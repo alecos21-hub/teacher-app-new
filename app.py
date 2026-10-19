@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from google import genai
 from PIL import Image
 import pandas as pd
@@ -6,6 +7,7 @@ import datetime
 import os
 import json
 import re
+import base64
 
 # --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & GRADEMIND AI ---
 st.set_page_config(
@@ -82,13 +84,13 @@ TRANSLATIONS = {
         "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
         "input_mode": "Τρόπος Εισαγωγής Τετραδίου Μαθητή:",
-        "mode_cam": "📷 Live Κάμερα Browser",
-        "mode_file": "📱 Πίσω Κάμερα Κινητού / Επιλογή Αρχείων (Συνιστάται για Κινητά)",
+        "mode_cam": "📸 Απευθείας Πίσω Κάμερα Κινητού (Native Rear Camera)",
+        "mode_file": "📁 Επιλογή Πολλαπλών Αρχείων από Συλλογή",
         "how_many_pages": "Πόσες σελίδες θέλετε να φωτογραφίσετε για το τετράδιο;",
         "page_label": "Σελίδα",
         "snap_page": "📷 Φωτογραφίστε τη Σελίδα",
         "page_saved": "αποθηκεύτηκε!",
-        "batch_upload": "📱 Τραβήξτε φωτογραφίες με την Πίσω Κάμερα ή επιλέξτε από τη Συλλογή:",
+        "batch_upload": "📁 Επιλέξτε φωτογραφίες τετραδίων από τη συλλογή (πολλαπλή επιλογή):",
         "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
@@ -126,13 +128,13 @@ TRANSLATIONS = {
         "notebook_sec": "✨ Capture Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
         "input_mode": "Student Notebook Input Method:",
-        "mode_cam": "📷 Live Browser Camera",
-        "mode_file": "📱 Mobile Back Camera / Gallery (Recommended for Phones)",
+        "mode_cam": "📸 Native Mobile Rear Camera",
+        "mode_file": "📁 Select Multiple Files from Gallery",
         "how_many_pages": "How many pages do you want to snap for this notebook?",
         "page_label": "Page",
         "snap_page": "📷 Snap Page",
         "page_saved": "saved!",
-        "batch_upload": "📱 Snap photos using Back Camera or select from Gallery:",
+        "batch_upload": "📁 Select notebook photos from gallery (multiple selection):",
         "batch_saved": "photos uploaded successfully!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
@@ -174,7 +176,7 @@ for h_idx in range(int(hw_pages_num)):
                 f.write(hw_cam.getbuffer())
             homework_images.append(Image.open(hw_path))
     except Exception:
-        st.sidebar.warning("⚠️ Η live κάμερα δεν υποστηρίζεται. Ανεβάστε τη φωτογραφία εκφώνησης ως αρχείο.")
+        st.sidebar.warning("⚠️ Η κάμερα δεν αποκρίθηκε.")
 
 if homework_images:
     st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
@@ -219,28 +221,60 @@ if api_key:
 
             input_mode = st.radio(
                 t["input_mode"], 
-                [t["mode_file"], t["mode_cam"]], # Η επιλογή κινητού είναι πρώτη
+                [t["mode_cam"], t["mode_file"]],
                 key="input_mode_radio"
             )
 
             if input_mode == t["mode_cam"]:
-                num_pages = st.number_input(t["how_many_pages"], min_value=1, max_value=5, value=2, step=1)
+                st.info("📷 **Λήψη με Πίσω Κάμερα:** Πατήστε το κουμπί παρακάτω. Το κινητό θα ανοίξει απευθείας την πίσω κάμερά σας!")
                 
-                for p_idx in range(int(num_pages)):
-                    st.write(f"**{t['page_label']} {p_idx+1}:**")
-                    try:
-                        cam_file = st.camera_input(f"{t['snap_page']} {p_idx+1}", key=f"student_cam_{p_idx}")
-                        if cam_file:
-                            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                            file_path = os.path.join(UPLOAD_FOLDER, f"student_cam_p{p_idx+1}_{timestamp}.jpg")
-                            with open(file_path, "wb") as f:
-                                f.write(cam_file.getbuffer())
-                            st.success(f"✅ {t['page_label']} {p_idx+1} {t['page_saved']}")
-                    except Exception:
-                        st.error("⚠️ Η live κάμερα του browser κόλλησε. Παρακαλώ επιλέξτε την επιλογή '📱 Πίσω Κάμερα Κινητού / Επιλογή Αρχείων' παραπάνω.")
+                # HTML5 Direct Rear Camera Component (capture="environment")
+                camera_html = """
+                <div style="text-align: center; padding: 10px;">
+                    <input type="file" accept="image/*" capture="environment" id="nativeCameraInput" style="display: none;" onchange="uploadImage(event)">
+                    <button onclick="document.getElementById('nativeCameraInput').click()" style="background-color: #4F46E5; color: white; padding: 15px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">
+                        📸 Άνοιγμα Πίσω Κάμερας Κινητού
+                    </button>
+                    <div id="statusMsg" style="margin-top: 10px; color: green; font-weight: bold;"></div>
+                </div>
+
+                <script>
+                function uploadImage(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        document.getElementById('statusMsg').innerText = "⏳ Αποθήκευση φωτογραφίας...";
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const base64Data = e.target.result.split(',')[1];
+                            const data = {
+                                image: base64Data,
+                                name: file.name
+                            };
+                            window.parent.postMessage({
+                                type: 'streamlit:setComponentValue',
+                                value: JSON.stringify(data)
+                            }, '*');
+                            document.getElementById('statusMsg').innerText = "✅ Η φωτογραφία αποθηκεύτηκε!";
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+                </script>
+                """
+                
+                # Προβολή Native Camera Widget
+                captured_data = components.html(camera_html, height=130)
+                
+                # Επίσης υποστήριξη του απλού uploader αν θέλει να βγάλει πολλές μαζί
+                cam_upload = st.file_uploader("Ή βγάλτε/ανεβάστε φωτογραφία εδώ:", type=["jpg", "jpeg", "png"], key="native_cam_fallback")
+                if cam_upload:
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    file_path = os.path.join(UPLOAD_FOLDER, f"student_cam_{timestamp}_{cam_upload.name}")
+                    with open(file_path, "wb") as f:
+                        f.write(cam_upload.getbuffer())
+                    st.success("✅ Η φωτογραφία αποθηκεύτηκε στον φάκελο!")
 
             else:
-                st.info("💡 **Συμβουλή για Κινητά:** Πατώντας το κουμπί παρακάτω, επιλέξτε **«Κάμερα»** στο κινητό σας. Έτσι θα ανοίξει η **πίσω κάμερα** της συσκευής σας χωρίς κανένα σφάλμα!")
                 up_files = st.file_uploader(
                     t["batch_upload"], 
                     type=["png", "jpg", "jpeg"], 
@@ -340,7 +374,6 @@ if api_key:
                             
                             df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
                             
-                            # ΑΥΤΟΜΑΤΟΣ ΚΑΘΑΡΙΣΜΟΣ ΦΑΚΕΛΟΥ ΜΕΤΑ ΤΗ ΒΑΘΜΟΛΟΓΗΣΗ
                             clear_upload_folder()
                             st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
 
