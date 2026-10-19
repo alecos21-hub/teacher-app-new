@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 from google import genai
 from PIL import Image
 import pandas as pd
@@ -81,15 +80,8 @@ TRANSLATIONS = {
         "tab3": "📊 Αναφορές & Απουσίες",
         "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
-        "input_mode": "Τρόπος Εισαγωγής Τετραδίου Μαθητή:",
-        "mode_cam": "📸 Απευθείας Πίσω Κάμερα Κινητού (Native Rear Camera)",
-        "mode_file": "📁 Επιλογή Πολλαπλών Αρχείων από Συλλογή",
-        "how_many_pages": "Πόσες σελίδες θέλετε να φωτογραφίσετε για το τετράδιο;",
-        "page_label": "Σελίδα",
-        "snap_page": "📷 Φωτογραφίστε τη Σελίδα",
-        "page_saved": "αποθηκεύτηκε!",
-        "batch_upload": "📁 Επιλέξτε φωτογραφίες τετραδίων από τη συλλογή (πολλαπλή επιλογή):",
-        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς!",
+        "batch_upload": "📱 Τραβήξτε φωτογραφία με την Κάμερα ή επιλέξτε από τη Συλλογή (πολλαπλή επιλογή):",
+        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
         "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και προσαρμόζει τις οδηγίες...",
@@ -125,15 +117,8 @@ TRANSLATIONS = {
         "tab3": "📊 Reports & Attendance",
         "notebook_sec": "✨ Capture Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
-        "input_mode": "Student Notebook Input Method:",
-        "mode_cam": "📸 Native Mobile Rear Camera",
-        "mode_file": "📁 Select Multiple Files from Gallery",
-        "how_many_pages": "How many pages do you want to snap for this notebook?",
-        "page_label": "Page",
-        "snap_page": "📷 Snap Page",
-        "page_saved": "saved!",
-        "batch_upload": "📁 Select notebook photos from gallery (multiple selection):",
-        "batch_saved": "photos uploaded successfully!",
+        "batch_upload": "📱 Snap photo using Camera or select from Gallery (multiple selection):",
+        "batch_saved": "photos uploaded successfully to folder!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
         "eval_spinner": "🤖 AI is analyzing pages and adapting feedback...",
@@ -221,47 +206,20 @@ if api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            input_mode = st.radio(
-                t["input_mode"], 
-                [t["mode_cam"], t["mode_file"]],
-                key="input_mode_radio"
+            st.info("💡 **Συμβουλή για Κινητά:** Πατήστε το κουμπί παρακάτω και επιλέξτε **«Κάμερα»** για να τραβήξετε φωτογραφία απευθείας, ή επιλέξτε πολλαπλές φωτογραφίες από τη συλλογή σας!")
+            
+            up_files = st.file_uploader(
+                t["batch_upload"], 
+                type=["png", "jpg", "jpeg"], 
+                accept_multiple_files=True, 
+                key="up_ex_multi"
             )
-
-            if input_mode == t["mode_cam"]:
-                st.info("📷 **Λήψη με Πίσω Κάμερα:** Πατήστε το κουμπί παρακάτω για να ανοίξει απευθείας η πίσω κάμερα!")
-                
-                camera_html = """
-                <div style="text-align: center; padding: 10px;">
-                    <input type="file" accept="image/*" capture="environment" id="nativeCameraInput" style="display: none;" onchange="uploadImage(event)">
-                    <button onclick="document.getElementById('nativeCameraInput').click()" style="background-color: #4F46E5; color: white; padding: 15px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">
-                        📸 Άνοιγμα Πίσω Κάμερας Κινητού
-                    </button>
-                    <div id="statusMsg" style="margin-top: 10px; color: green; font-weight: bold;"></div>
-                </div>
-                """
-                components.html(camera_html, height=100)
-                
-                cam_upload = st.file_uploader("Ή ανεβάστε τη φωτογραφία εδώ:", type=["jpg", "jpeg", "png"], key="native_cam_fallback")
-                if cam_upload:
-                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    file_path = os.path.join(UPLOAD_FOLDER, f"student_cam_{timestamp}_{cam_upload.name}")
+            if up_files:
+                for idx, uf in enumerate(up_files):
+                    file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
                     with open(file_path, "wb") as f:
-                        f.write(cam_upload.getbuffer())
-                    st.success("✅ Η φωτογραφία αποθηκεύτηκε στον φάκελο!")
-
-            else:
-                up_files = st.file_uploader(
-                    t["batch_upload"], 
-                    type=["png", "jpg", "jpeg"], 
-                    accept_multiple_files=True, 
-                    key="up_ex_multi"
-                )
-                if up_files:
-                    for idx, uf in enumerate(up_files):
-                        file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
-                        with open(file_path, "wb") as f:
-                            f.write(uf.getbuffer())
-                    st.success(f"📂 {len(up_files)} {t['batch_saved']}")
+                        f.write(uf.getbuffer())
+                st.success(f"📂 {len(up_files)} {t['batch_saved']}")
 
             # ΕΜΦΑΝΙΣΗ ΑΡΧΕΙΩΝ ΣΤΟΝ ΦΑΚΕΛΟ & ΚΟΥΜΠΙ ΑΞΙΟΛΟΓΗΣΗΣ
             folder_files = [
@@ -404,7 +362,7 @@ if api_key:
                     del st.session_state["found_names_cache"]
                     st.rerun()
 
-        # TAB 3: ΑΝΑΦΟΡΕΣ & STATS
+        # TAB 3: ΑΝΑΦΟΡΕΣ & STATΣ
         with tab3:
             st.subheader(f"{t['stats_sec']} {selected_class}")
             st.caption(t["stats_info"])
