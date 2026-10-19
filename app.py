@@ -6,7 +6,6 @@ import datetime
 import os
 import json
 import re
-import time
 
 # --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & GRADEMIND AI ---
 st.set_page_config(
@@ -15,6 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
+# Φάκελοι & Αρχεία
 UPLOAD_FOLDER = "uploads_folder"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -45,6 +45,7 @@ def clean_old_records():
             pass
 
 def clear_upload_folder():
+    """Διαγράφει όλες τις φωτογραφίες τετραδίων από τον φάκελο ώστε να είναι καθαρός για την επόμενη μέρα."""
     for f in os.listdir(UPLOAD_FOLDER):
         if not f.startswith('hw_page_'):
             file_path = os.path.join(UPLOAD_FOLDER, f)
@@ -57,7 +58,7 @@ def clear_upload_folder():
 clean_old_records()
 students_db = load_students()
 
-# --- 2. ΛΕΞΙΚΟ ΠΟΛΛΑΠΛΩΝ ΓΛΩΣΣΩΝ ---
+# --- 2. ΛΕΞΙΚΟ ΠΟΛΛΑΠΛΩΝ ΓΛΩΣΣΩΝ ΓΙΑ ΤΟ ΠΕΡΙΒΑΛΛΟΝ (TRANSLATIONS) ---
 TRANSLATIONS = {
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -80,8 +81,15 @@ TRANSLATIONS = {
         "tab3": "📊 Αναφορές & Απουσίες",
         "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
-        "batch_upload": "📱 Τραβήξτε φωτογραφία με την Κάμερα ή επιλέξτε από τη Συλλογή (πολλαπλή επιλογή):",
-        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
+        "input_mode": "Τρόπος Εισαγωγής Τετραδίου Μαθητή:",
+        "mode_cam": "📷 Live Κάμερα Browser",
+        "mode_file": "📱 Επιλογή Αρχείων / Συλλογή",
+        "how_many_pages": "Πόσες σελίδες θέλετε να φωτογραφίσετε για το τετράδιο;",
+        "page_label": "Σελίδα",
+        "snap_page": "📷 Φωτογραφίστε τη Σελίδα",
+        "page_saved": "αποθηκεύτηκε!",
+        "batch_upload": "📱 Τραβήξτε φωτογραφίες ή επιλέξτε από τη Συλλογή:",
+        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
         "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και προσαρμόζει τις οδηγίες...",
@@ -117,8 +125,15 @@ TRANSLATIONS = {
         "tab3": "📊 Reports & Attendance",
         "notebook_sec": "✨ Capture Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
-        "batch_upload": "📱 Snap photo using Camera or select from Gallery (multiple selection):",
-        "batch_saved": "photos uploaded successfully to folder!",
+        "input_mode": "Student Notebook Input Method:",
+        "mode_cam": "📷 Live Browser Camera",
+        "mode_file": "📱 Select Files / Gallery",
+        "how_many_pages": "How many pages do you want to snap for this notebook?",
+        "page_label": "Page",
+        "snap_page": "📷 Snap Page",
+        "page_saved": "saved!",
+        "batch_upload": "📱 Snap photos or select from Gallery:",
+        "batch_saved": "photos uploaded successfully!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
         "eval_spinner": "🤖 AI is analyzing pages and adapting feedback...",
@@ -186,7 +201,7 @@ if st.sidebar.button(t["btn_remove"]):
         st.sidebar.warning(f"Removed: {student_to_remove}")
         st.rerun()
 
-# --- 4. ΚΥΡΙΩΣ ΜΕΡΟΣ & API KEY ---
+# --- 4. ΚΥΡΙΩΣ ΜΕΡΟΣ & ΑΥΤΟΜΑΤΗ ΑΠΟΘΗΚΕΥΣΗ API KEY ---
 default_api_key = ""
 if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
     default_api_key = st.secrets["GEMINI_API_KEY"]
@@ -206,22 +221,42 @@ if api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            st.info("💡 **Συμβουλή για Κινητά:** Πατήστε το κουμπί παρακάτω και επιλέξτε **«Κάμερα»** για να τραβήξετε φωτογραφία απευθείας, ή επιλέξτε πολλαπλές φωτογραφίες από τη συλλογή σας!")
-            
-            up_files = st.file_uploader(
-                t["batch_upload"], 
-                type=["png", "jpg", "jpeg"], 
-                accept_multiple_files=True, 
-                key="up_ex_multi"
+            input_mode = st.radio(
+                t["input_mode"], 
+                [t["mode_cam"], t["mode_file"]],
+                key="input_mode_radio"
             )
-            if up_files:
-                for idx, uf in enumerate(up_files):
-                    file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
-                    with open(file_path, "wb") as f:
-                        f.write(uf.getbuffer())
-                st.success(f"📂 {len(up_files)} {t['batch_saved']}")
 
-            # ΕΜΦΑΝΙΣΗ ΑΡΧΕΙΩΝ ΣΤΟΝ ΦΑΚΕΛΟ & ΚΟΥΜΠΙ ΑΞΙΟΛΟΓΗΣΗΣ
+            if input_mode == t["mode_cam"]:
+                num_pages = st.number_input(t["how_many_pages"], min_value=1, max_value=5, value=2, step=1)
+                
+                for p_idx in range(int(num_pages)):
+                    st.write(f"**{t['page_label']} {p_idx+1}:**")
+                    try:
+                        cam_file = st.camera_input(f"{t['snap_page']} {p_idx+1}", key=f"student_cam_{p_idx}")
+                        if cam_file:
+                            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                            file_path = os.path.join(UPLOAD_FOLDER, f"student_cam_p{p_idx+1}_{timestamp}.jpg")
+                            with open(file_path, "wb") as f:
+                                f.write(cam_file.getbuffer())
+                            st.success(f"✅ {t['page_label']} {p_idx+1} {t['page_saved']}")
+                    except Exception:
+                        pass
+
+            else:
+                up_files = st.file_uploader(
+                    t["batch_upload"], 
+                    type=["png", "jpg", "jpeg"], 
+                    accept_multiple_files=True, 
+                    key="up_ex_multi"
+                )
+                if up_files:
+                    for idx, uf in enumerate(up_files):
+                        file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
+                        with open(file_path, "wb") as f:
+                            f.write(uf.getbuffer())
+                    st.success(f"📂 {len(up_files)} {t['batch_saved']}")
+
             folder_files = [
                 os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
                 if f.endswith(('.png', '.jpg', '.jpeg')) and not f.startswith('hw_page_')
@@ -260,29 +295,14 @@ if api_key:
                         if homework_images:
                             contents_list += homework_images
 
-                        eval_res = None
-                        models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash']
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=contents_list
+                        )
                         
-                        for attempt in range(3):
-                            for m_name in models_to_try:
-                                try:
-                                    response = client.models.generate_content(
-                                        model=m_name,
-                                        contents=contents_list
-                                    )
-                                    eval_res = response.text
-                                    break
-                                except Exception:
-                                    continue
-                            if eval_res:
-                                break
-                            time.sleep(2)
-                        
-                        if not eval_res:
-                            st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι. Παρακαλώ δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
-                            st.stop()
-
+                        eval_res = response.text
                         today = datetime.date.today().strftime("%Y-%m-%d")
+
                         student_blocks = re.split(r'###\s*Μαθητής\s*:?|Μαθητής\s+\d+:', eval_res)
                         
                         new_rows = []
@@ -322,6 +342,7 @@ if api_key:
                                 df_updated = df_new
                             
                             df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
+                            
                             clear_upload_folder()
                             st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
 
@@ -334,19 +355,24 @@ if api_key:
         # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
         with tab2:
             st.subheader(f"{t['catalog_sec']} {selected_class}")
+            
             list_img_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="list_up")
             if list_img_file:
                 list_path = os.path.join(UPLOAD_FOLDER, list_img_file.name)
                 with open(list_path, "wb") as f:
                     f.write(list_img_file.getbuffer())
                 list_img = Image.open(list_path)
+                
                 st.image(list_img, caption="Roster Photo", use_column_width=True)
                 
                 if st.button(t["btn_read_names"]):
                     with st.spinner("AI Reading Roster..."):
-                        p_list = "Read student names clearly from photo as comma-separated list."
+                        p_list = "Read the student names carefully from the photo. Return them as a simple comma-separated list (e.g. Name1, Name2, Name3)."
                         res_list = client.models.generate_content(model='gemini-2.5-flash', contents=[p_list, list_img])
+                        
                         names_found = [n.strip() for n in res_list.text.split(",") if n.strip()]
+                        st.write("**Names Found:**", names_found)
+                        
                         st.session_state["found_names_cache"] = names_found
 
             if "found_names_cache" in st.session_state and st.session_state["found_names_cache"]:
@@ -358,38 +384,87 @@ if api_key:
                             added_count += 1
                     students_db[selected_class].sort()
                     save_students(students_db)
-                    st.success(f"Added {added_count} students!")
+                    st.success(f"Added {added_count} new students to section {selected_class}!")
                     del st.session_state["found_names_cache"]
                     st.rerun()
 
-        # TAB 3: ΑΝΑΦΟΡΕΣ & STATΣ
+        # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΔΙΑΓΡΑΦΗ (EXCEL FORMAT)
         with tab3:
             st.subheader(f"{t['stats_sec']} {selected_class}")
             st.caption(t["stats_info"])
             
             if st.button(t["btn_close_day"]):
                 today = datetime.date.today().strftime("%Y-%m-%d")
-                df_g = pd.read_csv(GRADES_FILE) if os.path.exists(GRADES_FILE) else pd.DataFrame(columns=["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποσοστό", "Κατάσταση", "Αξιολόγηση"])
+                
+                if os.path.exists(GRADES_FILE):
+                    df_g = pd.read_csv(GRADES_FILE)
+                else:
+                    df_g = pd.DataFrame(columns=["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποσοστό", "Κατάσταση", "Αξιολόγηση"])
+
                 today_checked = df_g[(df_g["Ημερομηνία"] == today) & (df_g["Τμήμα"] == selected_class)]["Μαθητής"].tolist()
                 
-                missing_records = [{
-                    "Ημερομηνία": today, "Τμήμα": selected_class, "Μαθητής": st_name,
-                    "Ποσοστό": "-", "Κατάσταση": "Δεν έκανε ασκήσεις", "Αξιολόγηση": "No notebook submitted."
-                } for st_name in students_db[selected_class] if st_name not in today_checked]
+                missing_records = []
+                for st_name in students_db[selected_class]:
+                    if st_name not in today_checked:
+                        missing_records.append({
+                            "Ημερομηνία": today,
+                            "Τμήμα": selected_class,
+                            "Μαθητής": st_name,
+                            "Ποσοστό": "-",
+                            "Κατάσταση": "Δεν έκανε ασκήσεις",
+                            "Αξιολόγηση": "No notebook submitted."
+                        })
                 
                 if missing_records:
-                    pd.concat([df_g, pd.DataFrame(missing_records)], ignore_index=True).to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                    st.warning(f"{len(missing_records)} students marked as missing.")
+                    df_missing = pd.DataFrame(missing_records)
+                    df_final = pd.concat([df_g, df_missing], ignore_index=True)
+                    df_final.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
+                    st.warning(f"{len(missing_records)} students marked as missing homework for today.")
                     st.rerun()
                 else:
-                    st.success("All graded!")
+                    st.success("All students graded!")
 
             if os.path.exists(GRADES_FILE):
                 df_all = pd.read_csv(GRADES_FILE)
                 df_class = df_all[df_all["Τμήμα"] == selected_class]
+                
                 if not df_class.empty:
-                    pivot_df = df_class.pivot_table(index="Μαθητής", columns="Ημερομηνία", values="Ποσοστό", aggfunc="first").fillna("-")
+                    st.markdown("### 📊 Πίνακας Excel - Πρόοδος Μαθητών ανά Ημερομηνία")
+                    
+                    pivot_df = df_class.pivot_table(
+                        index="Μαθητής", 
+                        columns="Ημερομηνία", 
+                        values="Ποσοστό", 
+                        aggfunc="first"
+                    ).fillna("-")
+                    
                     st.dataframe(pivot_df, use_container_width=True)
+
+                    st.markdown("---")
+                    st.markdown("📋 **Αναλυτικός Κατάλογος Εγγραφών**")
+                    df_display = df_class[["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποσοστό", "Κατάσταση"]]
+                    st.dataframe(df_display, use_container_width=True)
+
+                    st.markdown("---")
+                    st.subheader(t["manual_delete"])
+                    
+                    options_to_delete = ["-- Select record to delete --"]
+                    indices_map = {}
+                    for idx, row in df_class.iterrows():
+                        label = f"{row['Ημερομηνία']} | {row['Μαθητής']} | {row['Ποσοστό']} ({row['Κατάσταση']})"
+                        options_to_delete.append(label)
+                        indices_map[label] = idx
+
+                    selected_del = st.selectbox("Select Record:", options_to_delete)
+                    if st.button("🗑️ Delete"):
+                        if selected_del != "-- Select record to delete --":
+                            target_idx = indices_map[selected_del]
+                            df_all = df_all.drop(target_idx)
+                            df_all.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
+                            st.success("Record deleted successfully!")
+                            st.rerun()
+                else:
+                    st.info("No saved records for this section in the last 7 days.")
 
     except Exception as e:
         st.error(f"Error: {e}")
