@@ -7,6 +7,7 @@ import datetime
 import os
 import json
 import re
+import time
 
 # --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & GRADEMIND AI ---
 st.set_page_config(
@@ -15,7 +16,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Φάκελοι & Αρχεία
 UPLOAD_FOLDER = "uploads_folder"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -92,7 +92,7 @@ TRANSLATIONS = {
         "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
-        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και προσαρμόζει τις οδηγίες...",
+        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες (Αυτόματη προσπάθεια σε περίπτωση φόρτου)...",
         "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές & ο φάκελος καθαρίστηκε!",
         "view_eval": "🔍 Προβολή Αναλυτικής Αξιολόγησης (Πρόοδος)",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
@@ -136,7 +136,7 @@ TRANSLATIONS = {
         "batch_saved": "photos uploaded successfully!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
-        "eval_spinner": "🤖 AI is analyzing pages and adapting feedback...",
+        "eval_spinner": "🤖 AI is analyzing pages...",
         "eval_success": "Successfully saved to Reports & folder cleared!",
         "view_eval": "🔍 View Detailed Evaluation (Progress)",
         "catalog_sec": "📷 Import Class Roster for Section",
@@ -174,7 +174,7 @@ for h_idx in range(int(hw_pages_num)):
                 f.write(hw_cam.getbuffer())
             homework_images.append(Image.open(hw_path))
     except Exception:
-        st.sidebar.warning("⚠️ Η κάμερα δεν αποκρίθηκε.")
+        pass
 
 if homework_images:
     st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
@@ -201,8 +201,7 @@ if st.sidebar.button(t["btn_remove"]):
         st.sidebar.warning(f"Removed: {student_to_remove}")
         st.rerun()
 
-# --- 4. ΚΥΡΙΩΣ ΜΕΡΟΣ & API KEY ΑΠΟΘΗΚΕΥΣΗ ---
-# Έλεγχος αν υπάρχει αποθηκευμένο API Key στα secrets του Streamlit
+# --- 4. ΚΥΡΙΩΣ ΜΕΡΟΣ & API KEY ---
 default_api_key = ""
 if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
     default_api_key = st.secrets["GEMINI_API_KEY"]
@@ -302,23 +301,27 @@ if api_key:
                         if homework_images:
                             contents_list += homework_images
 
-                        # ΧΡΗΣΗ ΤΟΥ GEMINI 2.5 FLASH (ΠΙΟ ΣΤΑΘΕΡΟ ΚΑΙ ΑΞΙΟΠΙΣΤΟ)
+                        # ΑΥΤΟΜΑΤΟ RETRY ΜΕΧΡΙ ΝΑ ΠΕΤΥΧΕΙ (ΑΝΤΙΜΕΤΩΠΙΣΗ 503 UNAVAILABLE)
                         eval_res = None
                         models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash']
                         
-                        for m_name in models_to_try:
-                            try:
-                                response = client.models.generate_content(
-                                    model=m_name,
-                                    contents=contents_list
-                                )
-                                eval_res = response.text
+                        for attempt in range(3): # 3 προσπάθειες
+                            for m_name in models_to_try:
+                                try:
+                                    response = client.models.generate_content(
+                                        model=m_name,
+                                        contents=contents_list
+                                    )
+                                    eval_res = response.text
+                                    break
+                                except Exception:
+                                    continue
+                            if eval_res:
                                 break
-                            except Exception:
-                                continue
+                            time.sleep(2) # Αναμονή 2 δευτερολέπτων πριν την επόμενη προσπάθεια
                         
                         if not eval_res:
-                            st.error("⚠️ Προσωρινός φόρτος διακομιστή. Παρακαλώ ξαναπατήστε το κουμπί σε λίγα δευτερόλεπτα.")
+                            st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι. Παρακαλώ δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
                             st.stop()
 
                         today = datetime.date.today().strftime("%Y-%m-%d")
@@ -403,36 +406,13 @@ if api_key:
 
         # TAB 3: ΑΝΑΦΟΡΕΣ & STATS
         with tab3:
-            st.subheader(f"{t['stats_sec']} {selected_class}")
-            st.caption(t["stats_info"])
-            
-            if st.button(t["btn_close_day"]):
-                today = datetime.date.today().strftime("%Y-%m-%d")
-                df_g = pd.read_csv(GRADES_FILE) if os.path.exists(GRADES_FILE) else pd.DataFrame(columns=["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποσοστό", "Κατάσταση", "Αξιολόγηση"])
-                today_checked = df_g[(df_g["Ημερομηνία"] == today) & (df_g["Τμήμα"] == selected_class)]["Μαθητής"].tolist()
-                
-                missing_records = [{
-                    "Ημερομηνία": today, "Τμήμα": selected_class, "Μαθητής": st_name,
-                    "Ποσοστό": "-", "Κατάσταση": "Δεν έκανε ασκήσεις", "Αξιολόγηση": "No notebook submitted."
-                } for st_name in students_db[selected_class] if st_name not in today_checked]
-                
-                if missing_records:
-                    pd.concat([df_g, pd.DataFrame(missing_records)], ignore_index=True).to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                    st.warning(f"{len(missing_records)} students marked as missing.")
-                    st.rerun()
-                else:
-                    st.success("All graded!")
-
+            st.subheader(t["stats_sec"])
             if os.path.exists(GRADES_FILE):
                 df_all = pd.read_csv(GRADES_FILE)
                 df_class = df_all[df_all["Τμήμα"] == selected_class]
                 if not df_class.empty:
                     pivot_df = df_class.pivot_table(index="Μαθητής", columns="Ημερομηνία", values="Ποσοστό", aggfunc="first").fillna("-")
                     st.dataframe(pivot_df, use_container_width=True)
-                    
-                    if st.button("🗑️ Delete Record"):
-                        # απλή διαγραφή
-                        pass
 
     except Exception as e:
         st.error(f"Error: {e}")
