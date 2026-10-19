@@ -92,7 +92,7 @@ TRANSLATIONS = {
         "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
-        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες (Αυτόματη προσπάθεια σε περίπτωση φόρτου)...",
+        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και προσαρμόζει τις οδηγίες...",
         "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές & ο φάκελος καθαρίστηκε!",
         "view_eval": "🔍 Προβολή Αναλυτικής Αξιολόγησης (Πρόοδος)",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
@@ -136,7 +136,7 @@ TRANSLATIONS = {
         "batch_saved": "photos uploaded successfully!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
-        "eval_spinner": "🤖 AI is analyzing pages...",
+        "eval_spinner": "🤖 AI is analyzing pages and adapting feedback...",
         "eval_success": "Successfully saved to Reports & folder cleared!",
         "view_eval": "🔍 View Detailed Evaluation (Progress)",
         "catalog_sec": "📷 Import Class Roster for Section",
@@ -263,6 +263,7 @@ if api_key:
                             f.write(uf.getbuffer())
                     st.success(f"📂 {len(up_files)} {t['batch_saved']}")
 
+            # ΕΜΦΑΝΙΣΗ ΑΡΧΕΙΩΝ ΣΤΟΝ ΦΑΚΕΛΟ & ΚΟΥΜΠΙ ΑΞΙΟΛΟΓΗΣΗΣ
             folder_files = [
                 os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
                 if f.endswith(('.png', '.jpg', '.jpeg')) and not f.startswith('hw_page_')
@@ -301,11 +302,10 @@ if api_key:
                         if homework_images:
                             contents_list += homework_images
 
-                        # ΑΥΤΟΜΑΤΟ RETRY ΜΕΧΡΙ ΝΑ ΠΕΤΥΧΕΙ (ΑΝΤΙΜΕΤΩΠΙΣΗ 503 UNAVAILABLE)
                         eval_res = None
                         models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash']
                         
-                        for attempt in range(3): # 3 προσπάθειες
+                        for attempt in range(3):
                             for m_name in models_to_try:
                                 try:
                                     response = client.models.generate_content(
@@ -318,7 +318,7 @@ if api_key:
                                     continue
                             if eval_res:
                                 break
-                            time.sleep(2) # Αναμονή 2 δευτερολέπτων πριν την επόμενη προσπάθεια
+                            time.sleep(2)
                         
                         if not eval_res:
                             st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι. Παρακαλώ δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
@@ -406,7 +406,26 @@ if api_key:
 
         # TAB 3: ΑΝΑΦΟΡΕΣ & STATS
         with tab3:
-            st.subheader(t["stats_sec"])
+            st.subheader(f"{t['stats_sec']} {selected_class}")
+            st.caption(t["stats_info"])
+            
+            if st.button(t["btn_close_day"]):
+                today = datetime.date.today().strftime("%Y-%m-%d")
+                df_g = pd.read_csv(GRADES_FILE) if os.path.exists(GRADES_FILE) else pd.DataFrame(columns=["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποσοστό", "Κατάσταση", "Αξιολόγηση"])
+                today_checked = df_g[(df_g["Ημερομηνία"] == today) & (df_g["Τμήμα"] == selected_class)]["Μαθητής"].tolist()
+                
+                missing_records = [{
+                    "Ημερομηνία": today, "Τμήμα": selected_class, "Μαθητής": st_name,
+                    "Ποσοστό": "-", "Κατάσταση": "Δεν έκανε ασκήσεις", "Αξιολόγηση": "No notebook submitted."
+                } for st_name in students_db[selected_class] if st_name not in today_checked]
+                
+                if missing_records:
+                    pd.concat([df_g, pd.DataFrame(missing_records)], ignore_index=True).to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
+                    st.warning(f"{len(missing_records)} students marked as missing.")
+                    st.rerun()
+                else:
+                    st.success("All graded!")
+
             if os.path.exists(GRADES_FILE):
                 df_all = pd.read_csv(GRADES_FILE)
                 df_class = df_all[df_all["Τμήμα"] == selected_class]
