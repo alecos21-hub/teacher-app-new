@@ -75,7 +75,7 @@ clean_old_records()
 students_db = load_students()
 config_data = load_config()
 
-# --- 2. ΛΕΞΙΚΟ ΠΟΛΛΑΠΛΩΝ ΓΛΩΣΣΩΝ ΓΙΑ ΤΟ ΠΕΡΙΒΑΛΛΟΝ (TRANSLATIONS) ---
+# --- 2. ΛΕΞΙΚΟ ΠΟΛΛΑΠΛΩΝ ΓΛΩΣΣΩΝ ---
 TRANSLATIONS = {
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -98,13 +98,14 @@ TRANSLATIONS = {
         "tab1": "📷 Αυτόματη Αξιολόγηση Άσκησης",
         "tab2": "📋 Εισαγωγή Καταλόγου",
         "tab3": "📊 Αναφορές & Απουσίες",
-        "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
+        "notebook_sec": "✨ Συνεχής Φωτογράφηση Τετραδίων",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
-        "batch_upload": "📱 Τραβήξτε ή επιλέξτε φωτογραφίες τετραδίων μαθητών (πολλαπλή επιλογή):",
-        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
-        "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
-        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
-        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και καταγράφει τα ποσοστά των μαθητών...",
+        "snap_btn": "📸 Τραβήξτε φωτογραφία τετραδίου (μία-μία)",
+        "photo_added": "Η φωτογραφία προστέθηκε στη συλλογή!",
+        "photos_in_basket": "φωτογραφίες τετραδίων είναι έτοιμες στη μνήμη.",
+        "btn_clear_basket": "🗑️ Καθαρισμός Φωτογραφιών",
+        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Όλων των Φωτογραφιών",
+        "eval_spinner": "🤖 Η AI αναλύει τις φωτογραφίες και καταγράφει τους βαθμούς...",
         "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές & ο φάκελος καθαρίστηκε!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
@@ -137,13 +138,14 @@ TRANSLATIONS = {
         "tab1": "📷 Automatic Grading",
         "tab2": "📋 Import Roster",
         "tab3": "📊 Reports & Attendance",
-        "notebook_sec": "✨ Capture Student Notebooks",
+        "notebook_sec": "✨ Continuous Notebook Capture",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
-        "batch_upload": "📱 Snap or select student notebook photos (multiple selection):",
-        "batch_saved": "photos uploaded successfully to folder!",
-        "folder_found": "student notebook photos in folder.",
-        "btn_evaluate": "🚀 Start Folder Grading Evaluation",
-        "eval_spinner": "🤖 AI is analyzing pages and recording student scores...",
+        "snap_btn": "📸 Take notebook photo (one by one)",
+        "photo_added": "Photo added to collection!",
+        "photos_in_basket": "notebook photos ready in memory.",
+        "btn_clear_basket": "🗑️ Clear Photos",
+        "btn_evaluate": "🚀 Start Grading All Photos",
+        "eval_spinner": "🤖 AI is analyzing photos and recording scores...",
         "eval_success": "Successfully saved to Reports & folder cleared!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
@@ -157,7 +159,7 @@ TRANSLATIONS = {
     }
 }
 
-# --- 3. SIDEBAR: ΕΠΙΛΟΓΗ ΓΛΩΣΣΑΣ & ΔΙΑΧΕΙΡΙΣΗ ---
+# --- 3. SIDEBAR ---
 st.sidebar.header("🌐 App Language / Γλώσσα")
 app_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=0)
 t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
@@ -208,7 +210,7 @@ if st.sidebar.button(t["btn_remove"]):
         st.sidebar.warning(f"Removed: {student_to_remove}")
         st.rerun()
 
-# --- 4. ΜΟΝΙΜΗ ΑΠΟΘΗΚΕΥΣΗ API KEY ---
+# --- 4. API KEY ---
 saved_api_key = config_data.get("api_key", "")
 col_api1, col_api2 = st.columns([3, 1])
 
@@ -233,6 +235,10 @@ if active_api_key:
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
+        # Δημιουργία Session State για αποθήκευση φωτογραφιών στη μνήμη
+        if "captured_photos" not in st.session_state:
+            st.session_state["captured_photos"] = []
+
         # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ
         with tab1:
             st.subheader(t["notebook_sec"])
@@ -240,39 +246,49 @@ if active_api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            st.info("💡 **Οδηγία:** Πατήστε παρακάτω στο κουμπί μεταφόρτωσης. Στο κινητό σας θα σας δοθεί η επιλογή να τραβήξετε απευθείας **Φωτογραφία** με την κάμερα ή να επιλέξετε από τη **Συλλογή** (μπορείτε να επιλέξετε πολλές φωτογραφίες μαζεμένες).")
+            st.info("💡 **Οδηγία:** Πατήστε την κάμερα για να βγάλετε φωτογραφία το τετράδιο. Μόλις τραβηχτεί, θα αποθηκευτεί στη λίστα. Μπορείτε να συνεχίσετε να βγάζετε όσες φωτογραφίες θέλετε (ακόμη και 2-3 για τον ίδιο μαθητή).")
 
-            up_files = st.file_uploader(
-                t["batch_upload"], 
-                type=["png", "jpg", "jpeg"], 
-                accept_multiple_files=True, 
-                key="up_ex_multi"
-            )
-            if up_files:
-                for idx, uf in enumerate(up_files):
-                    file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
-                    with open(file_path, "wb") as f:
-                        f.write(uf.getbuffer())
-                st.success(f"📂 {len(up_files)} {t['batch_saved']}")
+            # Κάμερα συνεχούς λήψης
+            cam_pic = st.camera_input(t["snap_btn"], key="continuous_cam_input")
+            
+            if cam_pic:
+                # Ελέγχουμε αν είναι νέα φωτογραφία (συγκρίνοντας με την τελευταία αποθηκευμένη)
+                img_bytes = cam_pic.getvalue()
+                if not st.session_state["captured_photos"] or st.session_state["captured_photos"][-1] != img_bytes:
+                    st.session_state["captured_photos"].append(img_bytes)
+                    st.success(f"✅ {t['photo_added']} (Σύνολο: {len(st.session_state['captured_photos'])})")
 
-            folder_files = [
-                os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
-                if f.endswith(('.png', '.jpg', '.jpeg')) and not f.startswith('hw_page_')
-            ]
-
-            if folder_files:
+            # Εμφάνιση πλήθους φωτογραφιών στη μνήμη και επιλογές
+            if st.session_state["captured_photos"]:
                 st.markdown("---")
-                st.write(f"📊 **{len(folder_files)} {t['folder_found']}**")
+                st.write(f"📊 **{len(st.session_state['captured_photos'])} {t['photos_in_basket']}**")
                 
-                if st.button(t["btn_evaluate"]):
-                    student_images = [Image.open(f_path) for f_path in folder_files]
-                    
+                col_eval1, col_eval2 = st.columns([2, 1])
+                with col_eval1:
+                    run_eval_btn = st.button(t["btn_evaluate"], type="primary")
+                with col_eval2:
+                    clear_basket_btn = st.button(t["btn_clear_basket"])
+
+                if clear_basket_btn:
+                    st.session_state["captured_photos"] = []
+                    st.rerun()
+
+                if run_eval_btn:
+                    # Αποθήκευση των φωτογραφιών προσωρινά στον φάκελο για αποστολή
+                    student_images = []
+                    for idx, p_bytes in enumerate(st.session_state["captured_photos"]):
+                        f_path = os.path.join(UPLOAD_FOLDER, f"student_cont_{idx}.jpg")
+                        with open(f_path, "wb") as f:
+                            f.write(p_bytes)
+                        student_images.append(Image.open(f_path))
+
                     with st.spinner(t["eval_spinner"]):
                         known_students_str = ", ".join(students_db[selected_class])
                         
                         prompt = f"""
                         You are an expert teacher grading student exercises.
                         I attached the images of the homework prompt and student notebook pages.
+                        Some students may have multiple pages/photos attached. Group pages belonging to the same student together.
                         Evaluate EACH student individually.
 
                         1. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student in their exercise.
@@ -352,9 +368,11 @@ if active_api_key:
                             
                             df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
                             clear_upload_folder()
+                            st.session_state["captured_photos"] = [] # Άδειασμα καλαθιού
                             st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
 
                         st.session_state["current_eval"] = eval_res
+                        st.rerun()
 
             if "current_eval" in st.session_state:
                 with st.expander(t["view_eval"], expanded=True):
@@ -396,7 +414,7 @@ if active_api_key:
                     del st.session_state["found_names_cache"]
                     st.rerun()
 
-        # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΔΙΑΓΡΑΦΗ (EXCEL FORMAT)
+        # TAB 3: ΑΝΑΦΟΡΕΣ & ΑΠΟΥΣΙΕΣ
         with tab3:
             st.subheader(t["stats_sec"])
             
