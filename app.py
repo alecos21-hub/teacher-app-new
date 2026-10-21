@@ -106,12 +106,12 @@ TRANSLATIONS = {
         "mode_cam": "📸 Άμεση Πίσω Κάμερα Κινητού (Rear Camera)",
         "mode_file": "📁 Επιλογή Αρχείων / Συλλογή",
         "batch_upload": "📁 Ή επιλέξτε αρχεία από τη συλλογή:",
-        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς!",
+        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
-        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και προσαρμόζει τις οδηγίες...",
+        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και καταγράφει τα ποσοστά των μαθητών...",
         "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές & ο φάκελος καθαρίστηκε!",
-        "view_eval": "🔍 Προβολή Αναλυτικής Αξιολόγησης (Πρόοδος)",
+        "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "Ανεβάστε φωτογραφία καταλόγου",
         "btn_read_names": "🤖 Ανάγνωση Ονομάτων από AI",
@@ -148,12 +148,12 @@ TRANSLATIONS = {
         "mode_cam": "📸 Native Mobile Rear Camera",
         "mode_file": "📁 Select Files / Gallery",
         "batch_upload": "📁 Or select files from gallery:",
-        "batch_saved": "photos uploaded successfully!",
+        "batch_saved": "photos uploaded successfully to folder!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
-        "eval_spinner": "🤖 AI is analyzing pages and adapting feedback...",
+        "eval_spinner": "🤖 AI is analyzing pages and recording student scores...",
         "eval_success": "Successfully saved to Reports & folder cleared!",
-        "view_eval": "🔍 View Detailed Evaluation (Progress)",
+        "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "Upload roster photo",
         "btn_read_names": "🤖 Read Names with AI",
@@ -331,7 +331,7 @@ if active_api_key:
                         1. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student in their exercise.
                         2. **MATCH FEEDBACK LANGUAGE**: Write all analysis, corrections, feedback, and notes EXCLUSIVELY in the EXACT SAME language used by the student.
 
-                        For EACH student found in the images, structure your response as follows:
+                        For EACH student found in the images, structure your response strictly using this format:
 
                         ### Μαθητής:
                         Όνομα: [Student Name]
