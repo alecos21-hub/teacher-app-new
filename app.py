@@ -100,7 +100,10 @@ TRANSLATIONS = {
         "tab3": "📊 Αναφορές & Απουσίες",
         "notebook_sec": "✨ Συνεχής Φωτογράφηση Τετραδίων",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
-        "snap_btn": "📸 Τραβήξτε φωτογραφία τετραδίου (μία-μία)",
+        "camera_choice": "επιλογή Κάμερας:",
+        "cam_back": "🔙 Πίσω Κάμερα (Κύρια - Προτείνεται για τετράδια)",
+        "cam_front": "🤳 Μπροστινή Κάμερα (Selfie)",
+        "snap_btn": "📸 Τραβήξτε φωτογραφία τετραδίου",
         "photo_added": "Η φωτογραφία προστέθηκε στη συλλογή!",
         "photos_in_basket": "φωτογραφίες τετραδίων είναι έτοιμες στη μνήμη.",
         "btn_clear_basket": "🗑️ Καθαρισμός Φωτογραφιών",
@@ -140,7 +143,10 @@ TRANSLATIONS = {
         "tab3": "📊 Reports & Attendance",
         "notebook_sec": "✨ Continuous Notebook Capture",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
-        "snap_btn": "📸 Take notebook photo (one by one)",
+        "camera_choice": "Camera Choice:",
+        "cam_back": "🔙 Back Camera (Main - Recommended for notebooks)",
+        "cam_front": "🤳 Front Camera (Selfie)",
+        "snap_btn": "📸 Take notebook photo",
         "photo_added": "Photo added to collection!",
         "photos_in_basket": "notebook photos ready in memory.",
         "btn_clear_basket": "🗑️ Clear Photos",
@@ -235,7 +241,6 @@ if active_api_key:
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
-        # Δημιουργία Session State για αποθήκευση φωτογραφιών στη μνήμη
         if "captured_photos" not in st.session_state:
             st.session_state["captured_photos"] = []
 
@@ -246,19 +251,25 @@ if active_api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            st.info("💡 **Οδηγία:** Πατήστε την κάμερα για να βγάλετε φωτογραφία το τετράδιο. Μόλις τραβηχτεί, θα αποθηκευτεί στη λίστα. Μπορείτε να συνεχίσετε να βγάζετε όσες φωτογραφίες θέλετε (ακόμη και 2-3 για τον ίδιο μαθητή).")
+            # Επιλογή κάμερας (User-controlled direction to prevent black screen bug)
+            cam_direction = st.radio(
+                t["camera_choice"],
+                [t["cam_back"], t["cam_front"]],
+                horizontal=True,
+                key="cam_dir_selector"
+            )
+            
+            use_facing = "environment" if cam_direction == t["cam_back"] else "user"
 
-            # Κάμερα συνεχούς λήψης
-            cam_pic = st.camera_input(t["snap_btn"], key="continuous_cam_input")
+            # Κάμερα με καθορισμένο facing mode για να μην μαυρίζει η οθόνη
+            cam_pic = st.camera_input(t["snap_btn"], key=f"cam_input_{use_facing}", label_visibility="visible")
             
             if cam_pic:
-                # Ελέγχουμε αν είναι νέα φωτογραφία (συγκρίνοντας με την τελευταία αποθηκευμένη)
                 img_bytes = cam_pic.getvalue()
                 if not st.session_state["captured_photos"] or st.session_state["captured_photos"][-1] != img_bytes:
                     st.session_state["captured_photos"].append(img_bytes)
                     st.success(f"✅ {t['photo_added']} (Σύνολο: {len(st.session_state['captured_photos'])})")
 
-            # Εμφάνιση πλήθους φωτογραφιών στη μνήμη και επιλογές
             if st.session_state["captured_photos"]:
                 st.markdown("---")
                 st.write(f"📊 **{len(st.session_state['captured_photos'])} {t['photos_in_basket']}**")
@@ -274,7 +285,6 @@ if active_api_key:
                     st.rerun()
 
                 if run_eval_btn:
-                    # Αποθήκευση των φωτογραφιών προσωρινά στον φάκελο για αποστολή
                     student_images = []
                     for idx, p_bytes in enumerate(st.session_state["captured_photos"]):
                         f_path = os.path.join(UPLOAD_FOLDER, f"student_cont_{idx}.jpg")
@@ -368,7 +378,7 @@ if active_api_key:
                             
                             df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
                             clear_upload_folder()
-                            st.session_state["captured_photos"] = [] # Άδειασμα καλαθιού
+                            st.session_state["captured_photos"] = []
                             st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
 
                         st.session_state["current_eval"] = eval_res
