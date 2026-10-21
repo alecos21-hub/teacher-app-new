@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 from google import genai
 from PIL import Image
 import pandas as pd
@@ -63,7 +62,6 @@ def clean_old_records():
             pass
 
 def clear_upload_folder():
-    """Διαγράφει όλες τις φωτογραφίες τετραδίων από τον φάκελο ώστε να είναι καθαρός για την επόμενη μέρα."""
     for f in os.listdir(UPLOAD_FOLDER):
         if not f.startswith('hw_page_'):
             file_path = os.path.join(UPLOAD_FOLDER, f)
@@ -103,8 +101,10 @@ TRANSLATIONS = {
         "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
         "input_mode": "Τρόπος Εισαγωγής Τετραδίου Μαθητή:",
-        "mode_cam": "📸 Άμεση Πίσω Κάμερα Κινητού (Rear Camera)",
+        "mode_cam": "📸 Λήψη με Κάμερα Κινητού",
         "mode_file": "📁 Επιλογή Αρχείων / Συλλογή",
+        "snap_btn": "📸 Τραβήξτε Φωτογραφία Τετραδίου",
+        "notebook_saved": "Η φωτογραφία τετραδίου αποθηκεύτηκε στον φάκελο!",
         "batch_upload": "📁 Ή επιλέξτε αρχεία από τη συλλογή:",
         "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
@@ -145,8 +145,10 @@ TRANSLATIONS = {
         "notebook_sec": "✨ Capture Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
         "input_mode": "Student Notebook Input Method:",
-        "mode_cam": "📸 Native Mobile Rear Camera",
+        "mode_cam": "📸 Mobile Camera Capture",
         "mode_file": "📁 Select Files / Gallery",
+        "snap_btn": "📸 Take Notebook Photo",
+        "notebook_saved": "Notebook photo saved to folder!",
         "batch_upload": "📁 Or select files from gallery:",
         "batch_saved": "photos uploaded successfully to folder!",
         "folder_found": "student notebook photos in folder.",
@@ -255,44 +257,14 @@ if active_api_key:
             )
 
             if input_mode == t["mode_cam"]:
-                st.info("📸 **Άμεση Πίσω Κάμερα:** Πατήστε το παρακάτω κουμπί για να ανοίξει απευθείας η πίσω κάμερα του κινητού σας:")
-                
-                camera_html = """
-                <div style="text-align: center; padding: 10px;">
-                    <input type="file" accept="image/*" capture="environment" id="rearCamInput" style="display: none;" onchange="handleFile(event)">
-                    <button onclick="document.getElementById('rearCamInput').click()" style="background-color: #4F46E5; color: white; padding: 15px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">
-                        📸 Άνοιγμα Πίσω Κάμερας
-                    </button>
-                    <div id="statusMsg" style="margin-top: 10px; color: green; font-weight: bold;"></div>
-                </div>
-                <script>
-                function handleFile(event) {
-                    const file = event.target.files[0];
-                    if (file) {
-                        document.getElementById('statusMsg').innerText = "⏳ Μεταφόρτωση φωτογραφίας...";
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const base64Data = e.target.result.split(',')[1];
-                            window.parent.postMessage({
-                                type: 'streamlit:setComponentValue',
-                                value: { image: base64Data, name: file.name }
-                            }, '*');
-                            document.getElementById('statusMsg').innerText = "✅ Η φωτογραφία καταγράφηκε!";
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                }
-                </script>
-                """
-                components.html(camera_html, height=110)
-                
-                cam_upload = st.file_uploader("Ή εναλλακτική φόρτωση αρχείου:", type=["jpg", "jpeg", "png"], key="rear_cam_fallback")
-                if cam_upload:
+                st.info("📸 **Λήψη με Κάμερα:** Χρησιμοποιήστε την κάμερα παρακάτω. Κάθε φωτογραφία που τραβάτε αποθηκεύεται απευθείας στον φάκελο!")
+                notebook_cam_pic = st.camera_input(t["snap_btn"], key="mobile_native_cam")
+                if notebook_cam_pic:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
                     file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}.jpg")
                     with open(file_path, "wb") as f:
-                        f.write(cam_upload.getbuffer())
-                    st.success("✅ Η φωτογραφία αποθηκεύτηκε επιτυχώς στον φάκελο!")
+                        f.write(notebook_cam_pic.getbuffer())
+                    st.success(f"✅ {t['notebook_saved']}")
 
             else:
                 up_files = st.file_uploader(
@@ -415,7 +387,7 @@ if active_api_key:
 
         # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
         with tab2:
-            st.subheader(f"{t['catalog_sec']} {selected_class}")
+            st.subheader(t["catalog_sec"] + " " + selected_class)
             
             list_img_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="list_up")
             if list_img_file:
