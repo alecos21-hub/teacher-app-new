@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from google import genai
 from PIL import Image
 import pandas as pd
@@ -82,10 +83,10 @@ TRANSLATIONS = {
         "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
         "input_mode": "Τρόπος Εισαγωγής Τετραδίου Μαθητή:",
-        "mode_cam": "📸 Άμεση Πίσω Κάμερα Κινητού (Native Rear Camera)",
+        "mode_cam": "📸 Άμεση Πίσω Κάμερα Κινητού (Rear Camera)",
         "mode_file": "📁 Επιλογή Αρχείων / Συλλογή",
-        "batch_upload": "📁 Ή επιλέξτε πολλαπλές φωτογραφίες από τη συλλογή σας:",
-        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
+        "batch_upload": "📁 Ή επιλέξτε αρχεία από τη συλλογή:",
+        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
         "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και προσαρμόζει τις οδηγίες...",
@@ -124,8 +125,8 @@ TRANSLATIONS = {
         "input_mode": "Student Notebook Input Method:",
         "mode_cam": "📸 Native Mobile Rear Camera",
         "mode_file": "📁 Select Files / Gallery",
-        "batch_upload": "📁 Or select multiple photos from your gallery:",
-        "batch_saved": "photos uploaded successfully to folder!",
+        "batch_upload": "📁 Or select files from gallery:",
+        "batch_saved": "photos uploaded successfully!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
         "eval_spinner": "🤖 AI is analyzing pages and adapting feedback...",
@@ -209,15 +210,68 @@ if api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            st.info("💡 Πατήστε το κουμπί παρακάτω για να τραβήξετε φωτογραφία με την πίσω κάμερα του κινητού ή να επιλέξετε από τη συλλογή:")
-            
-            cam_file = st.file_uploader("Τραβήξτε ή ανεβάστε φωτογραφία άσκησης:", type=["png", "jpg", "jpeg"], key="rear_cam_uploader")
-            if cam_file:
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}.jpg")
-                with open(file_path, "wb") as f:
-                    f.write(cam_file.getbuffer())
-                st.success("✅ Η φωτογραφία αποθηκεύτηκε επιτυχώς στον φάκελο!")
+            input_mode = st.radio(
+                t["input_mode"], 
+                [t["mode_cam"], t["mode_file"]],
+                key="input_mode_radio"
+            )
+
+            if input_mode == t["mode_cam"]:
+                st.info("📸 **Άμεση Πίσω Κάμερα:** Πατήστε το παρακάτω κουμπί για να ανοίξει απευθείας η πίσω κάμερα του κινητού σας:")
+                
+                # HTML5 component με capture="environment" για άμεσο άνοιγμα πίσω κάμερας κινητού
+                camera_html = """
+                <div style="text-align: center; padding: 10px;">
+                    <input type="file" accept="image/*" capture="environment" id="rearCamInput" style="display: none;" onchange="handleFile(event)">
+                    <button onclick="document.getElementById('rearCamInput').click()" style="background-color: #4F46E5; color: white; padding: 15px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">
+                        📸 Άνοιγμα Πίσω Κάμερας
+                    </button>
+                    <div id="statusMsg" style="margin-top: 10px; color: green; font-weight: bold;"></div>
+                </div>
+                <script>
+                function handleFile(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        document.getElementById('statusMsg').innerText = "⏳ Μεταφόρτωση φωτογραφίας...";
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const base64Data = e.target.result.split(',')[1];
+                            window.parent.postMessage({
+                                type: 'streamlit:setComponentValue',
+                                value: { image: base64Data, name: file.name }
+                            }, '*');
+                            document.getElementById('statusMsg').innerText = "✅ Η φωτογραφία καταγράφηκε!";
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+                </script>
+                """
+                # Ενσωμάτωση του widget κάμερας
+                components.html(camera_html, height=110)
+                
+                # Εναλλακτικό uploader ασφαλείας
+                cam_upload = st.file_uploader("Ή εναλλακτική φόρτωση αρχείου:", type=["jpg", "jpeg", "png"], key="rear_cam_fallback")
+                if cam_upload:
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                    file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}.jpg")
+                    with open(file_path, "wb") as f:
+                        f.write(cam_upload.getbuffer())
+                    st.success("✅ Η φωτογραφία αποθηκεύτηκε επιτυχώς στον φάκελο!")
+
+            else:
+                up_files = st.file_uploader(
+                    t["batch_upload"], 
+                    type=["png", "jpg", "jpeg"], 
+                    accept_multiple_files=True, 
+                    key="up_ex_multi"
+                )
+                if up_files:
+                    for idx, uf in enumerate(up_files):
+                        file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
+                        with open(file_path, "wb") as f:
+                            f.write(uf.getbuffer())
+                    st.success(f"📂 {len(up_files)} {t['batch_saved']}")
 
             folder_files = [
                 os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
@@ -413,7 +467,7 @@ if api_key:
                     indices_map = {}
                     for idx, row in df_class.iterrows():
                         label = f"{row['Ημερομηνία']} | {row['Μαθητής']} | {row['Ποσοστό']} ({row['Κατάσταση']})"
-                        options_to__delete.append(label)
+                        options_to_delete.append(label)
                         indices_map[label] = idx
 
                     selected_del = st.selectbox("Select Record:", options_to_delete)
