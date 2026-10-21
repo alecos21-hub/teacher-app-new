@@ -63,6 +63,7 @@ def clean_old_records():
             pass
 
 def clear_upload_folder():
+    """Διαγράφει όλες τις φωτογραφίες τετραδίων από τον φάκελο ώστε να είναι καθαρός για την επόμενη μέρα."""
     for f in os.listdir(UPLOAD_FOLDER):
         if not f.startswith('hw_page_'):
             file_path = os.path.join(UPLOAD_FOLDER, f)
@@ -217,14 +218,20 @@ if st.sidebar.button(t["btn_remove"]):
 
 # --- 4. ΜΟΝΙΜΗ ΑΠΟΘΗΚΕΥΣΗ API KEY ---
 saved_api_key = config_data.get("api_key", "")
-api_key_input = st.text_input(t["api_prompt"], value=saved_api_key, type="password")
+col_api1, col_api2 = st.columns([3, 1])
 
-if st.button(t["save_api"]):
-    if api_key_input.strip():
-        config_data["api_key"] = api_key_input.strip()
-        save_config(config_data)
-        st.success(t["api_saved_success"])
-        st.rerun()
+with col_api1:
+    api_key_input = st.text_input(t["api_prompt"], value=saved_api_key, type="password")
+
+with col_api2:
+    st.write("")
+    st.write("")
+    if st.button(t["save_api"]):
+        if api_key_input.strip():
+            config_data["api_key"] = api_key_input.strip()
+            save_config(config_data)
+            st.success(t["api_saved_success"])
+            st.rerun()
 
 active_api_key = config_data.get("api_key", "") or api_key_input
 
@@ -340,7 +347,7 @@ if active_api_key:
                             contents_list += homework_images
 
                         eval_res = None
-                        models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash']
+                        models_to_try = ['gemini-3.8-flash']
                         
                         for m_name in models_to_try:
                             try:
@@ -422,7 +429,7 @@ if active_api_key:
                 if st.button(t["btn_read_names"]):
                     with st.spinner("AI Reading Roster..."):
                         p_list = "Read the student names carefully from the photo. Return them as a simple comma-separated list (e.g. Name1, Name2, Name3)."
-                        res_list = client.models.generate_content(model='gemini-2.5-flash', contents=[p_list, list_img])
+                        res_list = client.models.generate_content(model='gemini-3.8-flash', contents=[p_list, list_img])
                         
                         names_found = [n.strip() for n in res_list.text.split(",") if n.strip()]
                         st.write("**Names Found:**", names_found)
