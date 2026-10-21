@@ -98,12 +98,9 @@ TRANSLATIONS = {
         "tab1": "📷 Αυτόματη Αξιολόγηση Άσκησης",
         "tab2": "📋 Εισαγωγή Καταλόγου",
         "tab3": "📊 Αναφορές & Απουσίες",
-        "notebook_sec": "✨ Συνεχής Φωτογράφηση Τετραδίων",
+        "notebook_sec": "✨ Συνεχής Φωτογράφηση Τετραδίων (Πίσω Κάμερα)",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
-        "camera_choice": "επιλογή Κάμερας:",
-        "cam_back": "🔙 Πίσω Κάμερα (Κύρια - Προτείνεται για τετράδια)",
-        "cam_front": "🤳 Μπροστινή Κάμερα (Selfie)",
-        "snap_btn": "📸 Τραβήξτε φωτογραφία τετραδίου",
+        "snap_btn": "📸 Τραβήξτε φωτογραφία τετραδίου με την πίσω κάμερα",
         "photo_added": "Η φωτογραφία προστέθηκε στη συλλογή!",
         "photos_in_basket": "φωτογραφίες τετραδίων είναι έτοιμες στη μνήμη.",
         "btn_clear_basket": "🗑️ Καθαρισμός Φωτογραφιών",
@@ -141,12 +138,9 @@ TRANSLATIONS = {
         "tab1": "📷 Automatic Grading",
         "tab2": "📋 Import Roster",
         "tab3": "📊 Reports & Attendance",
-        "notebook_sec": "✨ Continuous Notebook Capture",
+        "notebook_sec": "✨ Continuous Notebook Capture (Back Camera)",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
-        "camera_choice": "Camera Choice:",
-        "cam_back": "🔙 Back Camera (Main - Recommended for notebooks)",
-        "cam_front": "🤳 Front Camera (Selfie)",
-        "snap_btn": "📸 Take notebook photo",
+        "snap_btn": "📸 Take notebook photo with back camera",
         "photo_added": "Photo added to collection!",
         "photos_in_basket": "notebook photos ready in memory.",
         "btn_clear_basket": "🗑️ Clear Photos",
@@ -182,7 +176,7 @@ hw_pages_num = st.sidebar.number_input(t["hw_pages"], min_value=1, max_value=5, 
 homework_images = []
 for h_idx in range(int(hw_pages_num)):
     try:
-        hw_cam = st.sidebar.camera_input(f"{t['hw_cam']} {h_idx+1}", key=f"hw_cam_{h_idx}")
+        hw_cam = st.sidebar.camera_input(f"{t['hw_cam']} {h_idx+1}", key=f"hw_cam_{h_idx}", facing_direction="environment")
         if hw_cam:
             hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{h_idx}.jpg")
             with open(hw_path, "wb") as f:
@@ -251,18 +245,8 @@ if active_api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            # Επιλογή κάμερας (User-controlled direction to prevent black screen bug)
-            cam_direction = st.radio(
-                t["camera_choice"],
-                [t["cam_back"], t["cam_front"]],
-                horizontal=True,
-                key="cam_dir_selector"
-            )
-            
-            use_facing = "environment" if cam_direction == t["cam_back"] else "user"
-
-            # Κάμερα με καθορισμένο facing mode για να μην μαυρίζει η οθόνη
-            cam_pic = st.camera_input(t["snap_btn"], key=f"cam_input_{use_facing}", label_visibility="visible")
+            # Αποκλειστικά πίσω κάμερα με το facing_direction="environment"
+            cam_pic = st.camera_input(t["snap_btn"], key="env_camera_input", facing_direction="environment")
             
             if cam_pic:
                 img_bytes = cam_pic.getvalue()
