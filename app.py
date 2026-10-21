@@ -22,6 +22,23 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 STUDENTS_FILE = "students_db.json"
 GRADES_FILE = "grades_db.csv"
+CONFIG_FILE = "config.json"
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"api_key": ""}
+
+def save_config(config_dict):
+    try:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(config_dict, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
 
 def load_students():
     if os.path.exists(STUDENTS_FILE):
@@ -46,7 +63,6 @@ def clean_old_records():
             pass
 
 def clear_upload_folder():
-    """Διαγράφει όλες τις φωτογραφίες τετραδίων από τον φάκελο ώστε να είναι καθαρός για την επόμενη μέρα."""
     for f in os.listdir(UPLOAD_FOLDER):
         if not f.startswith('hw_page_'):
             file_path = os.path.join(UPLOAD_FOLDER, f)
@@ -58,6 +74,7 @@ def clear_upload_folder():
 
 clean_old_records()
 students_db = load_students()
+config_data = load_config()
 
 # --- 2. ΛΕΞΙΚΟ ΠΟΛΛΑΠΛΩΝ ΓΛΩΣΣΩΝ ΓΙΑ ΤΟ ΠΕΡΙΒΑΛΛΟΝ (TRANSLATIONS) ---
 TRANSLATIONS = {
@@ -77,6 +94,8 @@ TRANSLATIONS = {
         "remove_student": "Αφαίρεση μαθητή:",
         "btn_remove": "❌ Διαγραφή Μαθητή",
         "api_prompt": "Εισάγετε Google Gemini API Key",
+        "save_api": "💾 Αποθήκευση API Key",
+        "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
         "tab1": "📷 Αυτόματη Αξιολόγηση Άσκησης",
         "tab2": "📋 Εισαγωγή Καταλόγου",
         "tab3": "📊 Αναφορές & Απουσίες",
@@ -117,6 +136,8 @@ TRANSLATIONS = {
         "remove_student": "Remove student:",
         "btn_remove": "❌ Delete Student",
         "api_prompt": "Enter Google Gemini API Key",
+        "save_api": "💾 Save API Key",
+        "api_saved_success": "API Key saved successfully!",
         "tab1": "📷 Automatic Grading",
         "tab2": "📋 Import Roster",
         "tab3": "📊 Reports & Attendance",
@@ -194,12 +215,22 @@ if st.sidebar.button(t["btn_remove"]):
         st.sidebar.warning(f"Removed: {student_to_remove}")
         st.rerun()
 
-# --- 4. ΚΥΡΙΩΣ ΜΕΡΟΣ & API KEY ---
-api_key = st.text_input(t["api_prompt"], type="password")
+# --- 4. ΜΟΝΙΜΗ ΑΠΟΘΗΚΕΥΣΗ API KEY ---
+saved_api_key = config_data.get("api_key", "")
+api_key_input = st.text_input(t["api_prompt"], value=saved_api_key, type="password")
 
-if api_key:
+if st.button(t["save_api"]):
+    if api_key_input.strip():
+        config_data["api_key"] = api_key_input.strip()
+        save_config(config_data)
+        st.success(t["api_saved_success"])
+        st.rerun()
+
+active_api_key = config_data.get("api_key", "") or api_key_input
+
+if active_api_key:
     try:
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(api_key=active_api_key)
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
@@ -219,7 +250,6 @@ if api_key:
             if input_mode == t["mode_cam"]:
                 st.info("📸 **Άμεση Πίσω Κάμερα:** Πατήστε το παρακάτω κουμπί για να ανοίξει απευθείας η πίσω κάμερα του κινητού σας:")
                 
-                # HTML5 component με capture="environment" για άμεσο άνοιγμα πίσω κάμερας κινητού
                 camera_html = """
                 <div style="text-align: center; padding: 10px;">
                     <input type="file" accept="image/*" capture="environment" id="rearCamInput" style="display: none;" onchange="handleFile(event)">
@@ -247,10 +277,8 @@ if api_key:
                 }
                 </script>
                 """
-                # Ενσωμάτωση του widget κάμερας
                 components.html(camera_html, height=110)
                 
-                # Εναλλακτικό uploader ασφαλείας
                 cam_upload = st.file_uploader("Ή εναλλακτική φόρτωση αρχείου:", type=["jpg", "jpeg", "png"], key="rear_cam_fallback")
                 if cam_upload:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -311,14 +339,25 @@ if api_key:
                         if homework_images:
                             contents_list += homework_images
 
-                        response = client.models.generate_content(
-                            model='gemini-2.5-flash',
-                            contents=contents_list
-                        )
+                        eval_res = None
+                        models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash']
                         
-                        eval_res = response.text
-                        today = datetime.date.today().strftime("%Y-%m-%d")
+                        for m_name in models_to_try:
+                            try:
+                                response = client.models.generate_content(
+                                    model=m_name,
+                                    contents=contents_list
+                                )
+                                eval_res = response.text
+                                break
+                            except Exception:
+                                continue
 
+                        if not eval_res:
+                            st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι. Παρακαλώ δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
+                            st.stop()
+
+                        today = datetime.date.today().strftime("%Y-%m-%d")
                         student_blocks = re.split(r'###\s*Μαθητής\s*:?|Μαθητής\s+\d+:', eval_res)
                         
                         new_rows = []
@@ -358,7 +397,6 @@ if api_key:
                                 df_updated = df_new
                             
                             df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                            
                             clear_upload_folder()
                             st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
 
@@ -484,4 +522,4 @@ if api_key:
     except Exception as e:
         st.error(f"Error: {e}")
 else:
-    st.warning("Please enter your API Key.")
+    st.warning("Please enter and save your API Key to continue.")
