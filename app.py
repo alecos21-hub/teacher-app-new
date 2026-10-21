@@ -100,12 +100,7 @@ TRANSLATIONS = {
         "tab3": "📊 Αναφορές & Απουσίες",
         "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
-        "input_mode": "Τρόπος Εισαγωγής Τετραδίου Μαθητή:",
-        "mode_cam": "📸 Λήψη με Κάμερα Κινητού",
-        "mode_file": "📁 Επιλογή Αρχείων / Συλλογή",
-        "snap_btn": "📸 Τραβήξτε Φωτογραφία Τετραδίου",
-        "notebook_saved": "Η φωτογραφία τετραδίου αποθηκεύτηκε στον φάκελο!",
-        "batch_upload": "📁 Ή επιλέξτε αρχεία από τη συλλογή:",
+        "batch_upload": "📱 Τραβήξτε ή επιλέξτε φωτογραφίες τετραδίων μαθητών (πολλαπλή επιλογή):",
         "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
@@ -144,12 +139,7 @@ TRANSLATIONS = {
         "tab3": "📊 Reports & Attendance",
         "notebook_sec": "✨ Capture Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
-        "input_mode": "Student Notebook Input Method:",
-        "mode_cam": "📸 Mobile Camera Capture",
-        "mode_file": "📁 Select Files / Gallery",
-        "snap_btn": "📸 Take Notebook Photo",
-        "notebook_saved": "Notebook photo saved to folder!",
-        "batch_upload": "📁 Or select files from gallery:",
+        "batch_upload": "📱 Snap or select student notebook photos (multiple selection):",
         "batch_saved": "photos uploaded successfully to folder!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
@@ -250,35 +240,20 @@ if active_api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            input_mode = st.radio(
-                t["input_mode"], 
-                [t["mode_cam"], t["mode_file"]],
-                key="input_mode_radio"
+            st.info("💡 **Οδηγία:** Πατήστε παρακάτω στο κουμπί μεταφόρτωσης. Στο κινητό σας θα σας δοθεί η επιλογή να τραβήξετε απευθείας **Φωτογραφία** με την κάμερα ή να επιλέξετε από τη **Συλλογή** (μπορείτε να επιλέξετε πολλές φωτογραφίες μαζεμένες).")
+
+            up_files = st.file_uploader(
+                t["batch_upload"], 
+                type=["png", "jpg", "jpeg"], 
+                accept_multiple_files=True, 
+                key="up_ex_multi"
             )
-
-            if input_mode == t["mode_cam"]:
-                st.info("📸 **Λήψη με Κάμερα:** Χρησιμοποιήστε την κάμερα παρακάτω. Κάθε φωτογραφία που τραβάτε αποθηκεύεται απευθείας στον φάκελο!")
-                notebook_cam_pic = st.camera_input(t["snap_btn"], key="mobile_native_cam")
-                if notebook_cam_pic:
-                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}.jpg")
+            if up_files:
+                for idx, uf in enumerate(up_files):
+                    file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
                     with open(file_path, "wb") as f:
-                        f.write(notebook_cam_pic.getbuffer())
-                    st.success(f"✅ {t['notebook_saved']}")
-
-            else:
-                up_files = st.file_uploader(
-                    t["batch_upload"], 
-                    type=["png", "jpg", "jpeg"], 
-                    accept_multiple_files=True, 
-                    key="up_ex_multi"
-                )
-                if up_files:
-                    for idx, uf in enumerate(up_files):
-                        file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
-                        with open(file_path, "wb") as f:
-                            f.write(uf.getbuffer())
-                    st.success(f"📂 {len(up_files)} {t['batch_saved']}")
+                        f.write(uf.getbuffer())
+                st.success(f"📂 {len(up_files)} {t['batch_saved']}")
 
             folder_files = [
                 os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
