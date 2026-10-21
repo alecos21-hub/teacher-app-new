@@ -82,14 +82,10 @@ TRANSLATIONS = {
         "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
         "input_mode": "Τρόπος Εισαγωγής Τετραδίου Μαθητή:",
-        "mode_cam": "📷 Live Κάμερα Browser",
-        "mode_file": "📱 Επιλογή Αρχείων / Συλλογή",
-        "how_many_pages": "Πόσες σελίδες θέλετε να φωτογραφίσετε για το τετράδιο;",
-        "page_label": "Σελίδα",
-        "snap_page": "📷 Φωτογραφίστε τη Σελίδα",
-        "page_saved": "αποθηκεύτηκε!",
-        "batch_upload": "📱 Τραβήξτε φωτογραφίες ή επιλέξτε από τη Συλλογή:",
-        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς!",
+        "mode_cam": "📸 Άμεση Πίσω Κάμερα Κινητού (Native Rear Camera)",
+        "mode_file": "📁 Επιλογή Αρχείων / Συλλογή",
+        "batch_upload": "📁 Ή επιλέξτε πολλαπλές φωτογραφίες από τη συλλογή σας:",
+        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
         "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και προσαρμόζει τις οδηγίες...",
@@ -126,14 +122,10 @@ TRANSLATIONS = {
         "notebook_sec": "✨ Capture Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
         "input_mode": "Student Notebook Input Method:",
-        "mode_cam": "📷 Live Browser Camera",
-        "mode_file": "📱 Select Files / Gallery",
-        "how_many_pages": "How many pages do you want to snap for this notebook?",
-        "page_label": "Page",
-        "snap_page": "📷 Snap Page",
-        "page_saved": "saved!",
-        "batch_upload": "📱 Snap photos or select from Gallery:",
-        "batch_saved": "photos uploaded successfully!",
+        "mode_cam": "📸 Native Mobile Rear Camera",
+        "mode_file": "📁 Select Files / Gallery",
+        "batch_upload": "📁 Or select multiple photos from your gallery:",
+        "batch_saved": "photos uploaded successfully to folder!",
         "folder_found": "student notebook photos in folder.",
         "btn_evaluate": "🚀 Start Folder Grading Evaluation",
         "eval_spinner": "🤖 AI is analyzing pages and adapting feedback...",
@@ -201,12 +193,8 @@ if st.sidebar.button(t["btn_remove"]):
         st.sidebar.warning(f"Removed: {student_to_remove}")
         st.rerun()
 
-# --- 4. ΚΥΡΙΩΣ ΜΕΡΟΣ & ΑΥΤΟΜΑΤΗ ΑΠΟΘΗΚΕΥΣΗ API KEY ---
-default_api_key = ""
-if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
-    default_api_key = st.secrets["GEMINI_API_KEY"]
-
-api_key = st.text_input(t["api_prompt"], value=default_api_key, type="password")
+# --- 4. ΚΥΡΙΩΣ ΜΕΡΟΣ & API KEY ---
+api_key = st.text_input(t["api_prompt"], type="password")
 
 if api_key:
     try:
@@ -221,41 +209,15 @@ if api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            input_mode = st.radio(
-                t["input_mode"], 
-                [t["mode_cam"], t["mode_file"]],
-                key="input_mode_radio"
-            )
-
-            if input_mode == t["mode_cam"]:
-                num_pages = st.number_input(t["how_many_pages"], min_value=1, max_value=5, value=2, step=1)
-                
-                for p_idx in range(int(num_pages)):
-                    st.write(f"**{t['page_label']} {p_idx+1}:**")
-                    try:
-                        cam_file = st.camera_input(f"{t['snap_page']} {p_idx+1}", key=f"student_cam_{p_idx}")
-                        if cam_file:
-                            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                            file_path = os.path.join(UPLOAD_FOLDER, f"student_cam_p{p_idx+1}_{timestamp}.jpg")
-                            with open(file_path, "wb") as f:
-                                f.write(cam_file.getbuffer())
-                            st.success(f"✅ {t['page_label']} {p_idx+1} {t['page_saved']}")
-                    except Exception:
-                        pass
-
-            else:
-                up_files = st.file_uploader(
-                    t["batch_upload"], 
-                    type=["png", "jpg", "jpeg"], 
-                    accept_multiple_files=True, 
-                    key="up_ex_multi"
-                )
-                if up_files:
-                    for idx, uf in enumerate(up_files):
-                        file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
-                        with open(file_path, "wb") as f:
-                            f.write(uf.getbuffer())
-                    st.success(f"📂 {len(up_files)} {t['batch_saved']}")
+            st.info("💡 Πατήστε το κουμπί παρακάτω για να τραβήξετε φωτογραφία με την πίσω κάμερα του κινητού ή να επιλέξετε από τη συλλογή:")
+            
+            cam_file = st.file_uploader("Τραβήξτε ή ανεβάστε φωτογραφία άσκησης:", type=["png", "jpg", "jpeg"], key="rear_cam_uploader")
+            if cam_file:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}.jpg")
+                with open(file_path, "wb") as f:
+                    f.write(cam_file.getbuffer())
+                st.success("✅ Η φωτογραφία αποθηκεύτηκε επιτυχώς στον φάκελο!")
 
             folder_files = [
                 os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
@@ -390,8 +352,7 @@ if api_key:
 
         # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΔΙΑΓΡΑΦΗ (EXCEL FORMAT)
         with tab3:
-            st.subheader(f"{t['stats_sec']} {selected_class}")
-            st.caption(t["stats_info"])
+            st.subheader(t["stats_sec"])
             
             if st.button(t["btn_close_day"]):
                 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -452,7 +413,7 @@ if api_key:
                     indices_map = {}
                     for idx, row in df_class.iterrows():
                         label = f"{row['Ημερομηνία']} | {row['Μαθητής']} | {row['Ποσοστό']} ({row['Κατάσταση']})"
-                        options_to_delete.append(label)
+                        options_to__delete.append(label)
                         indices_map[label] = idx
 
                     selected_del = st.selectbox("Select Record:", options_to_delete)
