@@ -100,17 +100,17 @@ TRANSLATIONS = {
         "tab1": "📷 Αυτόματη Αξιολόγηση Άσκησης",
         "tab2": "📋 Εισαγωγή Καταλόγου",
         "tab3": "📊 Αναφορές & Απουσίες",
-        "notebook_sec": "✨ Φωτογράφηση Τετραδίων Μαθητών",
+        "notebook_sec": "✨ Συνεχής Φωτογράφηση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
         "input_mode": "Τρόπος Εισαγωγής Τετραδίου Μαθητή:",
         "mode_cam": "📸 Άμεση Πίσω Κάμερα Κινητού (Rear Camera)",
         "mode_file": "📁 Επιλογή Αρχείων / Συλλογή",
         "batch_upload": "📁 Ή επιλέξτε αρχεία από τη συλλογή:",
-        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
-        "folder_found": "φωτογραφίες σελίδων μαθητών στον φάκελο.",
-        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Ασκήσεων Φακέλου",
+        "batch_saved": "φωτογραφίες προστέθηκαν επιτυχώς!",
+        "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στη μνήμη.",
+        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Όλων των Φωτογραφιών",
         "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και καταγράφει τα ποσοστά των μαθητών...",
-        "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές & ο φάκελος καθαρίστηκε!",
+        "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές & η μνήμη καθαρίστηκε!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "Ανεβάστε φωτογραφία καταλόγου",
@@ -142,17 +142,17 @@ TRANSLATIONS = {
         "tab1": "📷 Automatic Grading",
         "tab2": "📋 Import Roster",
         "tab3": "📊 Reports & Attendance",
-        "notebook_sec": "✨ Capture Student Notebooks",
+        "notebook_sec": "✨ Continuous Student Notebook Capture",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
         "input_mode": "Student Notebook Input Method:",
         "mode_cam": "📸 Native Mobile Rear Camera",
         "mode_file": "📁 Select Files / Gallery",
         "batch_upload": "📁 Or select files from gallery:",
-        "batch_saved": "photos uploaded successfully to folder!",
-        "folder_found": "student notebook photos in folder.",
-        "btn_evaluate": "🚀 Start Folder Grading Evaluation",
+        "batch_saved": "photos added successfully!",
+        "folder_found": "student notebook photos ready in memory.",
+        "btn_evaluate": "🚀 Start Grading All Photos",
         "eval_spinner": "🤖 AI is analyzing pages and recording student scores...",
-        "eval_success": "Successfully saved to Reports & folder cleared!",
+        "eval_success": "Successfully saved to Reports & memory cleared!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "Upload roster photo",
@@ -241,6 +241,10 @@ if active_api_key:
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
+        # Αρχικοποίηση καλαθιού φωτογραφιών στη session_state
+        if "captured_photos_basket" not in st.session_state:
+            st.session_state["captured_photos_basket"] = []
+
         # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ
         with tab1:
             st.subheader(t["notebook_sec"])
@@ -255,9 +259,8 @@ if active_api_key:
             )
 
             if input_mode == t["mode_cam"]:
-                st.info("📸 **Άμεση Πίσω Κάμερα:** Πατήστε το κουμπί, τραβήξτε φωτογραφία (μπορείτε να το επαναλάβετε για επόμενο μαθητή) και πατήστε αποθήκευση:")
+                st.info("📸 **Συνεχής Φωτογράφηση:** Πατήστε το κουμπί, τραβήξτε φωτογραφία μαθητή (θα προστίθεται αυτόματα στη συλλογή), και επαναλάβετε για τον επόμενο:")
                 
-                # Διορθωμένο component που λαμβάνει τα bytes και τα στέλνει ασφαλές στη Python με μοναδικό όνομα
                 cam_val = components.html(
                     """
                     <div style="text-align: center; padding: 10px;">
@@ -268,16 +271,17 @@ if active_api_key:
                     function handleFile(event) {
                         const file = event.target.files[0];
                         if (file) {
-                            document.getElementById('statusMsg.innerText = "⏳ Μεταφόρτωση...";
+                            document.getElementById('statusMsg').innerText = "⏳ Προσθήκη φωτογραφίας στη συλλογή...";
                             const reader = new FileReader();
                             reader.onload = function(e) {
                                 const base64Data = e.target.result.split(',')[1];
-                                const uniqueName = "cam_" + Date.now() + "_" + file.name;
+                                const uniqueId = "photo_" + Date.now() + "_" + Math.random();
                                 window.parent.postMessage({
                                     type: 'streamlit:setComponentValue',
-                                    value: { image: base64Data, name: uniqueName }
+                                    value: { image: base64Data, id: uniqueId }
                                 }, '*');
-                                document.getElementById('statusMsg').innerText = "✅ Η φωτογραφία καταγράφηκε στη μνήμη!";
+                                document.getElementById('statusMsg').innerText = "✅ Η φωτογραφία προστέθηκε με επιτυχία!";
+                                event.target.value = ''; // Καθαρισμός για να μπορεί να ξαναπατηθεί
                             };
                             reader.readAsDataURL(file);
                         }
@@ -287,25 +291,23 @@ if active_api_key:
                     height=90
                 )
 
-                # Αν το component επιστρέψει νέα φωτογραφία, την αποθηκεύουμε με μοναδικό όνομα στον φάκελο
+                # Ανεβάζει τη νέα φωτογραφία και την αποθηκεύει στη λίστα (καλάθι)
                 if cam_val and isinstance(cam_val, dict) and "image" in cam_val:
                     import base64
                     img_bytes = base64.b64decode(cam_val["image"])
-                    filename = cam_val.get("name", f"cam_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.jpg")
-                    file_path = os.path.join(UPLOAD_FOLDER, filename)
+                    p_id = cam_val.get("id", str(datetime.datetime.now()))
                     
-                    # Ελέγχουμε να μην αποθηκευτεί ξανά η ίδια ακριβώς αν δεν αλλάξει
-                    if not os.path.exists(file_path):
-                        with open(file_path, "wb") as f:
-                            f.write(img_bytes)
+                    # Έλεγχος για να μην μπει διπλή η ίδια λήψη
+                    if not any(item['id'] == p_id for item in st.session_state["captured_photos_basket"]):
+                        st.session_state["captured_photos_basket"].append({"id": p_id, "bytes": img_bytes})
                         st.rerun()
 
                 cam_upload = st.file_uploader("Ή εναλλακτική φόρτωση αρχείου:", type=["jpg", "jpeg", "png"], key="rear_cam_fallback")
                 if cam_upload:
-                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}.jpg")
-                    with open(file_path, "wb") as f:
-                        f.write(cam_upload.getbuffer())
+                    img_bytes = cam_upload.getvalue()
+                    p_id = f"fallback_{datetime.datetime.now()}"
+                    st.session_state["captured_photos_basket"].append({"id": p_id, "bytes": img_bytes})
+                    st.success("✅ Η φωτογραφία προστέθηκε στη συλλογή!")
                     st.rerun()
 
             else:
@@ -316,32 +318,41 @@ if active_api_key:
                     key="up_ex_multi"
                 )
                 if up_files:
-                    for idx, uf in enumerate(up_files):
-                        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                        file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{timestamp}_{uf.name}")
-                        with open(file_path, "wb") as f:
-                            f.write(uf.getbuffer())
+                    for uf in up_files:
+                        img_bytes = uf.getvalue()
+                        p_id = f"batch_{uf.name}_{datetime.datetime.now()}"
+                        st.session_state["captured_photos_basket"].append({"id": p_id, "bytes": img_bytes})
                     st.success(f"📂 {len(up_files)} {t['batch_saved']}")
                     st.rerun()
 
-            folder_files = [
-                os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
-                if f.endswith(('.png', '.jpg', '.jpeg')) and not f.startswith('hw_page_')
-            ]
+            # Εμφάνιση πλήθους και προεπισκόπησης φωτογραφιών στο καλάθι
+            basket_photos = st.session_state["captured_photos_basket"]
 
-            if folder_files:
+            if basket_photos:
                 st.markdown("---")
-                st.write(f"📊 **{len(folder_files)} {t['folder_found']}**")
+                st.write(f"📊 **{len(basket_photos)} {t['folder_found']}**")
                 
-                # Εμφάνιση μικρογραφιών ή λίστας των φωτογραφιών που είναι έτοιμες για αξιολόγηση
+                # Κουμπί καθαρισμού καλαθιού αν θέλει να ξεκινήσει από την αρχή
+                if st.button("🗑️ Καθαρισμός Συλλογής Φωτογραφιών"):
+                    st.session_state["captured_photos_basket"] = []
+                    st.rerun()
+
                 with st.expander("👁️ Προβολή φωτογραφιών που τραβήχτηκαν"):
                     cols = st.columns(3)
-                    for idx, f_path in enumerate(folder_files):
+                    for idx, item in enumerate(basket_photos):
                         with cols[idx % 3]:
-                            st.image(f_path, caption=f"Φωτογραφία {idx+1}", use_column_width=True)
+                            import io
+                            img_obj = Image.open(io.BytesIO(item["bytes"]))
+                            st.image(img_obj, caption=f"Φωτογραφία {idx+1}", use_column_width=True)
                 
                 if st.button(t["btn_evaluate"]):
-                    student_images = [Image.open(f_path) for f_path in folder_files]
+                    # Αποθήκευση όλων προσωρινά στον φάκελο για να τις διαβάσει η AI
+                    student_images = []
+                    for idx, item in enumerate(basket_photos):
+                        f_path = os.path.join(UPLOAD_FOLDER, f"student_eval_{idx}.jpg")
+                        with open(f_path, "wb") as f:
+                            f.write(item["bytes"])
+                        student_images.append(Image.open(f_path))
                     
                     with st.spinner(t["eval_spinner"]):
                         known_students_str = ", ".join(students_db[selected_class])
@@ -349,6 +360,7 @@ if active_api_key:
                         prompt = f"""
                         You are an expert teacher grading student exercises.
                         I attached the images of the homework prompt and student notebook pages.
+                        Some students may have multiple pages/photos attached. Group pages belonging to the same student together.
                         Evaluate EACH student individually.
 
                         1. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student in their exercise.
@@ -428,6 +440,7 @@ if active_api_key:
                             
                             df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
                             clear_upload_folder()
+                            st.session_state["captured_photos_basket"] = [] # Άδειασμα καλαθιού μετά την επιτυχία
                             st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
 
                         st.session_state["current_eval"] = eval_res
