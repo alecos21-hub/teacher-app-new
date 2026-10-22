@@ -255,44 +255,58 @@ if active_api_key:
             )
 
             if input_mode == t["mode_cam"]:
-                st.info("📸 **Άμεση Πίσω Κάμερα:** Πατήστε το παρακάτω κουμπί για να ανοίξει απευθείας η πίσω κάμερα του κινητού σας:")
+                st.info("📸 **Άμεση Πίσω Κάμερα:** Πατήστε το κουμπί, τραβήξτε φωτογραφία (μπορείτε να το επαναλάβετε για επόμενο μαθητή) και πατήστε αποθήκευση:")
                 
-                camera_html = """
-                <div style="text-align: center; padding: 10px;">
-                    <input type="file" accept="image/*" capture="environment" id="rearCamInput" style="display: none;" onchange="handleFile(event)">
-                    <button onclick="document.getElementById('rearCamInput').click()" style="background-color: #4F46E5; color: white; padding: 15px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">
-                        📸 Άνοιγμα Πίσω Κάμερας
-                    </button>
-                    <div id="statusMsg" style="margin-top: 10px; color: green; font-weight: bold;"></div>
-                </div>
-                <script>
-                function handleFile(event) {
-                    const file = event.target.files[0];
-                    if (file) {
-                        document.getElementById('statusMsg').innerText = "⏳ Μεταφόρτωση φωτογραφίας...";
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const base64Data = e.target.result.split(',')[1];
-                            window.parent.postMessage({
-                                type: 'streamlit:setComponentValue',
-                                value: { image: base64Data, name: file.name }
-                            }, '*');
-                            document.getElementById('statusMsg').innerText = "✅ Η φωτογραφία καταγράφηκε!";
-                        };
-                        reader.readAsDataURL(file);
+                # Διορθωμένο component που λαμβάνει τα bytes και τα στέλνει ασφαλές στη Python με μοναδικό όνομα
+                cam_val = components.html(
+                    """
+                    <div style="text-align: center; padding: 10px;">
+                        <input type="file" accept="image/*" capture="environment" id="rearCamInput" onchange="handleFile(event)" style="font-size: 16px; padding: 10px; width: 100%;">
+                        <div id="statusMsg" style="margin-top: 8px; color: #4F46E5; font-weight: bold; font-size: 14px;"></div>
+                    </div>
+                    <script>
+                    function handleFile(event) {
+                        const file = event.target.files[0];
+                        if (file) {
+                            document.getElementById('statusMsg.innerText = "⏳ Μεταφόρτωση...";
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const base64Data = e.target.result.split(',')[1];
+                                const uniqueName = "cam_" + Date.now() + "_" + file.name;
+                                window.parent.postMessage({
+                                    type: 'streamlit:setComponentValue',
+                                    value: { image: base64Data, name: uniqueName }
+                                }, '*');
+                                document.getElementById('statusMsg').innerText = "✅ Η φωτογραφία καταγράφηκε στη μνήμη!";
+                            };
+                            reader.readAsDataURL(file);
+                        }
                     }
-                }
-                </script>
-                """
-                components.html(camera_html, height=110)
-                
+                    </script>
+                    """,
+                    height=90
+                )
+
+                # Αν το component επιστρέψει νέα φωτογραφία, την αποθηκεύουμε με μοναδικό όνομα στον φάκελο
+                if cam_val and isinstance(cam_val, dict) and "image" in cam_val:
+                    import base64
+                    img_bytes = base64.b64decode(cam_val["image"])
+                    filename = cam_val.get("name", f"cam_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.jpg")
+                    file_path = os.path.join(UPLOAD_FOLDER, filename)
+                    
+                    # Ελέγχουμε να μην αποθηκευτεί ξανά η ίδια ακριβώς αν δεν αλλάξει
+                    if not os.path.exists(file_path):
+                        with open(file_path, "wb") as f:
+                            f.write(img_bytes)
+                        st.rerun()
+
                 cam_upload = st.file_uploader("Ή εναλλακτική φόρτωση αρχείου:", type=["jpg", "jpeg", "png"], key="rear_cam_fallback")
                 if cam_upload:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
                     file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}.jpg")
                     with open(file_path, "wb") as f:
                         f.write(cam_upload.getbuffer())
-                    st.success("✅ Η φωτογραφία αποθηκεύτηκε επιτυχώς στον φάκελο!")
+                    st.rerun()
 
             else:
                 up_files = st.file_uploader(
@@ -303,10 +317,12 @@ if active_api_key:
                 )
                 if up_files:
                     for idx, uf in enumerate(up_files):
-                        file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{idx}_{uf.name}")
+                        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                        file_path = os.path.join(UPLOAD_FOLDER, f"student_batch_{timestamp}_{uf.name}")
                         with open(file_path, "wb") as f:
                             f.write(uf.getbuffer())
                     st.success(f"📂 {len(up_files)} {t['batch_saved']}")
+                    st.rerun()
 
             folder_files = [
                 os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
@@ -316,6 +332,13 @@ if active_api_key:
             if folder_files:
                 st.markdown("---")
                 st.write(f"📊 **{len(folder_files)} {t['folder_found']}**")
+                
+                # Εμφάνιση μικρογραφιών ή λίστας των φωτογραφιών που είναι έτοιμες για αξιολόγηση
+                with st.expander("👁️ Προβολή φωτογραφιών που τραβήχτηκαν"):
+                    cols = st.columns(3)
+                    for idx, f_path in enumerate(folder_files):
+                        with cols[idx % 3]:
+                            st.image(f_path, caption=f"Φωτογραφία {idx+1}", use_column_width=True)
                 
                 if st.button(t["btn_evaluate"]):
                     student_images = [Image.open(f_path) for f_path in folder_files]
@@ -408,6 +431,7 @@ if active_api_key:
                             st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
 
                         st.session_state["current_eval"] = eval_res
+                        st.rerun()
 
             if "current_eval" in st.session_state:
                 with st.expander(t["view_eval"], expanded=True):
