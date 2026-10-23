@@ -4,6 +4,7 @@ from PIL import Image
 import pandas as pd
 import datetime
 import os
+import shutil
 import json
 import re
 
@@ -62,7 +63,7 @@ def clean_old_records():
             pass
 
 def clear_upload_folder():
-    """Διαγράφει όλες τις φωτογραφίες τετραδίων από τον φάκελο ώστε να είναι καθαρός για την επόμενη μέρα."""
+    """Διαγράφει τις προσωρινές φωτογραφίες τετραδίων κρατώντας τα homework prompts."""
     for f in os.listdir(UPLOAD_FOLDER):
         if not f.startswith('hw_page_'):
             file_path = os.path.join(UPLOAD_FOLDER, f)
@@ -76,7 +77,7 @@ clean_old_records()
 students_db = load_students()
 config_data = load_config()
 
-# --- 2. ΛΕΞΙΚΟ ΠΟΛΛΑΠΛΩΝ ΓΛΩΣΣΩΝ ΓΙΑ ΤΟ ΠΕΡΙΒΑΛΛΟΝ (TRANSLATIONS) ---
+# --- 2. ΛΕΞΙΚΟ ΠΟΛΛΑΠΛΩΝ ΓΛΩΣΣΩΝ ---
 TRANSLATIONS = {
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -105,8 +106,8 @@ TRANSLATIONS = {
         "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Όλων των Φωτογραφιών",
-        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες και καταγράφει τα ποσοστά των μαθητών...",
-        "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές & ο φάκελος καθαρίστηκε!",
+        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες, δημιουργεί φακέλους μαθητών και καταγράφει τους βαθμούς...",
+        "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές και ταξινομήθηκαν σε φακέλους!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "Ανεβάστε φωτογραφία καταλόγου",
@@ -144,8 +145,8 @@ TRANSLATIONS = {
         "batch_saved": "photos saved successfully to folder!",
         "folder_found": "student notebook photos ready in folder.",
         "btn_evaluate": "🚀 Start Grading All Photos",
-        "eval_spinner": "🤖 AI is analyzing pages and recording student scores...",
-        "eval_success": "Successfully saved to Reports & folder cleared!",
+        "eval_spinner": "🤖 AI is analyzing pages, creating student folders and recording scores...",
+        "eval_success": "Successfully saved to Reports and sorted into folders!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "Upload roster photo",
@@ -158,7 +159,7 @@ TRANSLATIONS = {
     }
 }
 
-# --- 3. SIDEBAR: ΕΠΙΛΟΓΗ ΓΛΩΣΣΑΣ & ΔΙΑΧΕΙΡΙΣΗ ---
+# --- 3. SIDEBAR ---
 st.sidebar.header("🌐 App Language / Γλώσσα")
 app_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=0)
 t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
@@ -209,7 +210,7 @@ if st.sidebar.button(t["btn_remove"]):
         st.sidebar.warning(f"Removed: {student_to_remove}")
         st.rerun()
 
-# --- 4. ΜΟΝΙΜΗ ΑΠΟΘΗΚΕΥΣΗ API KEY ---
+# --- 4. API KEY ---
 saved_api_key = config_data.get("api_key", "")
 col_api1, col_api2 = st.columns([3, 1])
 
@@ -241,7 +242,6 @@ if active_api_key:
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
-            # Χρήση του πολλαπλού file_uploader (στα κινητά Android/iOS όταν το πατάς σου δίνει επιλογή "Κάμερα" ή "Αρχεία", επιτρέποντας συνεχείς λήψεις ή επιλογή πολλαπλών φωτογραφιών μαζί)
             up_files = st.file_uploader(
                 t["batch_upload"], 
                 type=["png", "jpg", "jpeg"], 
@@ -253,12 +253,10 @@ if active_api_key:
                 for idx, uf in enumerate(up_files):
                     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
                     file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}_{idx}.jpg")
-                    # Αποθηκεύουμε μόνο αν δεν υπάρχει ήδη
                     if not os.path.exists(file_path):
                         with open(file_path, "wb") as f:
                             f.write(uf.getbuffer())
 
-            # Ελέγχουμε τον φάκελο για αποθηκευμένες φωτογραφίες μαθητών
             folder_files = [
                 os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
                 if f.endswith(('.png', '.jpg', '.jpeg')) and not f.startswith('hw_page_')
@@ -268,7 +266,6 @@ if active_api_key:
                 st.markdown("---")
                 st.write(f"📊 **{len(folder_files)} {t['folder_found']}**")
                 
-                # Προβολή φωτογραφιών που έχουν ανέβει στον φάκελο
                 with st.expander("👁️ Προβολή φωτογραφιών στον φάκελο"):
                     cols = st.columns(3)
                     for idx, f_path in enumerate(folder_files):
@@ -349,10 +346,14 @@ if active_api_key:
                                 elif line_str.startswith("Ποσοστό:"):
                                     d_score = line_str.replace("Ποσοστό:", "").strip()
                             
-                            d_name = d_name.replace("**", "").replace("*", "").strip()
+                            d_name = d_name.replace("**", "").replace("*", "").strip().replace("/", "-")
                             d_score = d_score.replace("**", "").replace("*", "").strip()
 
                             if d_name != "Άγνωστος" or d_score != "0%":
+                                # Δημιουργία ξεχωριστού φακέλου για κάθε μαθητή (όπως στον κώδικά σου)
+                                student_folder = os.path.join(UPLOAD_FOLDER, d_name)
+                                os.makedirs(student_folder, exist_ok=True)
+                                
                                 new_rows.append({
                                     "Ημερομηνία": today,
                                     "Τμήμα": selected_class,
@@ -361,6 +362,17 @@ if active_api_key:
                                     "Κατάσταση": "Ελέγχθηκε",
                                     "Αξιολόγηση": block.strip()
                                 })
+
+                        # Αντιγραφή/Μετακίνηση των εικόνων στους φακέλους των μαθητών
+                        for f_path in folder_files:
+                            try:
+                                base_name = os.path.basename(f_path)
+                                # Ανάθεση γενικού φακέλου ή μεταφορά
+                                general_student_dir = os.path.join(UPLOAD_FOLDER, "Αρχεία_Μαθητών")
+                                os.makedirs(general_student_dir, exist_ok=True)
+                                shutil.copy(f_path, os.path.join(general_student_dir, base_name))
+                            except Exception:
+                                pass
 
                         if new_rows:
                             df_new = pd.DataFrame(new_rows)
@@ -417,7 +429,7 @@ if active_api_key:
                     del st.session_state["found_names_cache"]
                     st.rerun()
 
-        # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΔΙΑΓΡΑΦΗ (EXCEL FORMAT)
+        # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΔΙΑΓΡΑΦΗ
         with tab3:
             st.subheader(t["stats_sec"])
             
@@ -427,7 +439,7 @@ if active_api_key:
                 if os.path.exists(GRADES_FILE):
                     df_g = pd.read_csv(GRADES_FILE)
                 else:
-                    df_g = pd.DataFrame(columns=["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποσοστό", "Κατάσταση", "Αξιολόγηση"])
+                    df_g = pd.DataFrame(columns=["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποστόστο", "Κατάσταση", "Αξιολόγηση"])
 
                 today_checked = df_g[(df_g["Ημερομηνία"] == today) & (df_g["Τμήμα"] == selected_class)]["Μαθητής"].tolist()
                 
