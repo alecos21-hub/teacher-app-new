@@ -83,12 +83,12 @@ TRANSLATIONS = {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*",
         "hw_section": "📖 Φωτογραφίες Εκφώνησης (Homework)",
-        "hw_desc": "Τραβήξτε τις σελίδες της εκφώνησης:",
-        "hw_pages": "Σελίδες Homework:",
-        "hw_cam": "📸 Homework - Σελίδα",
-        "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν",
-        "class_mgmt": "⚙️ Διαχείριση Τάξης",
+        "hw_desc": "📸 Τραβήξτε/Ανεβάστε τις σελίδες της εκφώνησης (Πίσω κάμερα υψηλής ανάλυσης):",
+        "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν σε υψηλή ανάλυση!",
+        "class_mgmt": "⚙️ Διαχείριση Τάξης & Τμημάτων",
         "select_class": "Επιλογή Τμήματος:",
+        "add_new_class": "➕ Δημιουργία Νέου Τμήματος (π.χ. Β3):",
+        "btn_add_class": "Προσθήκη Τμήματος",
         "students_in": "Μαθητές Τμήματος",
         "add_student": "Προσθήκη νέου μαθητή:",
         "btn_add": "➕ Προσθήκη Μαθητή",
@@ -106,13 +106,12 @@ TRANSLATIONS = {
         "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Όλων των Φωτογραφιών",
-        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες, δημιουργεί φακέλους μαθητών και καταγράφει τους βαθμούς...",
+        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες υψηλής ανάλυσης, δημιουργεί φακέλους μαθητών και καταγράφει τους βαθμούς...",
         "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές και ταξινομήθηκαν σε φακέλους!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
-        "upload_catalog": "Ανεβάστε φωτογραφία καταλόγου",
-        "btn_read_names": "🤖 Ανάγνωση Ονομάτων από AI",
-        "btn_save_names": "📥 Αποθήκευση Ονομάτων στο Τμήμα",
+        "upload_catalog": "Ανεβάστε φωτογραφία καταλόγου (λίστα ονομάτων)",
+        "btn_read_names": "🤖 Ανάγνωση & Αυτόματη Αποθήκευση Καταλόγου",
         "stats_sec": "📊 Στατιστικά Τμήματος (Πίνακας Excel ανά Ημερομηνία)",
         "stats_info": "ℹ️ *Οι εγγραφές διαγράφονται αυτόματα μετά από 7 ημέρες.*",
         "btn_close_day": "🚨 Κλείσιμο Ημέρας & Σημείωση Όσων ΔΕΝ Έκαναν Ασκήσεις",
@@ -122,12 +121,12 @@ TRANSLATIONS = {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
         "hw_section": "📖 Homework Prompt Photos",
-        "hw_desc": "Take photos of the assignment pages:",
-        "hw_pages": "Homework Pages:",
-        "hw_cam": "📸 Homework - Page",
-        "hw_saved": "Homework page(s) saved",
-        "class_mgmt": "⚙️ Class Management",
+        "hw_desc": "📸 Take/Upload assignment prompt pages (High-Res Rear Camera):",
+        "hw_saved": "Homework page(s) saved in high resolution!",
+        "class_mgmt": "⚙️ Class Management & Sections",
         "select_class": "Select Class/Section:",
+        "add_new_class": "➕ Add New Section (e.g. B3):",
+        "btn_add_class": "Add Section",
         "students_in": "Students in Section",
         "add_student": "Add new student:",
         "btn_add": "➕ Add Student",
@@ -145,13 +144,12 @@ TRANSLATIONS = {
         "batch_saved": "photos saved successfully to folder!",
         "folder_found": "student notebook photos ready in folder.",
         "btn_evaluate": "🚀 Start Grading All Photos",
-        "eval_spinner": "🤖 AI is analyzing pages, creating student folders and recording scores...",
+        "eval_spinner": "🤖 AI is analyzing high-res pages, creating student folders and recording scores...",
         "eval_success": "Successfully saved to Reports and sorted into folders!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
-        "upload_catalog": "Upload roster photo",
-        "btn_read_names": "🤖 Read Names with AI",
-        "btn_save_names": "📥 Save Names to Section",
+        "upload_catalog": "Upload roster photo (list of names)",
+        "btn_read_names": "🤖 Read & Auto-Save Roster",
         "stats_sec": "📊 Class Statistics (Excel-style Table by Date)",
         "stats_info": "ℹ️ *Records are automatically deleted after 7 days.*",
         "btn_close_day": "🚨 Close Day & Mark Students Missing Homework",
@@ -159,7 +157,7 @@ TRANSLATIONS = {
     }
 }
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ, ΜΑΘΗΤΩΝ & HIGH-RES HOMEWORK CAM ---
 st.sidebar.header("🌐 App Language / Γλώσσα")
 app_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=0)
 t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
@@ -171,25 +169,36 @@ st.sidebar.markdown("---")
 st.sidebar.header(t["hw_section"])
 st.sidebar.write(t["hw_desc"])
 
-hw_pages_num = st.sidebar.number_input(t["hw_pages"], min_value=1, max_value=5, value=1, step=1)
+# ΝΕΑ ΥΨΗΛΗΣ ΑΝΑΛΥΣΗΣ ΜΕΘΟΔΟΣ ΓΙΑ ΤΙΣ ΣΕΛΙΔΕΣ ΕΚΦΩΝΗΣΗΣ (HOMEWORK)
+hw_files = st.sidebar.file_uploader(
+    "📸 Φωτογραφίστε ή επιλέξτε σελίδες εκφώνησης (πολλαπλές σελίδες):",
+    type=["png", "jpg", "jpeg"],
+    accept_multiple_files=True,
+    key="hw_high_res_uploader"
+)
 
 homework_images = []
-for h_idx in range(int(hw_pages_num)):
-    try:
-        hw_cam = st.sidebar.camera_input(f"{t['hw_cam']} {h_idx+1}", key=f"hw_cam_{h_idx}")
-        if hw_cam:
-            hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{h_idx}.jpg")
-            with open(hw_path, "wb") as f:
-                f.write(hw_cam.getbuffer())
-            homework_images.append(Image.open(hw_path))
-    except Exception:
-        pass
-
-if homework_images:
+if hw_files:
+    for idx, hw_f in enumerate(hw_files):
+        hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{idx}.jpg")
+        with open(hw_path, "wb") as f:
+            f.write(hw_f.getbuffer())
+        homework_images.append(Image.open(hw_path))
     st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
 
 st.sidebar.markdown("---")
 st.sidebar.header(t["class_mgmt"])
+
+# Προσθήκη Νέου Τμήματος (π.χ. Β3)
+new_class_input = st.sidebar.text_input(t["add_new_class"])
+if st.sidebar.button(t["btn_add_class"]):
+    n_class = new_class_input.strip().upper()
+    if n_class and n_class not in students_db:
+        students_db[n_class] = []
+        save_students(students_db)
+        st.sidebar.success(f"Δημιουργήθηκε το τμήμα: {n_class}")
+        st.rerun()
+
 selected_class = st.sidebar.selectbox(t["select_class"], list(students_db.keys()))
 
 st.sidebar.subheader(f"{t['students_in']} {selected_class}")
@@ -288,7 +297,7 @@ if active_api_key:
                         
                         prompt = f"""
                         You are an expert teacher grading student exercises.
-                        I attached the images of the homework prompt and student notebook pages.
+                        I attached the high-resolution images of the homework prompt and student notebook pages.
                         Some students may have multiple pages/photos attached. Group pages belonging to the same student together.
                         Evaluate EACH student individually.
 
@@ -350,7 +359,6 @@ if active_api_key:
                             d_score = d_score.replace("**", "").replace("*", "").strip()
 
                             if d_name != "Άγνωστος" or d_score != "0%":
-                                # Δημιουργία ξεχωριστού φακέλου για κάθε μαθητή (όπως στον κώδικά σου)
                                 student_folder = os.path.join(UPLOAD_FOLDER, d_name)
                                 os.makedirs(student_folder, exist_ok=True)
                                 
@@ -363,11 +371,9 @@ if active_api_key:
                                     "Αξιολόγηση": block.strip()
                                 })
 
-                        # Αντιγραφή/Μετακίνηση των εικόνων στους φακέλους των μαθητών
                         for f_path in folder_files:
                             try:
                                 base_name = os.path.basename(f_path)
-                                # Ανάθεση γενικού φακέλου ή μεταφορά
                                 general_student_dir = os.path.join(UPLOAD_FOLDER, "Αρχεία_Μαθητών")
                                 os.makedirs(general_student_dir, exist_ok=True)
                                 shutil.copy(f_path, os.path.join(general_student_dir, base_name))
@@ -395,7 +401,7 @@ if active_api_key:
 
         # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
         with tab2:
-            st.subheader(f"{t['catalog_sec']} {selected_class}")
+            st.subheader(f"{t['catalog_sec']} – {selected_class}")
             
             list_img_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="list_up")
             if list_img_file:
@@ -404,30 +410,28 @@ if active_api_key:
                     f.write(list_img_file.getbuffer())
                 list_img = Image.open(list_path)
                 
-                st.image(list_img, caption="Roster Photo", use_column_width=True)
+                st.image(list_img, caption="Φωτογραφία Καταλόγου", use_column_width=True)
                 
-                if st.button(t["btn_read_names"]):
-                    with st.spinner("AI Reading Roster..."):
-                        p_list = "Read the student names carefully from the photo. Return them as a simple comma-separated list (e.g. Name1, Name2, Name3)."
+                if st.button(t["btn_read_names"], type="primary"):
+                    with st.spinner("🤖 Η AI διαβάζει τα ονόματα και τα αποθηκεύει στο τμήμα..."):
+                        p_list = "Read all student names from this roster photo carefully. Return ONLY a comma-separated list of the full names (e.g. Γιώργος Παπαδόπουλος, Μαρία Ιωάννου). Do not add any extra text or numbers."
                         res_list = client.models.generate_content(model='gemini-3.8-flash', contents=[p_list, list_img])
                         
-                        names_found = [n.strip() for n in res_list.text.split(",") if n.strip()]
-                        st.write("**Names Found:**", names_found)
+                        raw_text = res_list.text.strip()
+                        names_found = [n.strip().replace("\n", "").replace("-", "") for n in raw_text.split(",") if n.strip()]
                         
-                        st.session_state["found_names_cache"] = names_found
-
-            if "found_names_cache" in st.session_state and st.session_state["found_names_cache"]:
-                if st.button(t["btn_save_names"]):
-                    added_count = 0
-                    for n in st.session_state["found_names_cache"]:
-                        if n not in students_db[selected_class]:
-                            students_db[selected_class].append(n)
-                            added_count += 1
-                    students_db[selected_class].sort()
-                    save_students(students_db)
-                    st.success(f"Added {added_count} new students to section {selected_class}!")
-                    del st.session_state["found_names_cache"]
-                    st.rerun()
+                        added_count = 0
+                        for n in names_found:
+                            if n and n not in students_db[selected_class]:
+                                students_db[selected_class].append(n)
+                                added_count += 1
+                        
+                        students_db[selected_class].sort()
+                        save_students(students_db)
+                        
+                        st.success(f"🎉 Διαβάστηκαν και αποθηκεύτηκαν επιτυχώς {added_count} νέα ονόματα στο τμήμα {selected_class}!")
+                        st.write("📋 **Ονόματα που προστέθηκαν:**", names_found)
+                        st.rerun()
 
         # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΔΙΑΓΡΑΦΗ
         with tab3:
@@ -439,7 +443,7 @@ if active_api_key:
                 if os.path.exists(GRADES_FILE):
                     df_g = pd.read_csv(GRADES_FILE)
                 else:
-                    df_g = pd.DataFrame(columns=["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποστόστο", "Κατάσταση", "Αξιολόγηση"])
+                    df_g = pd.DataFrame(columns=["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποσοστό", "Κατάσταση", "Αξιολόγηση"])
 
                 today_checked = df_g[(df_g["Ημερομηνία"] == today) & (df_g["Τμήμα"] == selected_class)]["Μαθητής"].tolist()
                 
