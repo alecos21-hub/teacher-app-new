@@ -246,12 +246,9 @@ if active_api_key:
     try:
         client = genai.Client(api_key=active_api_key)
         
-        # --- ΕΥΔΙΑΚΡΙΤΟ ΚΟΥΜΠΙ ΓΙΑ ΤΟ MENU ΣΤΗΝ ΚΥΡΙΑ ΟΘΟΝΗ ---
-        st.markdown("---")
-        col_m1, col_m2 = st.columns([1, 3])
-        with col_m1:
-            if st.button("⚙️ ☰ Άνοιγμα Μενού / Τμημάτων", type="primary", use_container_width=True):
-                st.info("👆 Πατήστε το εικονίδιο με τα βελάκια (>>) πάνω αριστερά αν το μενού είναι κλειστό, ή χρησιμοποιήστε τις επιλογές σας από εδώ!")
+        # Ευδιάκριτο κουμπί-υπόδειξη για τα τμήματα και τη γλώσσα
+        if st.button("⚙️ 🌐 Πατήστε το εικονίδιο με τα βελάκια πάνω αριστερά για Τμήματα & Γλώσσα", type="secondary", use_container_width=True):
+            st.info("👆 Χρησιμοποιήστε το μενού στα αριστερά της οθόνης σας για να επιλέξετε τμήμα ή γλώσσα.")
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
