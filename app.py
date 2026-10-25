@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from google import genai
 from PIL import Image
 import pandas as pd
@@ -9,12 +10,49 @@ import json
 import re
 import time
 
-# --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & GRADEMIND AI ---
+# --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & CUSTOM CSS ΓΙΑ ΕΥΔΙΑΚΡΙΤΟ ΚΟΥΜΠΙ MENU ---
 st.set_page_config(
     page_title="GradeMind AI – Smart Homework & Test Grader", 
     page_icon="🎓",
     layout="wide"
 )
+
+# Custom CSS για να κάνουμε το κουμπί του Sidebar τεράστιο, χρωματιστό και με κείμενο!
+st.markdown("""
+    <style>
+        /* Στυλ για το εγγενές κουμπί του Streamlit Sidebar toggle */
+        [data-testid="collapsedControl"] {
+            display: flex !important;
+            align-items: center !important;
+            background-color: #ff4b4b !important;
+            color: white !important;
+            padding: 8px 15px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
+            font-weight: bold !important;
+            top: 15px !important;
+            left: 15px !important;
+            z-index: 999999 !important;
+        }
+        
+        /* Προσθήκη κειμένου δίπλα στο κουμπί menu για να φαίνεται τι κάνει */
+        [data-testid="collapsedControl"]::after {
+            content: " ⚙️ Μενού & Τμήματα";
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            margin-left: 5px;
+            white-space: nowrap;
+        }
+
+        /* Μικρές διορθώσεις για κινητές συσκευές */
+        @media (max-width: 768px) {
+            [data-testid="collapsedControl"] {
+                padding: 6px 12px !important;
+            }
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # Φάκελοι & Αρχεία
 UPLOAD_FOLDER = "uploads_folder"
@@ -69,7 +107,6 @@ def clear_upload_folder():
                 pass
 
 def call_gemini_with_retry(client, model_name, contents, max_retries=3):
-    """Έξυπνος μηχανισμός αυτόματης επανάληψης (Retry) σε περίπτωση προσωρινού φόρτου."""
     delay = 1
     for attempt in range(max_retries):
         try:
@@ -116,8 +153,7 @@ TRANSLATIONS = {
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
         "batch_upload": "📸 Επιλέξτε ή Τραβήξτε φωτογραφίες τετραδίων (πολλαπλές επιλογές):",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
-        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Όλων των Φωτογραφιών",
-        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες σε ομάδες (batches), δημιουργεί φακέλους μαθητών και καταγράφει τους βαθμούς...",
+        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Γρήγορη Λειτουργία)",
         "eval_success": "Αποθηκεύτηκαν επιτυχώς στον πίνακα προόδου!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
@@ -151,10 +187,8 @@ TRANSLATIONS = {
         "notebook_sec": "✨ Capture & Upload Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
         "batch_upload": "📸 Select or Take notebook photos (multiple allowed):",
-        "batch_saved": "photos saved successfully to folder!",
         "folder_found": "student notebook photos ready in folder.",
-        "btn_evaluate": "🚀 Start Grading All Photos",
-        "eval_spinner": "🤖 AI is analyzing pages in batches, creating student folders and recording scores...",
+        "btn_evaluate": "🚀 Start Grading (Fast Mode)",
         "eval_success": "Successfully saved to Progress Table!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
@@ -251,7 +285,7 @@ if active_api_key:
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
-        # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ ΜΕ BATCHING & RETRY
+        # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ ΜΕ WAKE LOCK
         with tab1:
             st.subheader(t["notebook_sec"])
             
@@ -266,12 +300,16 @@ if active_api_key:
             )
             
             if up_files:
-                for idx, uf in enumerate(up_files):
-                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}_{idx}.jpg")
-                    if not os.path.exists(file_path):
+                current_signature = tuple((f.name, f.size) for f in up_files)
+                if st.session_state.get("last_uploaded_sig") != current_signature:
+                    clear_upload_folder()
+                    for idx, uf in enumerate(up_files):
+                        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                        file_path = os.path.join(UPLOAD_FOLDER, f"student_notebook_{timestamp}_{idx}.jpg")
                         with open(file_path, "wb") as f:
                             f.write(uf.getbuffer())
+                    st.session_state["last_uploaded_sig"] = current_signature
+                    st.rerun()
 
             folder_files = [
                 os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
@@ -294,10 +332,32 @@ if active_api_key:
                 with col_btn2:
                     if st.button("🗑️ Εκκαθάριση Φακέλου"):
                         clear_upload_folder()
+                        if "last_uploaded_sig" in st.session_state:
+                            del st.session_state["last_uploaded_sig"]
                         st.rerun()
 
                 if run_eval:
-                    BATCH_SIZE = 5
+                    wake_lock_code = """
+                    <script>
+                    let wakeLock = null;
+                    async function requestWakeLock() {
+                        try {
+                            if ('wakeLock' in navigator) {
+                                wakeLock = await navigator.wakeLock.request('screen');
+                                console.log('Screen Wake Lock active!');
+                            }
+                        } catch (err) {
+                            console.error(`${err.name}, ${err.message}`);
+                        }
+                    }
+                    requestWakeLock();
+                    </script>
+                    """
+                    components.html(wake_lock_code, height=0)
+                    
+                    st.info("💡 **Σημείωση:** Η οθόνη του κινητού σου κρατιέται ενεργή αυτόματα. Παρακαλώ περίμενε μερικά δευτερόλεπτα...")
+                    
+                    BATCH_SIZE = 15
                     folder_files_batches = [
                         folder_files[i:i + BATCH_SIZE] 
                         for i in range(0, len(folder_files), BATCH_SIZE)
@@ -309,7 +369,7 @@ if active_api_key:
                     total_batches = len(folder_files_batches)
                     
                     for b_idx, batch_paths in enumerate(folder_files_batches):
-                        status_text.text(f"⏳ Επεξεργασία ομάδας {b_idx + 1} από {total_batches}...")
+                        status_text.text(f"⏳ Γρήγορη επεξεργασία ομάδας {b_idx + 1} από {total_batches}...")
                         batch_images = [Image.open(f_path) for f_path in batch_paths]
                         
                         known_students_str = ", ".join(students_db[selected_class])
@@ -318,9 +378,10 @@ if active_api_key:
                         I attached high-resolution images of student notebook pages.
                         Evaluate EACH student found in these images individually.
 
-                        1. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student.
-                        2. **MATCH FEEDBACK LANGUAGE**: Write all analysis/notes EXCLUSIVELY in that same language.
-                        3. **SCORE FORMAT**: Provide the score strictly as a percentage (e.g., 85% or 0% if completely wrong).
+                        1. **MULTI-PAGE HANDLING**: If a student's work spans across multiple pages/images, combine all their pages together and output a SINGLE unified score and evaluation for that student. Do not create separate entries for the same student.
+                        2. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student.
+                        3. **MATCH FEEDBACK LANGUAGE**: Write all analysis/notes EXCLUSIVELY in that same language.
+                        4. **SCORE FORMAT**: Provide the score strictly as a percentage (e.g., 85% or 0% if completely wrong).
 
                         For EACH student, structure your response strictly as:
 
@@ -397,6 +458,8 @@ if active_api_key:
                         
                         df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
                         clear_upload_folder()
+                        if "last_uploaded_sig" in st.session_state:
+                            del st.session_state["last_uploaded_sig"]
                         st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
 
                     st.session_state["current_eval"] = full_eval_res
@@ -406,7 +469,7 @@ if active_api_key:
                 with st.expander(t["view_eval"], expanded=True):
                     st.markdown(st.session_state["current_eval"])
 
-        # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ ΜΕ RETRY
+        # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
         with tab2:
             st.subheader(f"{t['catalog_sec']} – {selected_class}")
             
