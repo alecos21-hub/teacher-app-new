@@ -10,12 +10,38 @@ import json
 import re
 import time
 
-# --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ ---
+# --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & CUSTOM CSS ---
 st.set_page_config(
     page_title="GradeMind AI – Smart Homework & Test Grader", 
     page_icon="🎓",
     layout="wide"
 )
+
+# Custom CSS για τα κόκκινα κουτάκια
+st.markdown("""
+    <style>
+        .custom-alert-box {
+            background-color: #ff4b4b;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .red-badge {
+            background-color: #8b0000;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 18px;
+            border: 1px solid #ff4b4b;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # Φάκελοι & Αρχεία
 UPLOAD_FOLDER = "uploads_folder"
@@ -246,9 +272,12 @@ if active_api_key:
     try:
         client = genai.Client(api_key=active_api_key)
         
-        # Ευδιάκριτο κουμπί-υπόδειξη για τα τμήματα και τη γλώσσα
-        if st.button("⚙️ 🌐 Πατήστε το εικονίδιο με τα βελάκια πάνω αριστερά για Τμήματα & Γλώσσα", type="secondary", use_container_width=True):
-            st.info("👆 Χρησιμοποιήστε το μενού στα αριστερά της οθόνης σας για να επιλέξετε τμήμα ή γλώσσα.")
+        # Κόκκινο κουτί με ξεχωριστό κόκκινο κουτάκι για τα βελάκια
+        st.markdown('''
+            <div class="custom-alert-box">
+                ⚙️ Πατήστε τα βελάκια <span class="red-badge">&gt;&gt;</span> πάνω αριστερά για Τμήματα &amp; Γλώσσα
+            </div>
+        ''', unsafe_allow_html=True)
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
@@ -521,7 +550,7 @@ if active_api_key:
                     pivot_df = df_class.pivot_table(
                         index="Μαθητής", 
                         columns="Ημερομηνία", 
-                        values="Ποσοστό", 
+                        values="Ποصστό", 
                         aggfunc="first"
                     ).fillna("Δεν έκανε ασκήσεις")
                     
