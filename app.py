@@ -150,7 +150,8 @@ TRANSLATIONS = {
         "btn_read_names": "🤖 Ανάγνωση & Αυτόματη Αποθήκευση Καταλόγου",
         "stats_sec": "📊 Συνολικός Πίνακας Προόδου Τμήματος (Excel Style)",
         "btn_close_day": "🚨 Καταγραφή Απουσιών/Ελλείψεων για Σήμερα",
-        "manual_delete": "🗑️ Διαγραφή Δεδομένων"
+        "manual_delete": "🗑️ Διαγραφή Δεδομένων",
+        "alert_msg": "⚙️ Πατήστε τα βελάκια"
     },
     "English": {
         "title": "🎓 GradeMind AI",
@@ -185,7 +186,8 @@ TRANSLATIONS = {
         "btn_read_names": "🤖 Read & Auto-Save Roster",
         "stats_sec": "📊 Class Progress Matrix (Excel Style)",
         "btn_close_day": "🚨 Mark Missing Homework for Today",
-        "manual_delete": "🗑️ Delete Records"
+        "manual_delete": "🗑️ Delete Records",
+        "alert_msg": "⚙️ Press the arrows"
     }
 }
 
@@ -272,12 +274,20 @@ if active_api_key:
     try:
         client = genai.Client(api_key=active_api_key)
         
-        # Κόκκινο κουτί με ξεχωριστό κόκκινο κουτάκι για τα βελάκια
-        st.markdown('''
-            <div class="custom-alert-box">
-                ⚙️ Πατήστε τα βελάκια <span class="red-badge">&gt;&gt;</span> πάνω αριστερά για Τμήματα &amp; Γλώσσα
-            </div>
-        ''', unsafe_allow_html=True)
+        # Δυναμικό κόκκινο κουτί με κόκκινο κουτάκι για τα βελάκια, προσαρμοσμένο στη γλώσσα
+        if app_lang == "Ελληνικά":
+            alert_html = f'''
+                <div class="custom-alert-box">
+                    ⚙️ Πατήστε τα βελάκια <span class="red-badge">&gt;&gt;</span> πάνω αριστερά για Τμήματα &amp; Γλώσσα
+                </div>
+            '''
+        else:
+            alert_html = f'''
+                <div class="custom-alert-box">
+                    ⚙️ Press the arrows <span class="red-badge">&gt;&gt;</span> top left for Sections &amp; Language
+                </div>
+            '''
+        st.markdown(alert_html, unsafe_allow_html=True)
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
