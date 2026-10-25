@@ -10,49 +10,12 @@ import json
 import re
 import time
 
-# --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & CUSTOM CSS ΓΙΑ ΕΥΔΙΑΚΡΙΤΟ ΚΟΥΜΠΙ MENU ---
+# --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ ---
 st.set_page_config(
     page_title="GradeMind AI – Smart Homework & Test Grader", 
     page_icon="🎓",
     layout="wide"
 )
-
-# Custom CSS για να κάνουμε το κουμπί του Sidebar τεράστιο, χρωματιστό και με κείμενο!
-st.markdown("""
-    <style>
-        /* Στυλ για το εγγενές κουμπί του Streamlit Sidebar toggle */
-        [data-testid="collapsedControl"] {
-            display: flex !important;
-            align-items: center !important;
-            background-color: #ff4b4b !important;
-            color: white !important;
-            padding: 8px 15px !important;
-            border-radius: 8px !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
-            font-weight: bold !important;
-            top: 15px !important;
-            left: 15px !important;
-            z-index: 999999 !important;
-        }
-        
-        /* Προσθήκη κειμένου δίπλα στο κουμπί menu για να φαίνεται τι κάνει */
-        [data-testid="collapsedControl"]::after {
-            content: " ⚙️ Μενού & Τμήματα";
-            font-size: 14px;
-            font-weight: bold;
-            color: white;
-            margin-left: 5px;
-            white-space: nowrap;
-        }
-
-        /* Μικρές διορθώσεις για κινητές συσκευές */
-        @media (max-width: 768px) {
-            [data-testid="collapsedControl"] {
-                padding: 6px 12px !important;
-            }
-        }
-    </style>
-""", unsafe_allow_html=True)
 
 # Φάκελοι & Αρχεία
 UPLOAD_FOLDER = "uploads_folder"
@@ -260,7 +223,7 @@ if st.sidebar.button(t["btn_remove"]):
         st.sidebar.warning(f"Removed: {student_to_remove}")
         st.rerun()
 
-# --- 4. API KEY ---
+# --- 4. API KEY & MAIN APP ---
 saved_api_key = config_data.get("api_key", "")
 col_api1, col_api2 = st.columns([3, 1])
 
@@ -282,6 +245,13 @@ active_api_key = config_data.get("api_key", "") or api_key_input
 if active_api_key:
     try:
         client = genai.Client(api_key=active_api_key)
+        
+        # --- ΕΥΔΙΑΚΡΙΤΟ ΚΟΥΜΠΙ ΓΙΑ ΤΟ MENU ΣΤΗΝ ΚΥΡΙΑ ΟΘΟΝΗ ---
+        st.markdown("---")
+        col_m1, col_m2 = st.columns([1, 3])
+        with col_m1:
+            if st.button("⚙️ ☰ Άνοιγμα Μενού / Τμημάτων", type="primary", use_container_width=True):
+                st.info("👆 Πατήστε το εικονίδιο με τα βελάκια (>>) πάνω αριστερά αν το μενού είναι κλειστό, ή χρησιμοποιήστε τις επιλογές σας από εδώ!")
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
