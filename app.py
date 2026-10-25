@@ -42,25 +42,19 @@ def save_config(config_dict):
 
 def load_students():
     if os.path.exists(STUDENTS_FILE):
-        with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
     return {"Α1": [], "Α2": [], "Β1": [], "Β2": [], "Γ1": [], "Γ2": []}
 
 def save_students(students_dict):
-    with open(STUDENTS_FILE, "w", encoding="utf-8") as f:
-        json.dump(students_dict, f, ensure_ascii=False, indent=4)
-
-def clean_old_records():
-    if os.path.exists(GRADES_FILE):
-        try:
-            df = pd.read_csv(GRADES_FILE)
-            if not df.empty and "Ημερομηνία" in df.columns:
-                df["Ημερομηνία_dt"] = pd.to_datetime(df["Ημερομηνία"], errors="coerce")
-                cutoff_date = pd.Timestamp(datetime.date.today() - datetime.timedelta(days=7))
-                df_filtered = df[df["Ημερομηνία_dt"] >= cutoff_date].drop(columns=["Ημερομηνία_dt"])
-                df_filtered.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-        except Exception:
-            pass
+    try:
+        with open(STUDENTS_FILE, "w", encoding="utf-8") as f:
+            json.dump(students_dict, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
 
 def clear_upload_folder():
     """Διαγράφει τις προσωρινές φωτογραφίες τετραδίων κρατώντας τα homework prompts."""
@@ -73,7 +67,6 @@ def clear_upload_folder():
             except Exception:
                 pass
 
-clean_old_records()
 students_db = load_students()
 config_data = load_config()
 
@@ -84,7 +77,7 @@ TRANSLATIONS = {
         "subtitle": "### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*",
         "hw_section": "📖 Φωτογραφίες Εκφώνησης (Homework)",
         "hw_desc": "📸 Τραβήξτε/Ανεβάστε τις σελίδες της εκφώνησης (Υψηλή Ανάλυση):",
-        "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν σε υψηλή ανάλυση!",
+        "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν!",
         "class_mgmt": "⚙️ Διαχείριση Τάξης & Τμημάτων",
         "select_class": "Επιλογή Τμήματος:",
         "add_new_class": "➕ Δημιουργία Νέου Τμήματος (π.χ. Β3):",
@@ -99,30 +92,28 @@ TRANSLATIONS = {
         "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
         "tab1": "📷 Αυτόματη Αξιολόγηση Άσκησης",
         "tab2": "📋 Εισαγωγή Καταλόγου",
-        "tab3": "📊 Αναφορές & Απουσίες",
+        "tab3": "📊 Πίνακας Προόδου & Αναφορές",
         "notebook_sec": "✨ Φωτογράφηση & Μεταφόρτωση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
         "batch_upload": "📸 Επιλέξτε ή Τραβήξτε φωτογραφίες τετραδίων (πολλαπλές επιλογές):",
-        "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Όλων των Φωτογραφιών",
         "eval_spinner": "🤖 Η AI αναλύει τις σελίδες σε ομάδες (batches), δημιουργεί φακέλους μαθητών και καταγράφει τους βαθμούς...",
-        "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές και ταξινομήθηκαν σε φακέλους!",
+        "eval_success": "Αποθηκεύτηκαν επιτυχώς στον πίνακα προόδου!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "Ανεβάστε φωτογραφία καταλόγου (λίστα ονομάτων)",
         "btn_read_names": "🤖 Ανάγνωση & Αυτόματη Αποθήκευση Καταλόγου",
-        "stats_sec": "📊 Στατιστικά Τμήματος (Πίνακας Excel ανά Ημερομηνία)",
-        "stats_info": "ℹ️ *Οι εγγραφές διαγράφονται αυτόματα μετά από 7 ημέρες.*",
-        "btn_close_day": "🚨 Κλείσιμο Ημέρας & Σημείωση Όσων ΔΕΝ Έκαναν Ασκήσεις",
-        "manual_delete": "🗑️ Χειροκίνητη Διαγραφή Εγγραφής"
+        "stats_sec": "📊 Συνολικός Πίνακας Προόδου Τμήματος (Excel Style)",
+        "btn_close_day": "🚨 Καταγραφή Απουσιών/Ελλείψεων για Σήμερα",
+        "manual_delete": "🗑️ Διαγραφή Δεδομένων"
     },
     "English": {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
         "hw_section": "📖 Homework Prompt Photos",
         "hw_desc": "📸 Take/Upload assignment prompt pages (High-Res):",
-        "hw_saved": "Homework page(s) saved in high resolution!",
+        "hw_saved": "Homework page(s) saved!",
         "class_mgmt": "⚙️ Class Management & Sections",
         "select_class": "Select Class/Section:",
         "add_new_class": "➕ Add New Section (e.g. B3):",
@@ -137,7 +128,7 @@ TRANSLATIONS = {
         "api_saved_success": "API Key saved successfully!",
         "tab1": "📷 Automatic Grading",
         "tab2": "📋 Import Roster",
-        "tab3": "📊 Reports & Attendance",
+        "tab3": "📊 Progress Table & Reports",
         "notebook_sec": "✨ Capture & Upload Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
         "batch_upload": "📸 Select or Take notebook photos (multiple allowed):",
@@ -145,19 +136,18 @@ TRANSLATIONS = {
         "folder_found": "student notebook photos ready in folder.",
         "btn_evaluate": "🚀 Start Grading All Photos",
         "eval_spinner": "🤖 AI is analyzing pages in batches, creating student folders and recording scores...",
-        "eval_success": "Successfully saved to Reports and sorted into folders!",
+        "eval_success": "Successfully saved to Progress Table!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "Upload roster photo (list of names)",
         "btn_read_names": "🤖 Read & Auto-Save Roster",
-        "stats_sec": "📊 Class Statistics (Excel-style Table by Date)",
-        "stats_info": "ℹ️ *Records are automatically deleted after 7 days.*",
-        "btn_close_day": "🚨 Close Day & Mark Students Missing Homework",
-        "manual_delete": "🗑️ Manual Record Deletion"
+        "stats_sec": "📊 Class Progress Matrix (Excel Style)",
+        "btn_close_day": "🚨 Mark Missing Homework for Today",
+        "manual_delete": "🗑️ Delete Records"
     }
 }
 
-# --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ, ΜΑΘΗΤΩΝ & HIGH-RES HOMEWORK CAM ---
+# --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ & ΜΑΘΗΤΩΝ ---
 st.sidebar.header("🌐 App Language / Γλώσσα")
 app_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=0)
 t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
@@ -170,7 +160,7 @@ st.sidebar.header(t["hw_section"])
 st.sidebar.write(t["hw_desc"])
 
 hw_files = st.sidebar.file_uploader(
-    "📸 Φωτογραφίστε ή επιλέξτε σελίδες εκφώνησης (πολλαπλές σελίδες):",
+    "📸 Φωτογραφίστε ή επιλέξτε σελίδες εκφώνησης:",
     type=["png", "jpg", "jpeg"],
     accept_multiple_files=True,
     key="hw_high_res_uploader"
@@ -288,7 +278,6 @@ if active_api_key:
                         st.rerun()
 
                 if run_eval:
-                    # Batching ανά 5 φωτογραφίες για αποφυγή API timeouts
                     BATCH_SIZE = 5
                     folder_files_batches = [
                         folder_files[i:i + BATCH_SIZE] 
@@ -301,7 +290,7 @@ if active_api_key:
                     total_batches = len(folder_files_batches)
                     
                     for b_idx, batch_paths in enumerate(folder_files_batches):
-                        status_text.text(f"⏳ Επεξεργασία ομάδας {b_idx + 1} από {total_batches} ({len(batch_paths)} φωτογραφίες)...")
+                        status_text.text(f"⏳ Επεξεργασία ομάδας {b_idx + 1} από {total_batches}...")
                         batch_images = [Image.open(f_path) for f_path in batch_paths]
                         
                         known_students_str = ", ".join(students_db[selected_class])
@@ -312,6 +301,7 @@ if active_api_key:
 
                         1. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student.
                         2. **MATCH FEEDBACK LANGUAGE**: Write all analysis/notes EXCLUSIVELY in that same language.
+                        3. **SCORE FORMAT**: Provide the score strictly as a percentage (e.g., 85% or 0% if completely wrong).
 
                         For EACH student, structure your response strictly as:
 
@@ -351,7 +341,7 @@ if active_api_key:
                     progress_bar.empty()
 
                     if not all_eval_responses:
-                        st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι. Παρακαλώ δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
+                        st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι.")
                         st.stop()
 
                     full_eval_res = "\n\n".join(all_eval_responses)
@@ -377,10 +367,7 @@ if active_api_key:
                         d_name = d_name.replace("**", "").replace("*", "").strip().replace("/", "-")
                         d_score = d_score.replace("**", "").replace("*", "").strip()
 
-                        if d_name != "Άγνωστος" or d_score != "0%":
-                            student_folder = os.path.join(UPLOAD_FOLDER, d_name)
-                            os.makedirs(student_folder, exist_ok=True)
-                            
+                        if d_name != "Άγνωστος":
                             new_rows.append({
                                 "Ημερομηνία": today,
                                 "Τμήμα": selected_class,
@@ -394,6 +381,8 @@ if active_api_key:
                         df_new = pd.DataFrame(new_rows)
                         if os.path.exists(GRADES_FILE):
                             df_ex = pd.read_csv(GRADES_FILE)
+                            # Αφαιρούμε τυχόν διπλότυπη εγγραφή για τον ίδιο μαθητή την ίδια μέρα
+                            df_ex = df_ex[~((df_ex["Ημερομηνία"] == today) & (df_ex["Τμήμα"] == selected_class) & (df_ex["Μαθητής"].isin([r["Μαθητής"] for r in new_rows])))]
                             df_updated = pd.concat([df_ex, df_new], ignore_index=True)
                         else:
                             df_updated = df_new
@@ -423,7 +412,7 @@ if active_api_key:
                 st.image(list_img, caption="Φωτογραφία Καταλόγου", use_column_width=True)
                 
                 if st.button(t["btn_read_names"], type="primary"):
-                    with st.spinner("🤖 Η AI διαβάζει τα ονόματα και τα αποθηκεύει στο τμήμα..."):
+                    with st.spinner("🤖 Η AI διαβάζει τα ονόματα και τα αποθηκεύει μόνιμα στο τμήμα..."):
                         p_list = "Read all student names from this roster photo carefully. Return ONLY a comma-separated list of the full names (e.g. Γιώργος Παπαδόπουλος, Μαρία Ιωάννου). Do not add any extra text or numbers."
                         res_list = client.models.generate_content(model='gemini-3.8-flash', contents=[p_list, list_img])
                         
@@ -443,9 +432,9 @@ if active_api_key:
                         st.write("📋 **Ονόματα που προστέθηκαν:**", names_found)
                         st.rerun()
 
-        # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΜΑΖΙΚΗ/ΜΕΜΟΝΩΜΕΝΗ ΔΙΑΓΡΑΦΗ
+        # TAB 3: ΠΙΝΑΚΑΣ ΠΡΟΟΔΟΥ & ΔΙΑΧΕΙΡΙΣΗ ΑΠΟΥΣΙΩΝ/ΕΛΛΕΙΨΕΩΝ
         with tab3:
-            st.subheader(t["stats_sec"])
+            st.subheader(f"{t['stats_sec']} – {selected_class}")
             
             if st.button(t["btn_close_day"]):
                 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -464,8 +453,8 @@ if active_api_key:
                             "Ημερομηνία": today,
                             "Τμήμα": selected_class,
                             "Μαθητής": st_name,
-                            "Ποσοστό": "-",
-                            "Κατάσταση": "Δεν έκανε ασκήσεις",
+                            "Ποσοστό": "Δεν έκανε ασκήσεις",
+                            "Κατάσταση": "Ελλιπής",
                             "Αξιολόγηση": "No notebook submitted."
                         })
                 
@@ -473,65 +462,67 @@ if active_api_key:
                     df_missing = pd.DataFrame(missing_records)
                     df_final = pd.concat([df_g, df_missing], ignore_index=True)
                     df_final.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                    st.warning(f"{len(missing_records)} students marked as missing homework for today.")
+                    st.success(f"Καταγράφηκαν οι απουσίες/ελλείψεις για όσους δεν είχαν τετράδιο σήμερα!")
                     st.rerun()
                 else:
-                    st.success("All students graded!")
+                    st.info("Όλοι οι μαθητές έχουν αξιολογηθεί για σήμερα!")
 
             if os.path.exists(GRADES_FILE):
                 df_all = pd.read_csv(GRADES_FILE)
                 df_class = df_all[df_all["Τμήμα"] == selected_class]
                 
                 if not df_class.empty:
-                    st.markdown("### 📊 Πίνακας Excel - Πρόοδος Μαθητών ανά Ημερομηνία")
-                    
+                    # Δημιουργία Πίνακα Excel-style (Μαθητές σε γραμμές, Ημερομηνίες σε στήλες)
                     pivot_df = df_class.pivot_table(
                         index="Μαθητής", 
                         columns="Ημερομηνία", 
                         values="Ποσοστό", 
                         aggfunc="first"
-                    ).fillna("-")
+                    ).fillna("Δεν έκανε ασκήσεις")
                     
+                    # Διασφάλιση ότι εμφανίζονται όλοι οι μαθητές του τμήματος ακόμα κι αν δεν έχουν εγγραφές ακόμα
+                    for st_name in students_db[selected_class]:
+                        if st_name not in pivot_df.index:
+                            pivot_df.loc[st_name] = "Δεν έκανε ασκήσεις"
+
+                    st.markdown("### 📋 Πίνακας Βαθμολογίας & Πρόκρισης (Excel Format)")
                     st.dataframe(pivot_df, use_container_width=True)
 
                     st.markdown("---")
-                    st.markdown("📋 **Αναλυτικός Κατάλογος Εγγραφών**")
-                    df_display = df_class[["Ημερομηνία", "Τμήμα", "Μαθητής", "Ποσοστό", "Κατάσταση"]]
-                    st.dataframe(df_display, use_container_width=True)
-
-                    st.markdown("---")
-                    st.subheader("🗑️ Μαζική Διαγραφή ανά Ημερομηνία")
+                    st.subheader("🗑️ Επιλογές Διαχείρισης & Διαγραφής")
                     
-                    available_dates = df_class["Ημερομηνία"].unique().tolist()
-                    selected_date_to_delete = st.selectbox("Επιλέξτε Ημερομηνία για μαζική διαγραφή:", ["-- Επιλέξτε ημερομηνία --"] + available_dates)
+                    col_d1, col_d2 = st.columns(2)
                     
-                    if st.button("🚨 Διαγραφή Ολόκληρης της Ημέρας"):
-                        if selected_date_to_delete != "-- Επιλέξτε ημερομηνία --":
-                            df_all = df_all[~((df_all["Ημερομηνία"] == selected_date_to_delete) & (df_all["Τμήμα"] == selected_class))]
-                            df_all.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                            st.success(f"Επιτυχής διαγραφή όλων των εγγραφών για την ημερομηνία {selected_date_to_delete}!")
-                            st.rerun()
+                    with col_d1:
+                        available_dates = df_class["Ημερομηνία"].unique().tolist()
+                        selected_date_to_delete = st.selectbox("Ημερομηνία για μαζική διαγραφή:", ["-- Επιλέξτε --"] + available_dates)
+                        if st.button("🚨 Διαγραφή Ημέρας"):
+                            if selected_date_to_delete != "-- Επιλέξτε --":
+                                df_all = df_all[~((df_all["Ημερομηνία"] == selected_date_to_delete) & (df_all["Τμήμα"] == selected_class))]
+                                df_all.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
+                                st.success(f"Η ημερομηνία {selected_date_to_delete} διαγράφηκε επιτυχώς!")
+                                st.rerun()
 
-                    st.markdown("---")
-                    st.subheader(t["manual_delete"])
-                    
-                    options_to_delete = ["-- Select record to delete --"]
-                    indices_map = {}
-                    for idx, row in df_class.iterrows():
-                        label = f"{row['Ημερομηνία']} | {row['Μαθητής']} | {row['Ποσοστό']} ({row['Κατάσταση']})"
-                        options_to_delete.append(label)
-                        indices_map[label] = idx
+                    with col_d2:
+                        options_to_delete = ["-- Επιλέξτε εγγραφή --"]
+                        indices_map = {}
+                        for idx, row in df_class.iterrows():
+                            label = f"{row['Ημερομηνία']} | {row['Μαθητής']} | {row['Ποσοστό']}"
+                            options_to_delete.append(label)
+                            indices_map[label] = idx
 
-                    selected_del = st.selectbox("Select Record (Individual):", options_to_delete)
-                    if st.button("🗑️ Delete Single"):
-                        if selected_del != "-- Select record to delete --":
-                            target_idx = indices_map[selected_del]
-                            df_all = df_all.drop(target_idx)
-                            df_all.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                            st.success("Record deleted successfully!")
-                            st.rerun()
+                        selected_del = st.selectbox("Μεμονωμένη εγγραφή:", options_to_delete)
+                        if st.button("🗑️ Διαγραφή Επιλεγμένου"):
+                            if selected_del != "-- Επιλέξτε εγγραφή --":
+                                target_idx = indices_map[selected_del]
+                                df_all = df_all.drop(target_idx)
+                                df_all.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
+                                st.success("Η εγγραφή διαγράφηκε!")
+                                st.rerun()
                 else:
-                    st.info("No saved records for this section in the last 7 days.")
+                    st.info(f"Δεν υπάρχουν καταγεγραμμένες βαθμολογίες για το τμήμα {selected_class} ακόμα. Ανεβάστε τετράδια στην 1η καρτέλα για να ξεκινήσετε!")
+            else:
+                st.info("Δεν βρέθηκε αρχείο βαθμολογιών.")
 
     except Exception as e:
         st.error(f"Error: {e}")
