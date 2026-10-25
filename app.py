@@ -550,7 +550,7 @@ if active_api_key:
                     pivot_df = df_class.pivot_table(
                         index="Μαθητής", 
                         columns="Ημερομηνία", 
-                        values="Ποصστό", 
+                        values="Ποσοστό", 
                         aggfunc="first"
                     ).fillna("Δεν έκανε ασκήσεις")
                     
