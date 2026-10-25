@@ -83,7 +83,7 @@ TRANSLATIONS = {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*",
         "hw_section": "📖 Φωτογραφίες Εκφώνησης (Homework)",
-        "hw_desc": "📸 Τραβήξτε/Ανεβάστε τις σελίδες της εκφώνησης (Πίσω κάμερα υψηλής ανάλυσης):",
+        "hw_desc": "📸 Τραβήξτε/Ανεβάστε τις σελίδες της εκφώνησης (Υψηλή Ανάλυση):",
         "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν σε υψηλή ανάλυση!",
         "class_mgmt": "⚙️ Διαχείριση Τάξης & Τμημάτων",
         "select_class": "Επιλογή Τμήματος:",
@@ -106,7 +106,7 @@ TRANSLATIONS = {
         "batch_saved": "φωτογραφίες αποθηκεύτηκαν επιτυχώς στον φάκελο!",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης Όλων των Φωτογραφιών",
-        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες υψηλής ανάλυσης, δημιουργεί φακέλους μαθητών και καταγράφει τους βαθμούς...",
+        "eval_spinner": "🤖 Η AI αναλύει τις σελίδες σε ομάδες (batches), δημιουργεί φακέλους μαθητών και καταγράφει τους βαθμούς...",
         "eval_success": "Αποθηκεύτηκαν επιτυχώς στις Αναφορές και ταξινομήθηκαν σε φακέλους!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
@@ -121,7 +121,7 @@ TRANSLATIONS = {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
         "hw_section": "📖 Homework Prompt Photos",
-        "hw_desc": "📸 Take/Upload assignment prompt pages (High-Res Rear Camera):",
+        "hw_desc": "📸 Take/Upload assignment prompt pages (High-Res):",
         "hw_saved": "Homework page(s) saved in high resolution!",
         "class_mgmt": "⚙️ Class Management & Sections",
         "select_class": "Select Class/Section:",
@@ -144,7 +144,7 @@ TRANSLATIONS = {
         "batch_saved": "photos saved successfully to folder!",
         "folder_found": "student notebook photos ready in folder.",
         "btn_evaluate": "🚀 Start Grading All Photos",
-        "eval_spinner": "🤖 AI is analyzing high-res pages, creating student folders and recording scores...",
+        "eval_spinner": "🤖 AI is analyzing pages in batches, creating student folders and recording scores...",
         "eval_success": "Successfully saved to Reports and sorted into folders!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
@@ -169,7 +169,6 @@ st.sidebar.markdown("---")
 st.sidebar.header(t["hw_section"])
 st.sidebar.write(t["hw_desc"])
 
-# ΝΕΑ ΥΨΗΛΗΣ ΑΝΑΛΥΣΗΣ ΜΕΘΟΔΟΣ ΓΙΑ ΤΙΣ ΣΕΛΙΔΕΣ ΕΚΦΩΝΗΣΗΣ (HOMEWORK)
 hw_files = st.sidebar.file_uploader(
     "📸 Φωτογραφίστε ή επιλέξτε σελίδες εκφώνησης (πολλαπλές σελίδες):",
     type=["png", "jpg", "jpeg"],
@@ -189,7 +188,6 @@ if hw_files:
 st.sidebar.markdown("---")
 st.sidebar.header(t["class_mgmt"])
 
-# Προσθήκη Νέου Τμήματος (π.χ. Β3)
 new_class_input = st.sidebar.text_input(t["add_new_class"])
 if st.sidebar.button(t["btn_add_class"]):
     n_class = new_class_input.strip().upper()
@@ -244,7 +242,7 @@ if active_api_key:
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
-        # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ
+        # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ ΜΕ BATCHING
         with tab1:
             st.subheader(t["notebook_sec"])
             
@@ -290,37 +288,48 @@ if active_api_key:
                         st.rerun()
 
                 if run_eval:
-                    student_images = [Image.open(f_path) for f_path in folder_files]
+                    # Batching ανά 5 φωτογραφίες για αποφυγή API timeouts
+                    BATCH_SIZE = 5
+                    folder_files_batches = [
+                        folder_files[i:i + BATCH_SIZE] 
+                        for i in range(0, len(folder_files), BATCH_SIZE)
+                    ]
                     
-                    with st.spinner(t["eval_spinner"]):
-                        known_students_str = ", ".join(students_db[selected_class])
+                    all_eval_responses = []
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    total_batches = len(folder_files_batches)
+                    
+                    for b_idx, batch_paths in enumerate(folder_files_batches):
+                        status_text.text(f"⏳ Επεξεργασία ομάδας {b_idx + 1} από {total_batches} ({len(batch_paths)} φωτογραφίες)...")
+                        batch_images = [Image.open(f_path) for f_path in batch_paths]
                         
+                        known_students_str = ", ".join(students_db[selected_class])
                         prompt = f"""
                         You are an expert teacher grading student exercises.
-                        I attached the high-resolution images of the homework prompt and student notebook pages.
-                        Some students may have multiple pages/photos attached. Group pages belonging to the same student together.
-                        Evaluate EACH student individually.
+                        I attached high-resolution images of student notebook pages.
+                        Evaluate EACH student found in these images individually.
 
-                        1. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student in their exercise.
-                        2. **MATCH FEEDBACK LANGUAGE**: Write all analysis, corrections, feedback, and notes EXCLUSIVELY in the EXACT SAME language used by the student.
+                        1. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student.
+                        2. **MATCH FEEDBACK LANGUAGE**: Write all analysis/notes EXCLUSIVELY in that same language.
 
-                        For EACH student found in the images, structure your response strictly using this format:
+                        For EACH student, structure your response strictly as:
 
                         ### Μαθητής:
                         Όνομα: [Student Name]
                         Ποσοστό: [X%]
-                        Ανάλυση: [Detailed evaluation text in the student's language]
+                        Ανάλυση: [Detailed evaluation text]
 
                         Enrolled students in section {selected_class}: [{known_students_str}].
                         Match the detected names with this roster.
                         """
 
-                        contents_list = [prompt] + student_images
+                        contents_list = [prompt] + batch_images
                         if homework_images:
                             contents_list += homework_images
 
                         eval_res = None
-                        models_to_try = ['gemini-3.8-flash']
+                        models_to_try = ['gemini-3.8-flash', 'gemini-1.5-flash']
                         
                         for m_name in models_to_try:
                             try:
@@ -333,67 +342,68 @@ if active_api_key:
                             except Exception:
                                 continue
 
-                        if not eval_res:
-                            st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι. Παρακαλώ δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
-                            st.stop()
-
-                        today = datetime.date.today().strftime("%Y-%m-%d")
-                        student_blocks = re.split(r'###\s*Μαθητής\s*:?|Μαθητής\s+\d+:', eval_res)
+                        if eval_res:
+                            all_eval_responses.append(eval_res)
                         
-                        new_rows = []
-                        for block in student_blocks:
-                            if not block.strip():
-                                continue
-                            
-                            d_name = "Άγνωστος"
-                            d_score = "0%"
-                            
-                            for line in block.split('\n'):
-                                line_str = line.strip()
-                                if line_str.startswith("Όνομα:"):
-                                    d_name = line_str.replace("Όνομα:", "").strip()
-                                elif line_str.startswith("Ποσοστό:"):
-                                    d_score = line_str.replace("Ποσοστό:", "").strip()
-                            
-                            d_name = d_name.replace("**", "").replace("*", "").strip().replace("/", "-")
-                            d_score = d_score.replace("**", "").replace("*", "").strip()
+                        progress_bar.progress((b_idx + 1) / total_batches)
 
-                            if d_name != "Άγνωστος" or d_score != "0%":
-                                student_folder = os.path.join(UPLOAD_FOLDER, d_name)
-                                os.makedirs(student_folder, exist_ok=True)
-                                
-                                new_rows.append({
-                                    "Ημερομηνία": today,
-                                    "Τμήμα": selected_class,
-                                    "Μαθητής": d_name,
-                                    "Ποσοστό": d_score,
-                                    "Κατάσταση": "Ελέγχθηκε",
-                                    "Αξιολόγηση": block.strip()
-                                })
+                    status_text.empty()
+                    progress_bar.empty()
 
-                        for f_path in folder_files:
-                            try:
-                                base_name = os.path.basename(f_path)
-                                general_student_dir = os.path.join(UPLOAD_FOLDER, "Αρχεία_Μαθητών")
-                                os.makedirs(general_student_dir, exist_ok=True)
-                                shutil.copy(f_path, os.path.join(general_student_dir, base_name))
-                            except Exception:
-                                pass
+                    if not all_eval_responses:
+                        st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι. Παρακαλώ δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
+                        st.stop()
 
-                        if new_rows:
-                            df_new = pd.DataFrame(new_rows)
-                            if os.path.exists(GRADES_FILE):
-                                df_ex = pd.read_csv(GRADES_FILE)
-                                df_updated = pd.concat([df_ex, df_new], ignore_index=True)
-                            else:
-                                df_updated = df_new
+                    full_eval_res = "\n\n".join(all_eval_responses)
+                    
+                    today = datetime.date.today().strftime("%Y-%m-%d")
+                    student_blocks = re.split(r'###\s*Μαθητής\s*:?|Μαθητής\s+\d+:', full_eval_res)
+                    
+                    new_rows = []
+                    for block in student_blocks:
+                        if not block.strip():
+                            continue
+                        
+                        d_name = "Άγνωστος"
+                        d_score = "0%"
+                        
+                        for line in block.split('\n'):
+                            line_str = line.strip()
+                            if line_str.startswith("Όνομα:"):
+                                d_name = line_str.replace("Όνομα:", "").strip()
+                            elif line_str.startswith("Ποσοστό:"):
+                                d_score = line_str.replace("Ποσοστό:", "").strip()
+                        
+                        d_name = d_name.replace("**", "").replace("*", "").strip().replace("/", "-")
+                        d_score = d_score.replace("**", "").replace("*", "").strip()
+
+                        if d_name != "Άγνωστος" or d_score != "0%":
+                            student_folder = os.path.join(UPLOAD_FOLDER, d_name)
+                            os.makedirs(student_folder, exist_ok=True)
                             
-                            df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                            clear_upload_folder()
-                            st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
+                            new_rows.append({
+                                "Ημερομηνία": today,
+                                "Τμήμα": selected_class,
+                                "Μαθητής": d_name,
+                                "Ποσοστό": d_score,
+                                "Κατάσταση": "Ελέγχθηκε",
+                                "Αξιολόγηση": block.strip()
+                            })
 
-                        st.session_state["current_eval"] = eval_res
-                        st.rerun()
+                    if new_rows:
+                        df_new = pd.DataFrame(new_rows)
+                        if os.path.exists(GRADES_FILE):
+                            df_ex = pd.read_csv(GRADES_FILE)
+                            df_updated = pd.concat([df_ex, df_new], ignore_index=True)
+                        else:
+                            df_updated = df_new
+                        
+                        df_updated.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
+                        clear_upload_folder()
+                        st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
+
+                    st.session_state["current_eval"] = full_eval_res
+                    st.rerun()
 
             if "current_eval" in st.session_state:
                 with st.expander(t["view_eval"], expanded=True):
@@ -433,7 +443,7 @@ if active_api_key:
                         st.write("📋 **Ονόματα που προστέθηκαν:**", names_found)
                         st.rerun()
 
-        # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΔΙΑΓΡΑΦΗ
+        # TAB 3: ΑΝΑΦΟΡΕΣ, ΑΠΟΥΣΙΕΣ & ΜΑΖΙΚΗ/ΜΕΜΟΝΩΜΕΝΗ ΔΙΑΓΡΑΦΗ
         with tab3:
             st.subheader(t["stats_sec"])
             
@@ -490,6 +500,19 @@ if active_api_key:
                     st.dataframe(df_display, use_container_width=True)
 
                     st.markdown("---")
+                    st.subheader("🗑️ Μαζική Διαγραφή ανά Ημερομηνία")
+                    
+                    available_dates = df_class["Ημερομηνία"].unique().tolist()
+                    selected_date_to_delete = st.selectbox("Επιλέξτε Ημερομηνία για μαζική διαγραφή:", ["-- Επιλέξτε ημερομηνία --"] + available_dates)
+                    
+                    if st.button("🚨 Διαγραφή Ολόκληρης της Ημέρας"):
+                        if selected_date_to_delete != "-- Επιλέξτε ημερομηνία --":
+                            df_all = df_all[~((df_all["Ημερομηνία"] == selected_date_to_delete) & (df_all["Τμήμα"] == selected_class))]
+                            df_all.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
+                            st.success(f"Επιτυχής διαγραφή όλων των εγγραφών για την ημερομηνία {selected_date_to_delete}!")
+                            st.rerun()
+
+                    st.markdown("---")
                     st.subheader(t["manual_delete"])
                     
                     options_to_delete = ["-- Select record to delete --"]
@@ -499,8 +522,8 @@ if active_api_key:
                         options_to_delete.append(label)
                         indices_map[label] = idx
 
-                    selected_del = st.selectbox("Select Record:", options_to_delete)
-                    if st.button("🗑️ Delete"):
+                    selected_del = st.selectbox("Select Record (Individual):", options_to_delete)
+                    if st.button("🗑️ Delete Single"):
                         if selected_del != "-- Select record to delete --":
                             target_idx = indices_map[selected_del]
                             df_all = df_all.drop(target_idx)
