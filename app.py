@@ -17,7 +17,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS για χρωματιστά κουτιά upload και κόκκινα badges
+# Custom CSS για χρωματιστά κουτιά upload και κάθετα μενού
 st.markdown("""
     <style>
         .custom-alert-box {
@@ -142,9 +142,10 @@ TRANSLATIONS = {
         "api_prompt": "Εισάγετε Google Gemini API Key",
         "save_api": "💾 Αποθήκευση API Key",
         "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
-        "tab1": "📷 1. Αυτόματη Αξιολόγηση Άσκησης",
-        "tab2": "📋 2. Εισαγωγή Καταλόγου",
-        "tab3": "📊 3. Πίνακας Προόδου & Αναφορές",
+        "menu_title": "📌 Επιλέξτε Λειτουργία (Κάθετο Μενού):",
+        "opt1": "📷 1. Αυτόματη Αξιολόγηση Άσκησης",
+        "opt2": "📋 2. Εισαγωγή Καταλόγου",
+        "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
         "notebook_sec": "✨ Φωτογράφηση & Μεταφόρτωση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
         "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
@@ -177,9 +178,10 @@ TRANSLATIONS = {
         "api_prompt": "Enter Google Gemini API Key",
         "save_api": "💾 Save API Key",
         "api_saved_success": "API Key saved successfully!",
-        "tab1": "📷 1. Automatic Grading",
-        "tab2": "📋 2. Import Roster",
-        "tab3": "📊 3. Progress Table & Reports",
+        "menu_title": "📌 Select Mode (Vertical Menu):",
+        "opt1": "📷 1. Automatic Grading",
+        "opt2": "📋 2. Import Roster",
+        "opt3": "📊 3. Progress Table & Reports",
         "notebook_sec": "✨ Capture & Upload Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
         "batch_upload": "📸 Take photo with camera or select notebook files:",
@@ -294,11 +296,16 @@ if active_api_key:
             '''
         st.markdown(alert_html, unsafe_allow_html=True)
         
-        # --- ΚΑΡΤΕΛΕΣ ΣΕ ΣΤΥΛ ΚΟΥΤΙΩΝ ---
-        tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
+        # --- ΚΑΘΕΤΟ ΜΕΝΟΥ ΕΠΙΛΟΓΩΝ (VERTICAL RADIO MENU) ---
+        selected_mode = st.radio(
+            t["menu_title"], 
+            [t["opt1"], t["opt2"], t["opt3"]],
+            horizontal=False
+        )
+        st.markdown("---")
 
-        # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ ΜΕ WAKE LOCK
-        with tab1:
+        # ΕΝΟΤΗΤΑ 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ
+        if selected_mode == t["opt1"]:
             st.markdown("### 🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης")
             st.subheader(t["notebook_sec"])
             
@@ -482,8 +489,8 @@ if active_api_key:
                 with st.expander(t["view_eval"], expanded=True):
                     st.markdown(st.session_state["current_eval"])
 
-        # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
-        with tab2:
+        # ΕΝΟΤΗΤΑ 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
+        elif selected_mode == t["opt2"]:
             st.markdown("### 🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου")
             st.subheader(f"{t['catalog_sec']} – {selected_class}")
             
@@ -525,8 +532,8 @@ if active_api_key:
                         st.write("📋 **Ονόματα που προστέθηκαν:**", names_found)
                         st.rerun()
 
-        # TAB 3: ΠΙΝΑΚΑΣ ΠΡΟΟΔΟΥ & ΔΙΑΧΕΙΡΙΣΗ ΑΠΟΥΣΙΩΝ/ΕΛΛΕΙΨΕΩΝ
-        with tab3:
+        # ΕΝΟΤΗΤΑ 3: ΠΙΝΑΚΑΣ ΠΡΟΟΔΟΥ & ΑΝΑΦΟΡΕΣ
+        elif selected_mode == t["opt3"]:
             st.markdown("### 🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές")
             st.subheader(f"{t['stats_sec']} – {selected_class}")
             
