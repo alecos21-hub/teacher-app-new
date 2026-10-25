@@ -17,7 +17,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS για τα κόκκινα κουτάκια
+# Custom CSS για χρωματιστά κουτιά upload και κόκκινα badges
 st.markdown("""
     <style>
         .custom-alert-box {
@@ -39,6 +39,13 @@ st.markdown("""
             font-family: monospace;
             font-size: 18px;
             border: 1px solid #ff4b4b;
+        }
+        /* Έντονο χρωματιστό στυλ για όλα τα uploaders */
+        [data-testid="stFileUploader"] {
+            border: 2px dashed #ff4b4b !important;
+            padding: 15px !important;
+            border-radius: 12px !important;
+            background-color: #fff5f5 !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -121,7 +128,7 @@ TRANSLATIONS = {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*",
         "hw_section": "📖 Φωτογραφίες Εκφώνησης (Homework)",
-        "hw_desc": "📸 Τραβήξτε/Ανεβάστε τις σελίδες της εκφώνησης (Υψηλή Ανάλυση):",
+        "hw_desc": "📸 Τραβήξτε φωτογραφία κάμερας ή ανεβάστε εκφώνηση:",
         "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν!",
         "class_mgmt": "⚙️ Διαχείριση Τάξης & Τμημάτων",
         "select_class": "Επιλογή Τμήματος:",
@@ -135,29 +142,28 @@ TRANSLATIONS = {
         "api_prompt": "Εισάγετε Google Gemini API Key",
         "save_api": "💾 Αποθήκευση API Key",
         "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
-        "tab1": "📷 Αυτόματη Αξιολόγηση Άσκησης",
-        "tab2": "📋 Εισαγωγή Καταλόγου",
-        "tab3": "📊 Πίνακας Προόδου & Αναφορές",
+        "tab1": "📷 1. Αυτόματη Αξιολόγηση Άσκησης",
+        "tab2": "📋 2. Εισαγωγή Καταλόγου",
+        "tab3": "📊 3. Πίνακας Προόδου & Αναφορές",
         "notebook_sec": "✨ Φωτογράφηση & Μεταφόρτωση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
-        "batch_upload": "📸 Επιλέξτε ή Τραβήξτε φωτογραφίες τετραδίων (πολλαπλές επιλογές):",
+        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Γρήγορη Λειτουργία)",
         "eval_success": "Αποθηκεύτηκαν επιτυχώς στον πίνακα προόδου!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
-        "upload_catalog": "Ανεβάστε φωτογραφία καταλόγου (λίστα ονομάτων)",
+        "upload_catalog": "📸 Τραβήξτε φωτογραφία καταλόγου με κάμερα ή ανεβάστε αρχείο:",
         "btn_read_names": "🤖 Ανάγνωση & Αυτόματη Αποθήκευση Καταλόγου",
         "stats_sec": "📊 Συνολικός Πίνακας Προόδου Τμήματος (Excel Style)",
         "btn_close_day": "🚨 Καταγραφή Απουσιών/Ελλείψεων για Σήμερα",
-        "manual_delete": "🗑️ Διαγραφή Δεδομένων",
-        "alert_msg": "⚙️ Πατήστε τα βελάκια"
+        "manual_delete": "🗑️ Διαγραφή Δεδομένων"
     },
     "English": {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
         "hw_section": "📖 Homework Prompt Photos",
-        "hw_desc": "📸 Take/Upload assignment prompt pages (High-Res):",
+        "hw_desc": "📸 Take camera photo or upload assignment pages:",
         "hw_saved": "Homework page(s) saved!",
         "class_mgmt": "⚙️ Class Management & Sections",
         "select_class": "Select Class/Section:",
@@ -171,23 +177,22 @@ TRANSLATIONS = {
         "api_prompt": "Enter Google Gemini API Key",
         "save_api": "💾 Save API Key",
         "api_saved_success": "API Key saved successfully!",
-        "tab1": "📷 Automatic Grading",
-        "tab2": "📋 Import Roster",
-        "tab3": "📊 Progress Table & Reports",
+        "tab1": "📷 1. Automatic Grading",
+        "tab2": "📋 2. Import Roster",
+        "tab3": "📊 3. Progress Table & Reports",
         "notebook_sec": "✨ Capture & Upload Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
-        "batch_upload": "📸 Select or Take notebook photos (multiple allowed):",
+        "batch_upload": "📸 Take photo with camera or select notebook files:",
         "folder_found": "student notebook photos ready in folder.",
         "btn_evaluate": "🚀 Start Grading (Fast Mode)",
         "eval_success": "Successfully saved to Progress Table!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
-        "upload_catalog": "Upload roster photo (list of names)",
+        "upload_catalog": "📸 Take roster photo with camera or upload file:",
         "btn_read_names": "🤖 Read & Auto-Save Roster",
         "stats_sec": "📊 Class Progress Matrix (Excel Style)",
         "btn_close_day": "🚨 Mark Missing Homework for Today",
-        "manual_delete": "🗑️ Delete Records",
-        "alert_msg": "⚙️ Press the arrows"
+        "manual_delete": "🗑️ Delete Records"
     }
 }
 
@@ -204,7 +209,7 @@ st.sidebar.header(t["hw_section"])
 st.sidebar.write(t["hw_desc"])
 
 hw_files = st.sidebar.file_uploader(
-    "📸 Φωτογραφίστε ή επιλέξτε σελίδες εκφώνησης:",
+    "📸 Κάμερα ή Αρχείο Εκφώνησης",
     type=["png", "jpg", "jpeg"],
     accept_multiple_files=True,
     key="hw_high_res_uploader"
@@ -274,7 +279,7 @@ if active_api_key:
     try:
         client = genai.Client(api_key=active_api_key)
         
-        # Δυναμικό κόκκινο κουτί με κόκκινο κουτάκι για τα βελάκια, προσαρμοσμένο στη γλώσσα
+        # Κόκκινο κουτί ειδοποίησης για τα βελάκια
         if app_lang == "Ελληνικά":
             alert_html = f'''
                 <div class="custom-alert-box">
@@ -289,10 +294,12 @@ if active_api_key:
             '''
         st.markdown(alert_html, unsafe_allow_html=True)
         
+        # --- ΚΑΡΤΕΛΕΣ ΣΕ ΣΤΥΛ ΚΟΥΤΙΩΝ ---
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
         # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ ΜΕ WAKE LOCK
         with tab1:
+            st.markdown("### 🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης")
             st.subheader(t["notebook_sec"])
             
             if not homework_images:
@@ -477,6 +484,7 @@ if active_api_key:
 
         # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
         with tab2:
+            st.markdown("### 🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου")
             st.subheader(f"{t['catalog_sec']} – {selected_class}")
             
             list_img_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="list_up")
@@ -519,6 +527,7 @@ if active_api_key:
 
         # TAB 3: ΠΙΝΑΚΑΣ ΠΡΟΟΔΟΥ & ΔΙΑΧΕΙΡΙΣΗ ΑΠΟΥΣΙΩΝ/ΕΛΛΕΙΨΕΩΝ
         with tab3:
+            st.markdown("### 🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές")
             st.subheader(f"{t['stats_sec']} – {selected_class}")
             
             if st.button(t["btn_close_day"]):
