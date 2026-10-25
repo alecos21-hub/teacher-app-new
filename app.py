@@ -7,6 +7,7 @@ import os
 import shutil
 import json
 import re
+import time
 
 # --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & GRADEMIND AI ---
 st.set_page_config(
@@ -66,6 +67,24 @@ def clear_upload_folder():
                     os.remove(file_path)
             except Exception:
                 pass
+
+def call_gemini_with_retry(client, model_name, contents, max_retries=3):
+    """Έξυπνος μηχανισμός αυτόματης επανάληψης (Retry) σε περίπτωση προσωρινού φόρτου."""
+    delay = 1
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=contents
+            )
+            if response and response.text:
+                return response.text
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise e
+            time.sleep(delay)
+            delay *= 2
+    return None
 
 students_db = load_students()
 config_data = load_config()
@@ -232,7 +251,7 @@ if active_api_key:
         
         tab1, tab2, tab3 = st.tabs([t["tab1"], t["tab2"], t["tab3"]])
 
-        # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ ΜΕ BATCHING
+        # TAB 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ ΜΕ BATCHING & RETRY
         with tab1:
             st.subheader(t["notebook_sec"])
             
@@ -318,22 +337,12 @@ if active_api_key:
                         if homework_images:
                             contents_list += homework_images
 
-                        eval_res = None
-                        models_to_try = ['gemini-3.8-flash', 'gemini-1.5-flash']
-                        
-                        for m_name in models_to_try:
-                            try:
-                                response = client.models.generate_content(
-                                    model=m_name,
-                                    contents=contents_list
-                                )
-                                eval_res = response.text
-                                break
-                            except Exception:
-                                continue
-
-                        if eval_res:
-                            all_eval_responses.append(eval_res)
+                        try:
+                            eval_res = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_list)
+                            if eval_res:
+                                all_eval_responses.append(eval_res)
+                        except Exception:
+                            pass
                         
                         progress_bar.progress((b_idx + 1) / total_batches)
 
@@ -341,7 +350,7 @@ if active_api_key:
                     progress_bar.empty()
 
                     if not all_eval_responses:
-                        st.error("⚠️ Οι διακομιστές της Google είναι προσωρινά υπερφορτωμένοι.")
+                        st.error("⚠️ Προέκυψε προσωρινό πρόβλημα σύνδεσης. Παρακαλώ δοκιμάστε ξανά.")
                         st.stop()
 
                     full_eval_res = "\n\n".join(all_eval_responses)
@@ -381,7 +390,6 @@ if active_api_key:
                         df_new = pd.DataFrame(new_rows)
                         if os.path.exists(GRADES_FILE):
                             df_ex = pd.read_csv(GRADES_FILE)
-                            # Αφαιρούμε τυχόν διπλότυπη εγγραφή για τον ίδιο μαθητή την ίδια μέρα
                             df_ex = df_ex[~((df_ex["Ημερομηνία"] == today) & (df_ex["Τμήμα"] == selected_class) & (df_ex["Μαθητής"].isin([r["Μαθητής"] for r in new_rows])))]
                             df_updated = pd.concat([df_ex, df_new], ignore_index=True)
                         else:
@@ -398,7 +406,7 @@ if active_api_key:
                 with st.expander(t["view_eval"], expanded=True):
                     st.markdown(st.session_state["current_eval"])
 
-        # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
+        # TAB 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ ΜΕ RETRY
         with tab2:
             st.subheader(f"{t['catalog_sec']} – {selected_class}")
             
@@ -414,9 +422,17 @@ if active_api_key:
                 if st.button(t["btn_read_names"], type="primary"):
                     with st.spinner("🤖 Η AI διαβάζει τα ονόματα και τα αποθηκεύει μόνιμα στο τμήμα..."):
                         p_list = "Read all student names from this roster photo carefully. Return ONLY a comma-separated list of the full names (e.g. Γιώργος Παπαδόπουλος, Μαρία Ιωάννου). Do not add any extra text or numbers."
-                        res_list = client.models.generate_content(model='gemini-3.8-flash', contents=[p_list, list_img])
                         
-                        raw_text = res_list.text.strip()
+                        try:
+                            raw_text_res = call_gemini_with_retry(client, 'gemini-3.8-flash', [p_list, list_img])
+                            raw_text = raw_text_res.strip() if raw_text_res else ""
+                        except Exception:
+                            raw_text = ""
+                        
+                        if not raw_text:
+                            st.error("⚠️ Προέκυψε στιγμιαίο πρόβλημα. Παρακαλώ δοκιμάστε ξανά.")
+                            st.stop()
+                        
                         names_found = [n.strip().replace("\n", "").replace("-", "") for n in raw_text.split(",") if n.strip()]
                         
                         added_count = 0
@@ -472,7 +488,6 @@ if active_api_key:
                 df_class = df_all[df_all["Τμήμα"] == selected_class]
                 
                 if not df_class.empty:
-                    # Δημιουργία Πίνακα Excel-style (Μαθητές σε γραμμές, Ημερομηνίες σε στήλες)
                     pivot_df = df_class.pivot_table(
                         index="Μαθητής", 
                         columns="Ημερομηνία", 
@@ -480,7 +495,6 @@ if active_api_key:
                         aggfunc="first"
                     ).fillna("Δεν έκανε ασκήσεις")
                     
-                    # Διασφάλιση ότι εμφανίζονται όλοι οι μαθητές του τμήματος ακόμα κι αν δεν έχουν εγγραφές ακόμα
                     for st_name in students_db[selected_class]:
                         if st_name not in pivot_df.index:
                             pivot_df.loc[st_name] = "Δεν έκανε ασκήσεις"
