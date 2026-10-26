@@ -10,7 +10,7 @@ import json
 import re
 import time
 
-# --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & CUSTOM CSS ---
+# --- 1. PAGE CONFIG & CUSTOM CSS ---
 st.set_page_config(
     page_title="GradeMind AI – Smart Homework & Test Grader", 
     page_icon="🎓",
@@ -99,7 +99,7 @@ def load_students():
                 return json.load(f)
         except Exception:
             pass
-    return {"Α1": [], "Α2": [], "Β1": [], "Β2": [], "Γ1": [], "Γ2": []}
+    return {"A1": [], "A2": [], "B1": [], "B2": [], "Gamma1": [], "Gamma2": []}
 
 def save_students(students_dict):
     try:
@@ -139,45 +139,7 @@ students_db = load_students()
 config_data = load_config()
 
 TRANSLATIONS = {
-    "Ελληνικά": {
-        "title": "🎓 GradeMind AI",
-        "subtitle": "### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*",
-        "hw_section": "📖 Φωτογραφίες Εκφώνησης (Homework)",
-        "hw_desc": "📸 Τραβήξτε φωτογραφία κάμερας ή ανεβάστε εκφώνηση:",
-        "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν!",
-        "class_mgmt": "⚙️ Διαχείριση Τάξης & Τμημάτων",
-        "select_class": "🏫 Επιλογή Τμήματος:",
-        "add_new_class": "➕ Δημιουργία Νέου Τμήματος (π.χ. Β3):",
-        "btn_add_class": "Προσθήκη Τμήματος",
-        "students_in": "Μαθητές Τμήματος",
-        "add_student": "Προσθήκη νέου μαθητή:",
-        "btn_add": "➕ Προσθήκη Μαθητή",
-        "remove_student": "Αφαίρεση μαθητή:",
-        "btn_remove": "❌ Διαγραφή Μαθητή",
-        "api_prompt": "Εισάγετε Google Gemini API Key",
-        "save_api": "💾 Αποθήκευση API Key",
-        "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
-        "menu_title": "📌 Επιλέξτε Λειτουργία (Κάθετο Μενού):",
-        "opt1": "📷 1. Αυτόματη Αξιολόγηση Άσκησης",
-        "opt2": "📋 2. Εισαγωγή Καταλόγου",
-        "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
-        "notebook_sec": "✨ Φωτογράφηση & Μεταφόρτωση Τετραδίων Μαθητών",
-        "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework.",
-        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
-        "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
-        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Γρήγορη Λειτουργία)",
-        "eval_success": "Αποθηκεύτηκαν επιτυχώς στον πίνακα προόδου!",
-        "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
-        "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
-        "upload_catalog": "📸 Τραβήξτε φωτογραφία καταλόγου με κάμερα ή ανεβάστε αρχείο:",
-        "btn_read_names": "🤖 Ανάγνωση & Αυτόματη Αποθήκευση Καταλόγου",
-        "stats_sec": "📊 Συνολικός Πίνακας Προόδου Τμήματος (Excel Style)",
-        "btn_close_day": "🚨 Καταγραφή Απουσιών/Ελλείψεων για Σήμερα",
-        "manual_delete": "🗑️ Διαγραφή Δεδομένων",
-        "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ / IMPORTANT: Κάντε scroll προς τα κάτω για διαχείριση μαθητών.",
-        "main_controls_header": "🎛️ Γρήγορες Επιλογές & Ρυθμίσεις Τάξης (Κέντρο/Δεξιά)"
-    },
-    "English": {
+    "Greek": {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
         "hw_section": "📖 Homework Prompt Photos",
@@ -185,7 +147,7 @@ TRANSLATIONS = {
         "hw_saved": "Homework page(s) saved!",
         "class_mgmt": "⚙️ Class Management & Sections",
         "select_class": "🏫 Select Class/Section:",
-        "add_new_class": "➕ Add New Section (e.g. B3):",
+        "add_new_class": "➕ Add New Section:",
         "btn_add_class": "Add Section",
         "students_in": "Students in Section",
         "add_student": "Add new student:",
@@ -195,32 +157,70 @@ TRANSLATIONS = {
         "api_prompt": "Enter Google Gemini API Key",
         "save_api": "💾 Save API Key",
         "api_saved_success": "API Key saved successfully!",
-        "menu_title": "📌 Select Mode (Vertical Menu):",
+        "menu_title": "📌 Select Mode:",
         "opt1": "📷 1. Automatic Grading",
         "opt2": "📋 2. Import Roster",
         "opt3": "📊 3. Progress Table & Reports",
         "notebook_sec": "✨ Capture & Upload Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo.",
-        "batch_upload": "📸 Take photo with camera or select notebook files:",
+        "batch_upload": "📸 Take photo or select notebook files:",
         "folder_found": "student notebook photos ready in folder.",
-        "btn_evaluate": "🚀 Start Grading (Fast Mode)",
+        "btn_evaluate": "🚀 Start Grading",
         "eval_success": "Successfully saved to Progress Table!",
         "view_eval": "🔍 View Latest Evaluation",
-        "catalog_sec": "📷 Import Class Roster for Section",
-        "upload_catalog": "📸 Take roster photo with camera or upload file:",
+        "catalog_sec": "📷 Import Class Roster",
+        "upload_catalog": "📸 Take roster photo or upload file:",
         "btn_read_names": "🤖 Read & Auto-Save Roster",
-        "stats_sec": "📊 Class Progress Matrix (Excel Style)",
+        "stats_sec": "📊 Class Progress Matrix",
         "btn_close_day": "🚨 Mark Missing Homework for Today",
         "manual_delete": "🗑️ Delete Records",
-        "sidebar_stop_text": "🔴 IMPORTANT / ΣΗΜΑΝΤΙΚΟ: Scroll down to manage students.",
-        "main_controls_header": "🎛️ Quick Options & Class Settings (Center/Right)"
+        "sidebar_stop_text": "🔴 IMPORTANT: Scroll down to manage students.",
+        "main_controls_header": "🎛️ Quick Options & Class Settings"
+    },
+    "English": {
+        "title": "🎓 GradeMind AI",
+        "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
+        "hw_section": "📖 Homework Prompt Photos",
+        "hw_desc": "📸 Take camera photo or upload assignment pages:",
+        "hw_saved": "Homework page(s) saved!",
+        "class_mgmt": "⚙️ Class Management & Sections",
+        "select_class": "🏫 Select Class/Section:",
+        "add_new_class": "➕ Add New Section:",
+        "btn_add_class": "Add Section",
+        "students_in": "Students in Section",
+        "add_student": "Add new student:",
+        "btn_add": "➕ Add Student",
+        "remove_student": "Remove student:",
+        "btn_remove": "❌ Delete Student",
+        "api_prompt": "Enter Google Gemini API Key",
+        "save_api": "💾 Save API Key",
+        "api_saved_success": "API Key saved successfully!",
+        "menu_title": "📌 Select Mode:",
+        "opt1": "📷 1. Automatic Grading",
+        "opt2": "📋 2. Import Roster",
+        "opt3": "📊 3. Progress Table & Reports",
+        "notebook_sec": "✨ Capture & Upload Student Notebooks",
+        "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo.",
+        "batch_upload": "📸 Take photo or select notebook files:",
+        "folder_found": "student notebook photos ready in folder.",
+        "btn_evaluate": "🚀 Start Grading",
+        "eval_success": "Successfully saved to Progress Table!",
+        "view_eval": "🔍 View Latest Evaluation",
+        "catalog_sec": "📷 Import Class Roster",
+        "upload_catalog": "📸 Take roster photo or upload file:",
+        "btn_read_names": "🤖 Read & Auto-Save Roster",
+        "stats_sec": "📊 Class Progress Matrix",
+        "btn_close_day": "🚨 Mark Missing Homework for Today",
+        "manual_delete": "🗑️ Delete Records",
+        "sidebar_stop_text": "🔴 IMPORTANT: Scroll down to manage students.",
+        "main_controls_header": "🎛️ Quick Options & Class Settings"
     }
 }
 
-# --- 3. SIDEBAR: ΒΑΣΙΚΑ ΑΡΧΕΙΑ & ΜΑΘΗΤΕΣ ---
-st.sidebar.header("🌐 App Language / Γλώσσα")
+# --- 3. SIDEBAR: STUDENTS & MANAGEMENT ---
+st.sidebar.header("🌐 App Language")
 app_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=0, key="sidebar_lang_select")
-t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
+t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Greek"])
 
 st.markdown(t["title"])
 st.markdown(t["subtitle"])
@@ -234,7 +234,7 @@ if st.sidebar.button(t["btn_add_class"]):
     if n_class and n_class not in students_db:
         students_db[n_class] = []
         save_students(students_db)
-        st.sidebar.success(f"Δημιουργήθηκε το τμήμα: {n_class}")
+        st.sidebar.success(f"Created class: {n_class}")
         st.rerun()
 
 st.sidebar.markdown(f"""
@@ -287,25 +287,23 @@ if active_api_key:
     try:
         client = genai.Client(api_key=active_api_key)
         
-        # --- ΚΑΘΕΤΟ ΠΛΑΙΣΙΟ ΡΥΘΜΙΣΕΩΝ ΣΤΟ ΚΕΝΤΡΟ (Γλώσσα, Τμήμα, Φωτογραφία Εκφώνησης) ---
+        # --- MAIN PANEL CONTROLS ---
         st.markdown(f"### {t['main_controls_header']}")
         
         with st.container():
             st.markdown('<div class="main-panel-box">', unsafe_allow_html=True)
             
-            # 1. Κάθετη επιλογή γλώσσας
             main_lang = st.selectbox(
-                "🌐 Γλώσσα Εφαρμογής / UI Language:", 
+                "🌐 UI Language:", 
                 list(TRANSLATIONS.keys()), 
                 index=list(TRANSLATIONS.keys()).index(app_lang), 
                 key="main_lang_select"
             )
             if main_lang != app_lang:
                 app_lang = main_lang
-                t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
+                t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Greek"])
                 st.rerun()
 
-            # 2. Κάθετη επιλογή τμήματος
             selected_class = st.selectbox(
                 t["select_class"], 
                 list(students_db.keys()), 
@@ -313,11 +311,10 @@ if active_api_key:
                 key="main_class_select"
             )
 
-            # 3. Κάθετη φωτογραφία εκφώνησης άσκησης (Homework prompt)
             st.markdown(f"**{t['hw_section']}**")
             st.write(t["hw_desc"])
             hw_files = st.file_uploader(
-                "📸 Κάμερα ή Αρχείο Εκφώνησης Άσκησης",
+                "📸 Camera or Assignment File",
                 type=["png", "jpg", "jpeg"],
                 accept_multiple_files=True,
                 key="main_hw_uploader"
@@ -349,7 +346,7 @@ if active_api_key:
         st.markdown("---")
 
         if selected_mode == t["opt1"]:
-            st.markdown("### 🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης")
+            st.markdown("### 🗂️ Mode 1: Automatic Homework Grading")
             st.subheader(t["notebook_sec"])
             
             if not homework_images:
@@ -389,17 +386,17 @@ if active_api_key:
                 st.markdown("---")
                 st.write(f"📊 **{len(folder_files)} {t['folder_found']}**")
                 
-                with st.expander("👁️ Προβολή φωτογραφιών στον φάκελο"):
+                with st.expander("👁️ View Folder Images"):
                     cols = st.columns(3)
                     for idx, f_path in enumerate(folder_files):
                         with cols[idx % 3]:
-                            st.image(f_path, caption=f"Φωτογραφία {idx+1}", use_column_width=True)
+                            st.image(f_path, caption=f"Photo {idx+1}", use_column_width=True)
                 
                 col_btn1, col_btn2 = st.columns([2, 1])
                 with col_btn1:
                     run_eval = st.button(t["btn_evaluate"], type="primary")
                 with col_btn2:
-                    if st.button("🗑️ Εκκαθάριση Φακέλου"):
+                    if st.button("🗑️ Clear Folder"):
                         clear_upload_folder()
                         if "last_uploaded_sig" in st.session_state:
                             del st.session_state["last_uploaded_sig"]
@@ -413,18 +410,15 @@ if active_api_key:
                         try {
                             if ('wakeLock' in navigator) {
                                 wakeLock = await navigator.wakeLock.request('screen');
-                                console.log('Screen Wake Lock active!');
                             }
-                        } catch (err) {
-                            console.error(`${err.name}, ${err.message}`);
-                        }
+                        } catch (err) {}
                     }
                     requestWakeLock();
                     </script>
                     """
                     components.html(wake_lock_code, height=0)
                     
-                    st.info("💡 **Σημείωση:** Η οθόνη του κινητού σου κρατιέται ενεργή αυτόματα. Παρακαλώ περίμενε μερικά δευτερόλεπτα...")
+                    st.info("💡 Screen wake lock active. Please wait...")
                     
                     batch_images = []
                     for f_path in folder_files:
@@ -439,17 +433,17 @@ if active_api_key:
                     I attached high-resolution images of student notebook pages.
                     Evaluate EACH student found in these images individually.
 
-                    1. **MULTI-PAGE HANDLING**: If a student's work spans across multiple pages/images, combine all their pages together and output a SINGLE unified score and evaluation for that student. Do not create separate entries for the same student.
+                    1. **MULTI-PAGE HANDLING**: If a student's work spans across multiple pages/images, combine all their pages together and output a SINGLE unified score and evaluation for that student.
                     2. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student.
                     3. **MATCH FEEDBACK LANGUAGE**: Write all analysis/notes EXCLUSIVELY in that same language.
                     4. **SCORE FORMAT**: Provide the score strictly as a percentage (e.g., 85% or 0% if completely wrong).
 
                     For EACH student, structure your response strictly as:
 
-                    ### Μαθητής:
-                    Όνομα: [Student Name]
-                    Ποσοστό: [X%]
-                    Ανάλυση: [Detailed evaluation text]
+                    ### Student:
+                    Name: [Student Name]
+                    Score: [X%]
+                    Analysis: [Detailed evaluation text]
 
                     Enrolled students in section {selected_class}: [{known_students_str}].
                     Match the detected names with this roster.
@@ -460,53 +454,52 @@ if active_api_key:
                         contents_list += homework_images
 
                     try:
-                        eval_res = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_list)
+                        eval_res = call_gemini_with_retry(client, 'gemini-2.5-flash', contents_list)
                     except Exception as api_err:
                         eval_res = None
-                        st.error(f"⚠️ Σφάλμα API: {api_err}")
+                        st.error(f"⚠️ API Error: {api_err}")
 
                     if not eval_res:
-                        st.error("⚠️ Προέκυψε πρόβλημα σύνδεσης με το Google Gemini API. Δοκιμάστε ξανά.")
+                        st.error("⚠️ Connection problem with Gemini API. Please try again.")
                         st.stop()
 
                     full_eval_res = eval_res
-                    
                     today = datetime.date.today().strftime("%Y-%m-%d")
-                    student_blocks = re.split(r'###\s*Μαθητής\s*:?|Μαθητής\s+\d+:', full_eval_res)
+                    student_blocks = re.split(r'###\s*Student\s*:?|Student\s+\d+:', full_eval_res)
                     
                     new_rows = []
                     for block in student_blocks:
                         if not block.strip():
                             continue
                         
-                        d_name = "Άγνωστος"
+                        d_name = "Unknown"
                         d_score = "0%"
                         
                         for line in block.split('\n'):
                             line_str = line.strip()
-                            if line_str.startswith("Όνομα:"):
-                                d_name = line_str.replace("Όνομα:", "").strip()
-                            elif line_str.startswith("Ποσοστό:"):
-                                d_score = line_str.replace("Ποσοστό:", "").strip()
+                            if line_str.startswith("Name:") or line_str.startswith("Όνομα:"):
+                                d_name = line_str.split(":", 1)[1].strip()
+                            elif line_str.startswith("Score:") or line_str.startswith("Ποσοστό:"):
+                                d_score = line_str.split(":", 1)[1].strip()
                         
-                        d_name = d_name.replace("**", "").replace("*", "").strip().replace("/", "-")
-                        d_score = d_score.replace("**", "").replace("*", "").strip()
+                        d_name = d_name.replace("*", "").strip().replace("/", "-")
+                        d_score = d_score.replace("*", "").strip()
 
-                        if d_name != "Άγνωστος":
+                        if d_name != "Unknown":
                             new_rows.append({
-                                "Ημερομηνία": today,
-                                "Τμήμα": selected_class,
-                                "Μαθητής": d_name,
-                                "Ποσοστό": d_score,
-                                "Κατάσταση": "Ελέγχθηκε",
-                                "Αξιολόγηση": block.strip()
+                                "Date": today,
+                                "Section": selected_class,
+                                "Student": d_name,
+                                "Score": d_score,
+                                "Status": "Graded",
+                                "Evaluation": block.strip()
                             })
 
                     if new_rows:
                         df_new = pd.DataFrame(new_rows)
                         if os.path.exists(GRADES_FILE):
                             df_ex = pd.read_csv(GRADES_FILE)
-                            df_ex = df_ex[~((df_ex["Ημερομηνία"] == today) & (df_ex["Τμήμα"] == selected_class) & (df_ex["Μαθητής"].isin([r["Μαθητής"] for r in new_rows])))]
+                            df_ex = df_ex[~((df_ex["Date"] == today) & (df_ex["Section"] == selected_class) & (df_ex["Student"].isin([r["Student"] for r in new_rows])))]
                             df_updated = pd.concat([df_ex, df_new], ignore_index=True)
                         else:
                             df_updated = df_new
@@ -515,7 +508,7 @@ if active_api_key:
                         clear_upload_folder()
                         if "last_uploaded_sig" in st.session_state:
                             del st.session_state["last_uploaded_sig"]
-                        st.success(f"🎉 {len(new_rows)} {t['eval_success']}")
+                        st.success(f"🎉 {len(new_rows)} evaluations saved successfully!")
 
                     st.session_state["current_eval"] = full_eval_res
                     st.rerun()
@@ -525,14 +518,9 @@ if active_api_key:
                     st.markdown(st.session_state["current_eval"])
 
         elif selected_mode == t["opt2"]:
-            st.markdown("### 🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου")
+            st.markdown("### 🗂️ Mode 2: Import Roster")
             st.subheader(f"{t['catalog_sec']} – {selected_class}")
             
             list_img_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="list_up")
             if list_img_file:
                 list_path = os.path.join(UPLOAD_FOLDER, list_img_file.name)
-                with open(list_path, "wb") as f:
-                    f.write(list_img_file.getbuffer())
-                list_img = Image.open(list_path)
-                
-                st.image(list_img, caption="Φω
