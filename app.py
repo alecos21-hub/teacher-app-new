@@ -535,39 +535,4 @@ if active_api_key:
                     f.write(list_img_file.getbuffer())
                 list_img = Image.open(list_path)
                 
-                st.image(list_img, caption="Φωτογραφία Καταλόγου", use_column_width=True)
-                
-                if st.button(t["btn_read_names"], type="primary"):
-                    with st.spinner("🤖 Η AI διαβάζει τα ονόματα και τα αποθηκεύει μόνιμα στο τμήμα..."):
-                        p_list = "Read all student names from this roster photo carefully. Return ONLY a comma-separated list of the full names (e.g. Γιώργος Παπαδόπουλος, Μαρία Ιωάννου). Do not add any extra text or numbers."
-                        
-                        try:
-                            raw_text_res = call_gemini_with_retry(client, 'gemini-3.8-flash', [p_list, list_img])
-                            raw_text = raw_text_res.strip() if raw_text_res else ""
-                        except Exception:
-                            raw_text = ""
-                        
-                        if not raw_text:
-                            st.error("⚠️ Προέκυψε στιγμιαίο πρόβλημα. Παρακαλώ δοκιμάστε ξανά.")
-                            st.stop()
-                        
-                        names_found = [n.strip().replace("\n", "").replace("-", "") for n in raw_text.split(",") if n.strip()]
-                        
-                        added_count = 0
-                        for n in names_found:
-                            if n and n not in students_db[selected_class]:
-                                students_db[selected_class].append(n)
-                                added_count += 1
-                        
-                        students_db[selected_class].sort()
-                        save_students(students_db)
-                        
-                        st.success(f"🎉 Διαβάστηκαν και αποθηκεύτηκαν επιτυχώς {added_count} νέα ονόματα στο τμήμα {selected_class}!")
-                        st.write("📋 **Ονόματα που προστέθηκαν:**", names_found)
-                        st.rerun()
-
-        elif selected_mode == t["opt3"]:
-            st.markdown("### 🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές")
-            st.subheader(f"{t['stats_sec']} – {selected_class}")
-            
-            if st.
+                st.image(list_img, caption="Φω
