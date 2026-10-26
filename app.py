@@ -17,7 +17,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS για χρωματιστά κουτιά upload και κάθετα μενού
 st.markdown("""
     <style>
         .custom-alert-box {
@@ -28,7 +27,7 @@ st.markdown("""
             font-weight: bold;
             font-size: 16px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
         .red-badge {
@@ -40,7 +39,6 @@ st.markdown("""
             font-size: 18px;
             border: 1px solid #ff4b4b;
         }
-        /* Έντονο χρωματιστό στυλ για όλα τα uploaders */
         [data-testid="stFileUploader"] {
             border: 2px dashed #ff4b4b !important;
             padding: 15px !important;
@@ -50,7 +48,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Φάκελοι & Αρχεία
 UPLOAD_FOLDER = "uploads_folder"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -92,7 +89,6 @@ def save_students(students_dict):
         pass
 
 def clear_upload_folder():
-    """Διαγράφει τις προσωρινές φωτογραφίες τετραδίων κρατώντας τα homework prompts."""
     for f in os.listdir(UPLOAD_FOLDER):
         if not f.startswith('hw_page_'):
             file_path = os.path.join(UPLOAD_FOLDER, f)
@@ -122,7 +118,6 @@ def call_gemini_with_retry(client, model_name, contents, max_retries=3):
 students_db = load_students()
 config_data = load_config()
 
-# --- 2. ΛΕΞΙΚΟ ΠΟΛΛΑΠΛΩΝ ΓΛΩΣΣΩΝ ---
 TRANSLATIONS = {
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -200,7 +195,7 @@ TRANSLATIONS = {
 
 # --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ & ΜΑΘΗΤΩΝ ---
 st.sidebar.header("🌐 App Language / Γλώσσα")
-app_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=0)
+app_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=0, key="sidebar_lang_select")
 t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
 
 st.markdown(t["title"])
@@ -223,7 +218,12 @@ if hw_files:
         hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{idx}.jpg")
         with open(hw_path, "wb") as f:
             f.write(hw_f.getbuffer())
-        homework_images.append(Image.open(hw_path))
+        try:
+            img = Image.open(hw_path)
+            img.verify()
+            homework_images.append(Image.open(hw_path))
+        except Exception:
+            pass
     st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
 
 st.sidebar.markdown("---")
@@ -258,7 +258,6 @@ if st.sidebar.button(t["btn_remove"]):
         st.sidebar.warning(f"Removed: {student_to_remove}")
         st.rerun()
 
-# --- 4. API KEY & MAIN APP ---
 saved_api_key = config_data.get("api_key", "")
 col_api1, col_api2 = st.columns([3, 1])
 
@@ -296,7 +295,24 @@ if active_api_key:
             '''
         st.markdown(alert_html, unsafe_allow_html=True)
         
-        # --- ΚΑΘΕΤΟ ΜΕΝΟΥ ΕΠΙΛΟΓΩΝ (VERTICAL RADIO MENU) ---
+        # --- ΕΥΔΙΑΚΡΙΤΑ ΕΠΕΚΤΑΣΙΜΑ ΚΟΥΤΙΑ (EXPANDERS) ΓΙΑ ΑΜΕΣΗ ΠΡΟΣΒΑΣΗ ΣΤΟ ΚΙΝΗΤΟ ---
+        with st.expander("🏫 Γρήγορη Επιλογή & Διαχείριση Τμήματος (Πατήστε εδώ)", expanded=False):
+            st.write(f"**Τρέχον Τμήμα:** `{selected_class}`")
+            # Δυνατότητα άμεσης αλλαγής τμήματος και εδώ
+            quick_class = st.selectbox("Αλλαγή Τμήματος:", list(students_db.keys()), index=list(students_db.keys()).index(selected_class) if selected_class in students_db else 0, key="quick_class_sel")
+            if quick_class != selected_class:
+                selected_class = quick_class
+            
+            st.write(f"👥 **Μαθητές τμήματος {selected_class}:** {', '.join(students_db[selected_class]) if students_db[selected_class] else 'Δεν έχουν προστεθεί μαθητές ακόμα.'}")
+
+        with st.expander("🌐 Γρήγορη Αλλαγή Γλώσσας UI (Πατήστε εδώ)", expanded=False):
+            quick_lang = st.selectbox("Επιλογή Γλώσσας / Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(app_lang), key="quick_lang_sel")
+            if quick_lang != app_lang:
+                app_lang = quick_lang
+                st.rerun()
+
+        st.markdown("---")
+        
         selected_mode = st.radio(
             t["menu_title"], 
             [t["opt1"], t["opt2"], t["opt3"]],
@@ -304,7 +320,6 @@ if active_api_key:
         )
         st.markdown("---")
 
-        # ΕΝΟΤΗΤΑ 1: ΑΥΤΟΜΑΤΗ ΑΞΙΟΛΟΓΗΣΗ
         if selected_mode == t["opt1"]:
             st.markdown("### 🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης")
             st.subheader(t["notebook_sec"])
@@ -331,10 +346,16 @@ if active_api_key:
                     st.session_state["last_uploaded_sig"] = current_signature
                     st.rerun()
 
-            folder_files = [
-                os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) 
-                if f.endswith(('.png', '.jpg', '.jpeg')) and not f.startswith('hw_page_')
-            ]
+            folder_files = []
+            for f in os.listdir(UPLOAD_FOLDER):
+                if f.endswith(('.png', '.jpg', '.jpeg')) and not f.startswith('hw_page_'):
+                    f_path = os.path.join(UPLOAD_FOLDER, f)
+                    try:
+                        img_check = Image.open(f_path)
+                        img_check.verify()
+                        folder_files.append(f_path)
+                    except Exception:
+                        pass
 
             if folder_files:
                 st.markdown("---")
@@ -377,64 +398,50 @@ if active_api_key:
                     
                     st.info("💡 **Σημείωση:** Η οθόνη του κινητού σου κρατιέται ενεργή αυτόματα. Παρακαλώ περίμενε μερικά δευτερόλεπτα...")
                     
-                    BATCH_SIZE = 15
-                    folder_files_batches = [
-                        folder_files[i:i + BATCH_SIZE] 
-                        for i in range(0, len(folder_files), BATCH_SIZE)
-                    ]
-                    
-                    all_eval_responses = []
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    total_batches = len(folder_files_batches)
-                    
-                    for b_idx, batch_paths in enumerate(folder_files_batches):
-                        status_text.text(f"⏳ Γρήγορη επεξεργασία ομάδας {b_idx + 1} από {total_batches}...")
-                        batch_images = [Image.open(f_path) for f_path in batch_paths]
-                        
-                        known_students_str = ", ".join(students_db[selected_class])
-                        prompt = f"""
-                        You are an expert teacher grading student exercises.
-                        I attached high-resolution images of student notebook pages.
-                        Evaluate EACH student found in these images individually.
-
-                        1. **MULTI-PAGE HANDLING**: If a student's work spans across multiple pages/images, combine all their pages together and output a SINGLE unified score and evaluation for that student. Do not create separate entries for the same student.
-                        2. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student.
-                        3. **MATCH FEEDBACK LANGUAGE**: Write all analysis/notes EXCLUSIVELY in that same language.
-                        4. **SCORE FORMAT**: Provide the score strictly as a percentage (e.g., 85% or 0% if completely wrong).
-
-                        For EACH student, structure your response strictly as:
-
-                        ### Μαθητής:
-                        Όνομα: [Student Name]
-                        Ποσοστό: [X%]
-                        Ανάλυση: [Detailed evaluation text]
-
-                        Enrolled students in section {selected_class}: [{known_students_str}].
-                        Match the detected names with this roster.
-                        """
-
-                        contents_list = [prompt] + batch_images
-                        if homework_images:
-                            contents_list += homework_images
-
+                    batch_images = []
+                    for f_path in folder_files:
                         try:
-                            eval_res = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_list)
-                            if eval_res:
-                                all_eval_responses.append(eval_res)
+                            batch_images.append(Image.open(f_path))
                         except Exception:
                             pass
-                        
-                        progress_bar.progress((b_idx + 1) / total_batches)
+                    
+                    known_students_str = ", ".join(students_db[selected_class])
+                    prompt = f"""
+                    You are an expert teacher grading student exercises.
+                    I attached high-resolution images of student notebook pages.
+                    Evaluate EACH student found in these images individually.
 
-                    status_text.empty()
-                    progress_bar.empty()
+                    1. **MULTI-PAGE HANDLING**: If a student's work spans across multiple pages/images, combine all their pages together and output a SINGLE unified score and evaluation for that student. Do not create separate entries for the same student.
+                    2. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student.
+                    3. **MATCH FEEDBACK LANGUAGE**: Write all analysis/notes EXCLUSIVELY in that same language.
+                    4. **SCORE FORMAT**: Provide the score strictly as a percentage (e.g., 85% or 0% if completely wrong).
 
-                    if not all_eval_responses:
-                        st.error("⚠️ Προέκυψε προσωρινό πρόβλημα σύνδεσης. Παρακαλώ δοκιμάστε ξανά.")
+                    For EACH student, structure your response strictly as:
+
+                    ### Μαθητής:
+                    Όνομα: [Student Name]
+                    Ποσοστό: [X%]
+                    Ανάλυση: [Detailed evaluation text]
+
+                    Enrolled students in section {selected_class}: [{known_students_str}].
+                    Match the detected names with this roster.
+                    """
+
+                    contents_list = [prompt] + batch_images
+                    if homework_images:
+                        contents_list += homework_images
+
+                    try:
+                        eval_res = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_list)
+                    except Exception as api_err:
+                        eval_res = None
+                        st.error(f"⚠️ Σφάλμα API: {api_err}")
+
+                    if not eval_res:
+                        st.error("⚠️ Προέκυψε πρόβλημα σύνδεσης με το Google Gemini API. Δοκιμάστε ξανά.")
                         st.stop()
 
-                    full_eval_res = "\n\n".join(all_eval_responses)
+                    full_eval_res = eval_res
                     
                     today = datetime.date.today().strftime("%Y-%m-%d")
                     student_blocks = re.split(r'###\s*Μαθητής\s*:?|Μαθητής\s+\d+:', full_eval_res)
@@ -489,7 +496,6 @@ if active_api_key:
                 with st.expander(t["view_eval"], expanded=True):
                     st.markdown(st.session_state["current_eval"])
 
-        # ΕΝΟΤΗΤΑ 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
         elif selected_mode == t["opt2"]:
             st.markdown("### 🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου")
             st.subheader(f"{t['catalog_sec']} – {selected_class}")
@@ -532,7 +538,6 @@ if active_api_key:
                         st.write("📋 **Ονόματα που προστέθηκαν:**", names_found)
                         st.rerun()
 
-        # ΕΝΟΤΗΤΑ 3: ΠΙΝΑΚΑΣ ΠΡΟΟΔΟΥ & ΑΝΑΦΟΡΕΣ
         elif selected_mode == t["opt3"]:
             st.markdown("### 🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές")
             st.subheader(f"{t['stats_sec']} – {selected_class}")
