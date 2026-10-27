@@ -168,7 +168,22 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 Καταγραφή Απουσιών/Ελλείψεων για Σήμερα",
         "manual_delete": "🗑️ Διαγραφή Δεδομένων",
         "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ:<br>Κάντε scroll προς τα κάτω 👇<br>για να επιλέξετε Τμήμα.<br><span style='font-size: 11px; font-weight: normal;'>(Scroll down to select Department)</span>",
-        "alert_box": "⚙️ Πατήστε τα βελάκια <span class=\"red-badge\">&gt;&gt;</span> πάνω αριστερά για Τμήματα &amp; Γλώσσα"
+        "alert_box": "⚙️ Πατήστε τα βελάκια <span class=\"red-badge\">&gt;&gt;</span> πάνω αριστερά για Τμήματα &amp; Γλώσσα",
+        "uploader_label_hw": "📸 Κάμερα ή Αρχείο Εκφώνησης",
+        "uploader_label_notebook": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
+        "expander_class": "🏫 Γρήγορη Επιλογή & Διαχείριση Τμήματος (Πατήστε εδώ)",
+        "expander_lang": "🌐 Γρήγορη Αλλαγή Γλώσσας UI (Πατήστε εδώ)",
+        "current_class_label": "Τρέχον Τμήμα:",
+        "change_class_label": "Αλλαγή Τμήματος:",
+        "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
+        "section_students_text": "Μαθητές τμήματος",
+        "lang_select_label": "Επιλογή Γλώσσας / Language:",
+        "box1_title": "🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης",
+        "box2_title": "🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου",
+        "box3_title": "🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές",
+        "view_photos_folder": "👁️ Προβολή φωτογραφιών στον φάκελο",
+        "clear_folder": "🗑️ Εκκαθάριση Φακέλου",
+        "roster_photo_caption": "Φωτογραφία Καταλόγου"
     },
     "English": {
         "title": "🎓 GradeMind AI",
@@ -206,7 +221,22 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 Mark Missing Homework for Today",
         "manual_delete": "🗑️ Delete Records",
         "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.<br><span style='font-size: 11px; font-weight: normal;'>(Κάντε scroll κάτω για Τμήμα)</span>",
-        "alert_box": "⚙️ Press the arrows <span class=\"red-badge\">&gt;&gt;</span> top left for Sections &amp; Language"
+        "alert_box": "⚙️ Press the arrows <span class=\"red-badge\">&gt;&gt;</span> top left for Sections &amp; Language",
+        "uploader_label_hw": "📸 Camera or Assignment File",
+        "uploader_label_notebook": "📸 Take photo with camera or select notebook files:",
+        "expander_class": "🏫 Quick Class Selection & Management (Click here)",
+        "expander_lang": "🌐 Quick UI Language Change (Click here)",
+        "current_class_label": "Current Section:",
+        "change_class_label": "Change Section:",
+        "no_students_yet": "No students added yet.",
+        "section_students_text": "Students in section",
+        "lang_select_label": "UI Language / Language:",
+        "box1_title": "🗂️ Box 1: Automatic Homework Grading",
+        "box2_title": "🗂️ Box 2: Import Roster",
+        "box3_title": "🗂️ Box 3: Progress Table & Reports",
+        "view_photos_folder": "👁️ View folder photos",
+        "clear_folder": "🗑️ Clear Folder",
+        "roster_photo_caption": "Roster Photo"
     },
     "Русский (Russian)": {
         "title": "🎓 GradeMind AI",
@@ -244,7 +274,22 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 Отметить отсутствующих на сегодня",
         "manual_delete": "🗑️ Удалить записи",
         "sidebar_stop_text": "🔴 ВАЖНО:<br>Прокрутите вниз 👇<br>для выбора класса.",
-        "alert_box": "⚙️ Нажмите стрелки <span class=\"red-badge\">&gt;&gt;</span> вверху слева для классов и языка"
+        "alert_box": "⚙️ Нажмите стрелки <span class=\"red-badge\">&gt;&gt;</span> вверху слева для классов и языка",
+        "uploader_label_hw": "📸 Камера или файл задания",
+        "uploader_label_notebook": "📸 Сделайте фото или выберите файлы тетрадей:",
+        "expander_class": "🏫 Выбор класса и управление (Нажмите здесь)",
+        "expander_lang": "🌐 Смена языка интерфейса (Нажмите здесь)",
+        "current_class_label": "Текущий класс:",
+        "change_class_label": "Изменить класс:",
+        "no_students_yet": "Ученики еще не добавлены.",
+        "section_students_text": "Ученики класса",
+        "lang_select_label": "Язык интерфейса / Language:",
+        "box1_title": "🗂️ Блок 1: Автоматическая оценка заданий",
+        "box2_title": "🗂️ Блок 2: Импорт списка",
+        "box3_title": "🗂️ Блок 3: Таблица успеваемости и отчеты",
+        "view_photos_folder": "👁️ Просмотр фотографий в папке",
+        "clear_folder": "🗑️ Очистить папку",
+        "roster_photo_caption": "Фото списка"
     },
     "Français (French)": {
         "title": "🎓 GradeMind AI",
@@ -282,7 +327,22 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 Marquer les absents pour aujourd'hui",
         "manual_delete": "🗑️ Supprimer des enregistrements",
         "sidebar_stop_text": "🔴 IMPORTANT :<br>Faites défiler vers le bas 👇<br>pour choisir la classe.",
-        "alert_box": "⚙️ Appuyez sur les flèches <span class=\"red-badge\">&gt;&gt;</span> en haut à gauche pour les classes et la langue"
+        "alert_box": "⚙️ Appuyez sur les flèches <span class=\"red-badge\">&gt;&gt;</span> en haut à gauche pour les classes et la langue",
+        "uploader_label_hw": "📸 Appareil photo ou fichier de consigne",
+        "uploader_label_notebook": "📸 Prenez une photo ou sélectionnez des fichiers :",
+        "expander_class": "🏫 Sélection et gestion de classe (Cliquez ici)",
+        "expander_lang": "🌐 Changement de langue (Cliquez ici)",
+        "current_class_label": "Classe actuelle :",
+        "change_class_label": "Changer de classe :",
+        "no_students_yet": "Aucun élève ajouté pour l'instant.",
+        "section_students_text": "Élèves de la classe",
+        "lang_select_label": "Langue de l'interface / Language:",
+        "box1_title": "🗂️ Bloc 1 : Correction automatique des devoirs",
+        "box2_title": "🗂️ Bloc 2 : Importer la liste",
+        "box3_title": "🗂️ Bloc 3 : Tableau de progression et rapports",
+        "view_photos_folder": "👁️ Afficher les photos du dossier",
+        "clear_folder": "🗑️ Vider le dossier",
+        "roster_photo_caption": "Photo de la liste"
     },
     "Italiano (Italian)": {
         "title": "🎓 GradeMind AI",
@@ -320,7 +380,22 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 Segna assenti per oggi",
         "manual_delete": "🗑️ Elimina record",
         "sidebar_stop_text": "🔴 IMPORTANTE:<br>Scorri verso il basso 👇<br>per selezionare la classe.",
-        "alert_box": "⚙️ Premi le frecce <span class=\"red-badge\">&gt;&gt;</span> in alto a sinistra per classi e lingua"
+        "alert_box": "⚙️ Premi le frecce <span class=\"red-badge\">&gt;&gt;</span> in alto a sinistra per classi e lingua",
+        "uploader_label_hw": "📸 Fotocamera o file del compito",
+        "uploader_label_notebook": "📸 Scatta foto o seleziona file dei quaderni:",
+        "expander_class": "🏫 Selezione e gestione classe (Clicca qui)",
+        "expander_lang": "🌐 Cambio lingua UI (Clicca qui)",
+        "current_class_label": "Classe corrente:",
+        "change_class_label": "Cambia classe:",
+        "no_students_yet": "Nessuno studente aggiunto.",
+        "section_students_text": "Studenti della classe",
+        "lang_select_label": "Lingua interfaccia / Language:",
+        "box1_title": "🗂️ Blocco 1: Correzione automatica dei compiti",
+        "box2_title": "🗂️ Blocco 2: Importa registro",
+        "box3_title": "🗂️ Blocco 3: Tabella dei progressi e report",
+        "view_photos_folder": "👁️ Visualizza foto nella cartella",
+        "clear_folder": "🗑️ Pulisci cartella",
+        "roster_photo_caption": "Foto del registro"
     },
     "Deutsch (German)": {
         "title": "🎓 GradeMind AI",
@@ -358,7 +433,22 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 Fehlende Hausaufgaben für heute markieren",
         "manual_delete": "🗑️ Datensätze löschen",
         "sidebar_stop_text": "🔴 WICHTIG:<br>Nach unten scrollen 👇<br>um die Klasse auszuwählen.",
-        "alert_box": "⚙️ Drücken Sie die Pfeile <span class=\"red-badge\">&gt;&gt;</span> oben links für Klassen und Sprache"
+        "alert_box": "⚙️ Drücken Sie die Pfeile <span class=\"red-badge\">&gt;&gt;</span> oben links für Klassen und Sprache",
+        "uploader_label_hw": "📸 Kamera oder Aufgabendatei",
+        "uploader_label_notebook": "📸 Foto aufnehmen oder Heftdateien auswählen:",
+        "expander_class": "🏫 Klassenauswahl & Verwaltung (Hier klicken)",
+        "expander_lang": "🌐 UI-Sprache ändern (Hier klicken)",
+        "current_class_label": "Aktuelle Klasse:",
+        "change_class_label": "Klasse wechseln:",
+        "no_students_yet": "Noch keine Schüler hinzugefügt.",
+        "section_students_text": "Schüler der Klasse",
+        "lang_select_label": "UI-Sprache / Language:",
+        "box1_title": "🗂️ Feld 1: Automatische Hausaufgabenkorrektur",
+        "box2_title": "🗂️ Feld 2: Klassenliste importieren",
+        "box3_title": "🗂️ Feld 3: Fortschrittstabelle und Berichte",
+        "view_photos_folder": "👁️ Ordnerfotos anzeigen",
+        "clear_folder": "🗑️ Ordner leeren",
+        "roster_photo_caption": "Listenfoto"
     },
     "中文 (Chinese)": {
         "title": "🎓 GradeMind AI",
@@ -396,7 +486,22 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 标记今日未交作业学生",
         "manual_delete": "🗑️ 删除记录",
         "sidebar_stop_text": "🔴 重要提示：<br>向下滚动 👇<br>以选择班级。",
-        "alert_box": "⚙️ 点击左上角的箭头 <span class=\"red-badge\">&gt;&gt;</span> 以管理班级和语言"
+        "alert_box": "⚙️ 点击左上角的箭头 <span class=\"red-badge\">&gt;&gt;</span> 以管理班级和语言",
+        "uploader_label_hw": "📸 相机或作业文件",
+        "uploader_label_notebook": "📸 拍摄作业照片或选择文件：",
+        "expander_class": "🏫 快速选择与班级管理（点击这里）",
+        "expander_lang": "🌐 快速切换界面语言（点击这里）",
+        "current_class_label": "当前班级：",
+        "change_class_label": "更改班级：",
+        "no_students_yet": "尚未添加学生。",
+        "section_students_text": "班级学生",
+        "lang_select_label": "界面语言 / Language:",
+        "box1_title": "🗂️ 模块 1：自动作业批改",
+        "box2_title": "🗂️ 模块 2：导入花名册",
+        "box3_title": "🗂️ 模块 3：进度表与报告",
+        "view_photos_folder": "👁️ 查看文件夹照片",
+        "clear_folder": "🗑️ 清空文件夹",
+        "roster_photo_caption": "花名册照片"
     },
     "日本語 (Japanese)": {
         "title": "🎓 GradeMind AI",
@@ -434,7 +539,22 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 本日の未提出者を記録",
         "manual_delete": "🗑️ データの削除",
         "sidebar_stop_text": "🔴 重要：<br>下にスクロール 👇<br>してクラスを選択してください。",
-        "alert_box": "⚙️ 左上の矢印 <span class=\"red-badge\">&gt;&gt;</span> を押してクラスと言語を変更してください"
+        "alert_box": "⚙️ 左上の矢印 <span class=\"red-badge\">&gt;&gt;</span> を押してクラスと言語を変更してください",
+        "uploader_label_hw": "📸 カメラまたは宿題ファイル",
+        "uploader_label_notebook": "📸 ノートの写真を撮影またはファイルを選択：",
+        "expander_class": "🏫 クラスの選択と管理（ここをクリック）",
+        "expander_lang": "🌐 UI言語の変更（ここをクリック）",
+        "current_class_label": "現在のクラス：",
+        "change_class_label": "クラスを変更：",
+        "no_students_yet": "生徒はまだ追加されていません。",
+        "section_students_text": "クラスの生徒",
+        "lang_select_label": "UI言語 / Language:",
+        "box1_title": "🗂️ ブロック 1：自動宿題採点",
+        "box2_title": "🗂️ ブロック 2：名簿のインポート",
+        "box3_title": "🗂️ ブロック 3：進捗テーブルとレポート",
+        "view_photos_folder": "👁️ フォルダの写真を表示",
+        "clear_folder": "🗑️ フォルダをクリア",
+        "roster_photo_caption": "名簿の写真"
     }
 }
 
@@ -459,7 +579,7 @@ st.sidebar.header(t["hw_section"])
 st.sidebar.write(t["hw_desc"])
 
 hw_files = st.sidebar.file_uploader(
-    "📸 Κάμερα ή Αρχείο Εκφώνησης",
+    t["uploader_label_hw"],
     type=["png", "jpg", "jpeg"],
     accept_multiple_files=True,
     key="hw_high_res_uploader"
@@ -558,17 +678,17 @@ if active_api_key:
             </div>
         ''', unsafe_allow_html=True)
         
-        with st.expander("🏫 Γρήγορη Επιλογή & Διαχείριση Τμήματος (Πατήστε εδώ)", expanded=False):
-            st.write(f"**Τρέχον Τμήμα:** `{selected_class}`")
-            quick_class = st.selectbox("Αλλαγή Τμήματος:", list(students_db.keys()), index=list(students_db.keys()).index(selected_class) if selected_class in students_db else 0, key="quick_class_sel")
+        with st.expander(t["expander_class"], expanded=False):
+            st.write(f"**{t['current_class_label']}** `{selected_class}`")
+            quick_class = st.selectbox(t["change_class_label"], list(students_db.keys()), index=list(students_db.keys()).index(selected_class) if selected_class in students_db else 0, key="quick_class_sel")
             if quick_class != selected_class:
                 st.session_state["selected_class"] = quick_class
                 st.rerun()
             
-            st.write(f"👥 **Μαθητές τμήματος {selected_class}:** {', '.join(students_db[selected_class]) if students_db[selected_class] else 'Δεν έχουν προστεθεί μαθητές ακόμα.'}")
+            st.write(f"👥 **{t['section_students_text']} {selected_class}:** {', '.join(students_db[selected_class]) if students_db[selected_class] else t['no_students_yet']}")
 
-        with st.expander("🌐 Γρήγορη Αλλαγή Γλώσσας UI (Πατήστε εδώ)", expanded=False):
-            quick_lang = st.selectbox("Επιλογή Γλώσσας / Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(app_lang), key="quick_lang_sel")
+        with st.expander(t["expander_lang"], expanded=False):
+            quick_lang = st.selectbox(t["lang_select_label"], list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(app_lang), key="quick_lang_sel")
             if quick_lang != app_lang:
                 st.session_state["app_lang"] = quick_lang
                 st.rerun()
@@ -583,14 +703,14 @@ if active_api_key:
         st.markdown("---")
 
         if selected_mode == t["opt1"]:
-            st.markdown("### 🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης")
+            st.markdown(f"### {t['box1_title']}")
             st.subheader(t["notebook_sec"])
             
             if not homework_images:
                 st.warning(t["no_hw_warn"])
 
             up_files = st.file_uploader(
-                t["batch_upload"], 
+                t["uploader_label_notebook"], 
                 type=["png", "jpg", "jpeg"], 
                 accept_multiple_files=True, 
                 key="notebook_batch_up"
@@ -623,17 +743,17 @@ if active_api_key:
                 st.markdown("---")
                 st.write(f"📊 **{len(folder_files)} {t['folder_found']}**")
                 
-                with st.expander("👁️ Προβολή φωτογραφιών στον φάκελο"):
+                with st.expander(t["view_photos_folder"]):
                     cols = st.columns(3)
                     for idx, f_path in enumerate(folder_files):
                         with cols[idx % 3]:
-                            st.image(f_path, caption=f"Φωτογραφία {idx+1}", use_column_width=True)
+                            st.image(f_path, caption=f"Photo {idx+1}", use_column_width=True)
                 
                 col_btn1, col_btn2 = st.columns([2, 1])
                 with col_btn1:
                     run_eval = st.button(t["btn_evaluate"], type="primary")
                 with col_btn2:
-                    if st.button("🗑️ Εκκαθάριση Φακέλου"):
+                    if st.button(t["clear_folder"]):
                         clear_upload_folder()
                         if "last_uploaded_sig" in st.session_state:
                             del st.session_state["last_uploaded_sig"]
@@ -655,7 +775,7 @@ if active_api_key:
                     """
                     components.html(wake_lock_code, height=0)
                     
-                    st.info("💡 Σημείωση / Note...")
+                    st.info("💡 Screen wake lock active. Please wait...")
                     
                     batch_images = []
                     for f_path in folder_files:
@@ -755,7 +875,7 @@ if active_api_key:
                     st.markdown(st.session_state["current_eval"])
 
         elif selected_mode == t["opt2"]:
-            st.markdown("### 🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου")
+            st.markdown(f"### {t['box2_title']}")
             st.subheader(f"{t['catalog_sec']} – {selected_class}")
             
             list_img_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="list_up")
@@ -765,7 +885,7 @@ if active_api_key:
                     f.write(list_img_file.getbuffer())
                 list_img = Image.open(list_path)
                 
-                st.image(list_img, caption="Φωτογραφία Καταλόγου", use_column_width=True)
+                st.image(list_img, caption=t["roster_photo_caption"], use_column_width=True)
                 
                 if st.button(t["btn_read_names"], type="primary"):
                     with st.spinner("🤖 AI..."):
@@ -797,7 +917,7 @@ if active_api_key:
                         st.rerun()
 
         elif selected_mode == t["opt3"]:
-            st.markdown("### 🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές")
+            st.markdown(f"### {t['box3_title']}")
             st.subheader(f"{t['stats_sec']} – {selected_class}")
             
             if st.button(t["btn_close_day"]):
