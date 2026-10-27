@@ -258,9 +258,24 @@ if st.sidebar.button(t["btn_add_class"]):
         students_db[n_class] = []
         save_students(students_db)
         st.sidebar.success(f"Δημιουργήθηκε το τμήμα: {n_class}")
+        st.session_state["selected_class"] = n_class
         st.rerun()
 
-selected_class = st.sidebar.selectbox(t["select_class"], list(students_db.keys()))
+# Αρχικοποίηση επιλεγμένου τμήματος στο session state αν δεν υπάρχει
+if "selected_class" not in st.session_state or st.session_state["selected_class"] not in students_db:
+    st.session_state["selected_class"] = list(students_db.keys())[0]
+
+# Επιλογή τμήματος στην αριστερή στήλη με συγχρονισμό
+selected_class_sidebar = st.sidebar.selectbox(
+    t["select_class"], 
+    list(students_db.keys()), 
+    index=list(students_db.keys()).index(st.session_state["selected_class"])
+)
+if selected_class_sidebar != st.session_state["selected_class"]:
+    st.session_state["selected_class"] = selected_class_sidebar
+    st.rerun()
+
+selected_class = st.session_state["selected_class"]
 
 st.sidebar.subheader(f"{t['students_in']} {selected_class}")
 new_student = st.sidebar.text_input(t["add_student"])
@@ -322,7 +337,8 @@ if active_api_key:
             st.write(f"**Τρέχον Τμήμα:** `{selected_class}`")
             quick_class = st.selectbox("Αλλαγή Τμήματος:", list(students_db.keys()), index=list(students_db.keys()).index(selected_class) if selected_class in students_db else 0, key="quick_class_sel")
             if quick_class != selected_class:
-                selected_class = quick_class
+                st.session_state["selected_class"] = quick_class
+                st.rerun()
             
             st.write(f"👥 **Μαθητές τμήματος {selected_class}:** {', '.join(students_db[selected_class]) if students_db[selected_class] else 'Δεν έχουν προστεθεί μαθητές ακόμα.'}")
 
