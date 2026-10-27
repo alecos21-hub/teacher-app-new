@@ -167,7 +167,8 @@ TRANSLATIONS = {
         "stats_sec": "📊 Συνολικός Πίνακας Προόδου Τμήματος (Excel Style)",
         "btn_close_day": "🚨 Καταγραφή Απουσιών/Ελλείψεων για Σήμερα",
         "manual_delete": "🗑️ Διαγραφή Δεδομένων",
-        "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ:<br>Κάντε scroll προς τα κάτω 👇<br>για να επιλέξετε Τμήμα.<br><span style='font-size: 11px; font-weight: normal;'>(Scroll down to select Department)</span>"
+        "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ:<br>Κάντε scroll προς τα κάτω 👇<br>για να επιλέξετε Τμήμα.<br><span style='font-size: 11px; font-weight: normal;'>(Scroll down to select Department)</span>",
+        "alert_box": "⚙️ Πατήστε τα βελάκια <span class=\"red-badge\">&gt;&gt;</span> πάνω αριστερά για Τμήματα &amp; Γλώσσα"
     },
     "English": {
         "title": "🎓 GradeMind AI",
@@ -204,7 +205,8 @@ TRANSLATIONS = {
         "stats_sec": "📊 Class Progress Matrix (Excel Style)",
         "btn_close_day": "🚨 Mark Missing Homework for Today",
         "manual_delete": "🗑️ Delete Records",
-        "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.<br><span style='font-size: 11px; font-weight: normal;'>(Κάντε scroll κάτω για Τμήμα)</span>"
+        "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.<br><span style='font-size: 11px; font-weight: normal;'>(Κάντε scroll κάτω για Τμήμα)</span>",
+        "alert_box": "⚙️ Press the arrows <span class=\"red-badge\">&gt;&gt;</span> top left for Sections &amp; Language"
     },
     "Русский (Russian)": {
         "title": "🎓 GradeMind AI",
@@ -241,7 +243,8 @@ TRANSLATIONS = {
         "stats_sec": "📊 Матрица успеваемости класса",
         "btn_close_day": "🚨 Отметить отсутствующих на сегодня",
         "manual_delete": "🗑️ Удалить записи",
-        "sidebar_stop_text": "🔴 ВАЖНО:<br>Прокрутите вниз 👇<br>для выбора класса."
+        "sidebar_stop_text": "🔴 ВАЖНО:<br>Прокрутите вниз 👇<br>для выбора класса.",
+        "alert_box": "⚙️ Нажмите стрелки <span class=\"red-badge\">&gt;&gt;</span> вверху слева для классов и языка"
     },
     "Français (French)": {
         "title": "🎓 GradeMind AI",
@@ -278,7 +281,8 @@ TRANSLATIONS = {
         "stats_sec": "📊 Matrice de progression de la classe",
         "btn_close_day": "🚨 Marquer les absents pour aujourd'hui",
         "manual_delete": "🗑️ Supprimer des enregistrements",
-        "sidebar_stop_text": "🔴 IMPORTANT :<br>Faites défiler vers le bas 👇<br>pour choisir la classe."
+        "sidebar_stop_text": "🔴 IMPORTANT :<br>Faites défiler vers le bas 👇<br>pour choisir la classe.",
+        "alert_box": "⚙️ Appuyez sur les flèches <span class=\"red-badge\">&gt;&gt;</span> en haut à gauche pour les classes et la langue"
     },
     "Italiano (Italian)": {
         "title": "🎓 GradeMind AI",
@@ -315,7 +319,8 @@ TRANSLATIONS = {
         "stats_sec": "📊 Matrice progressi della classe",
         "btn_close_day": "🚨 Segna assenti per oggi",
         "manual_delete": "🗑️ Elimina record",
-        "sidebar_stop_text": "🔴 IMPORTANTE:<br>Scorri verso il basso 👇<br>per selezionare la classe."
+        "sidebar_stop_text": "🔴 IMPORTANTE:<br>Scorri verso il basso 👇<br>per selezionare la classe.",
+        "alert_box": "⚙️ Premi le frecce <span class=\"red-badge\">&gt;&gt;</span> in alto a sinistra per classi e lingua"
     },
     "Deutsch (German)": {
         "title": "🎓 GradeMind AI",
@@ -352,7 +357,8 @@ TRANSLATIONS = {
         "stats_sec": "📊 Klassen-Fortschrittsmatrix",
         "btn_close_day": "🚨 Fehlende Hausaufgaben für heute markieren",
         "manual_delete": "🗑️ Datensätze löschen",
-        "sidebar_stop_text": "🔴 WICHTIG:<br>Nach unten scrollen 👇<br>um die Klasse auszuwählen."
+        "sidebar_stop_text": "🔴 WICHTIG:<br>Nach unten scrollen 👇<br>um die Klasse auszuwählen.",
+        "alert_box": "⚙️ Drücken Sie die Pfeile <span class=\"red-badge\">&gt;&gt;</span> oben links für Klassen und Sprache"
     },
     "中文 (Chinese)": {
         "title": "🎓 GradeMind AI",
@@ -389,7 +395,8 @@ TRANSLATIONS = {
         "stats_sec": "📊 班级进度矩阵 (Excel格式)",
         "btn_close_day": "🚨 标记今日未交作业学生",
         "manual_delete": "🗑️ 删除记录",
-        "sidebar_stop_text": "🔴 重要提示：<br>向下滚动 👇<br>以选择班级。"
+        "sidebar_stop_text": "🔴 重要提示：<br>向下滚动 👇<br>以选择班级。",
+        "alert_box": "⚙️ 点击左上角的箭头 <span class=\"red-badge\">&gt;&gt;</span> 以管理班级和语言"
     },
     "日本語 (Japanese)": {
         "title": "🎓 GradeMind AI",
@@ -426,13 +433,22 @@ TRANSLATIONS = {
         "stats_sec": "📊 クラス進捗マトリックス",
         "btn_close_day": "🚨 本日の未提出者を記録",
         "manual_delete": "🗑️ データの削除",
-        "sidebar_stop_text": "🔴 重要：<br>下にスクロール 👇<br>してクラスを選択してください。"
+        "sidebar_stop_text": "🔴 重要：<br>下にスクロール 👇<br>してクラスを選択してください。",
+        "alert_box": "⚙️ 左上の矢印 <span class=\"red-badge\">&gt;&gt;</span> を押してクラスと言語を変更してください"
     }
 }
 
 # --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ & ΜΑΘΗΤΩΝ ---
+if "app_lang" not in st.session_state:
+    st.session_state["app_lang"] = "Ελληνικά"
+
 st.sidebar.header("🌐 App Language / Γλώσσα")
-app_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=0, key="sidebar_lang_select")
+selected_sidebar_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(st.session_state["app_lang"]), key="sidebar_lang_select")
+if selected_sidebar_lang != st.session_state["app_lang"]:
+    st.session_state["app_lang"] = selected_sidebar_lang
+    st.rerun()
+
+app_lang = st.session_state["app_lang"]
 t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
 
 st.markdown(t["title"])
@@ -463,7 +479,6 @@ if hw_files:
             pass
     st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
 
-# Κόκκινο πλαίσιο-στοπ ακριβώς κάτω από το upload στο sidebar για τα κινητά
 st.sidebar.markdown(f"""
     <div class="sidebar-stop-box">
         {t["sidebar_stop_text"]}
@@ -483,11 +498,9 @@ if st.sidebar.button(t["btn_add_class"]):
         st.session_state["selected_class"] = n_class
         st.rerun()
 
-# Αρχικοποίηση επιλεγμένου τμήματος στο session state αν δεν υπάρχει
 if "selected_class" not in st.session_state or st.session_state["selected_class"] not in students_db:
     st.session_state["selected_class"] = list(students_db.keys())[0]
 
-# Επιλογή τμήματος στην αριστερή στήλη με συγχρονισμό
 selected_class_sidebar = st.sidebar.selectbox(
     t["select_class"], 
     list(students_db.keys()), 
@@ -539,22 +552,12 @@ if active_api_key:
     try:
         client = genai.Client(api_key=active_api_key)
         
-        # Κόκκινο κουτί ειδοποίησης για τα βελάκια
-        if app_lang == "Ελληνικά":
-            alert_html = f'''
-                <div class="custom-alert-box">
-                    ⚙️ Πατήστε τα βελάκια <span class="red-badge">&gt;&gt;</span> πάνω αριστερά για Τμήματα &amp; Γλώσσα
-                </div>
-            '''
-        else:
-            alert_html = f'''
-                <div class="custom-alert-box">
-                    ⚙️ Press the arrows <span class="red-badge">&gt;&gt;</span> top left for Sections &amp; Language
-                </div>
-            '''
-        st.markdown(alert_html, unsafe_allow_html=True)
+        st.markdown(f'''
+            <div class="custom-alert-box">
+                {t["alert_box"]}
+            </div>
+        ''', unsafe_allow_html=True)
         
-        # --- ΕΥΔΙΑΚΡΙΤΑ ΕΠΕΚΤΑΣΙΜΑ ΚΟΥΤΙΑ (EXPANDERS) ΓΙΑ ΑΜΕΣΗ ΠΡΟΣΒΑΣΗ ΣΤΟ ΚΙΝΗΤΟ ---
         with st.expander("🏫 Γρήγορη Επιλογή & Διαχείριση Τμήματος (Πατήστε εδώ)", expanded=False):
             st.write(f"**Τρέχον Τμήμα:** `{selected_class}`")
             quick_class = st.selectbox("Αλλαγή Τμήματος:", list(students_db.keys()), index=list(students_db.keys()).index(selected_class) if selected_class in students_db else 0, key="quick_class_sel")
@@ -567,7 +570,7 @@ if active_api_key:
         with st.expander("🌐 Γρήγορη Αλλαγή Γλώσσας UI (Πατήστε εδώ)", expanded=False):
             quick_lang = st.selectbox("Επιλογή Γλώσσας / Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(app_lang), key="quick_lang_sel")
             if quick_lang != app_lang:
-                app_lang = quick_lang
+                st.session_state["app_lang"] = quick_lang
                 st.rerun()
 
         st.markdown("---")
@@ -644,18 +647,15 @@ if active_api_key:
                         try {
                             if ('wakeLock' in navigator) {
                                 wakeLock = await navigator.wakeLock.request('screen');
-                                console.log('Screen Wake Lock active!');
                             }
-                        } catch (err) {
-                            console.error(`${err.name}, ${err.message}`);
-                        }
+                        } catch (err) {}
                     }
                     requestWakeLock();
                     </script>
                     """
                     components.html(wake_lock_code, height=0)
                     
-                    st.info("💡 **Σημείωση:** Η οθόνη του κινητού σου κρατιέται ενεργή αυτόματα. Παρακαλώ περίμενε μερικά δευτερόλεπτα...")
+                    st.info("💡 Σημείωση / Note...")
                     
                     batch_images = []
                     for f_path in folder_files:
@@ -670,7 +670,7 @@ if active_api_key:
                     I attached high-resolution images of student notebook pages.
                     Evaluate EACH student found in these images individually.
 
-                    1. **MULTI-PAGE HANDLING**: If a student's work spans across multiple pages/images, combine all their pages together and output a SINGLE unified score and evaluation for that student. Do not create separate entries for the same student.
+                    1. **MULTI-PAGE HANDLING**: If a student's work spans across multiple pages/images, combine all their pages together and output a SINGLE unified score and evaluation for that student.
                     2. **DETECT STUDENT WORK LANGUAGE**: Automatically detect the language used by the student.
                     3. **MATCH FEEDBACK LANGUAGE**: Write all analysis/notes EXCLUSIVELY in that same language.
                     4. **SCORE FORMAT**: Provide the score strictly as a percentage (e.g., 85% or 0% if completely wrong).
@@ -694,14 +694,13 @@ if active_api_key:
                         eval_res = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_list)
                     except Exception as api_err:
                         eval_res = None
-                        st.error(f"⚠️ Σφάλμα API: {api_err}")
+                        st.error(f"⚠️ API Error: {api_err}")
 
                     if not eval_res:
-                        st.error("⚠️ Προέκυψε πρόβλημα σύνδεσης με το Google Gemini API. Δοκιμάστε ξανά.")
+                        st.error("⚠️ Connection error. Please try again.")
                         st.stop()
 
                     full_eval_res = eval_res
-                    
                     today = datetime.date.today().strftime("%Y-%m-%d")
                     student_blocks = re.split(r'###\s*Μαθητής\s*:?|Μαθητής\s+\d+:', full_eval_res)
                     
@@ -715,15 +714,15 @@ if active_api_key:
                         
                         for line in block.split('\n'):
                             line_str = line.strip()
-                            if line_str.startswith("Όνομα:"):
-                                d_name = line_str.replace("Όνομα:", "").strip()
-                            elif line_str.startswith("Ποσοστό:"):
-                                d_score = line_str.replace("Ποσοστό:", "").strip()
+                            if line_str.startswith("Όνομα:") or line_str.startswith("Name:"):
+                                d_name = line_str.split(":", 1)[1].strip()
+                            elif line_str.startswith("Ποσοστό:") or line_str.startswith("Score:"):
+                                d_score = line_str.split(":", 1)[1].strip()
                         
-                        d_name = d_name.replace("**", "").replace("*", "").strip().replace("/", "-")
-                        d_score = d_score.replace("**", "").replace("*", "").strip()
+                        d_name = d_name.replace("*", "").strip().replace("/", "-")
+                        d_score = d_score.replace("*", "").strip()
 
-                        if d_name != "Άγνωστος":
+                        if d_name != "Άγνωστος" and d_name != "Unknown":
                             new_rows.append({
                                 "Ημερομηνία": today,
                                 "Τμήμα": selected_class,
@@ -769,8 +768,8 @@ if active_api_key:
                 st.image(list_img, caption="Φωτογραφία Καταλόγου", use_column_width=True)
                 
                 if st.button(t["btn_read_names"], type="primary"):
-                    with st.spinner("🤖 Η AI διαβάζει τα ονόματα και τα αποθηκεύει μόνιμα στο τμήμα..."):
-                        p_list = "Read all student names from this roster photo carefully. Return ONLY a comma-separated list of the full names (e.g. Γιώργος Παπαδόπουλος, Μαρία Ιωάννου). Do not add any extra text or numbers."
+                    with st.spinner("🤖 AI..."):
+                        p_list = "Read all student names from this roster photo carefully. Return ONLY a comma-separated list of the full names. Do not add any extra text or numbers."
                         
                         try:
                             raw_text_res = call_gemini_with_retry(client, 'gemini-3.8-flash', [p_list, list_img])
@@ -779,7 +778,7 @@ if active_api_key:
                             raw_text = ""
                         
                         if not raw_text:
-                            st.error("⚠️ Προέκυψε στιγμιαίο πρόβλημα. Παρακαλώ δοκιμάστε ξανά.")
+                            st.error("⚠️ Error reading roster. Please try again.")
                             st.stop()
                         
                         names_found = [n.strip().replace("\n", "").replace("-", "") for n in raw_text.split(",") if n.strip()]
@@ -793,8 +792,8 @@ if active_api_key:
                         students_db[selected_class].sort()
                         save_students(students_db)
                         
-                        st.success(f"🎉 Διαβάστηκαν και αποθηκεύτηκαν επιτυχώς {added_count} νέα ονόματα στο τμήμα {selected_class}!")
-                        st.write("📋 **Ονόματα που προστέθηκαν:**", names_found)
+                        st.success(f"🎉 {added_count} names added successfully!")
+                        st.write("📋 **Names:**", names_found)
                         st.rerun()
 
         elif selected_mode == t["opt3"]:
@@ -827,10 +826,10 @@ if active_api_key:
                     df_missing = pd.DataFrame(missing_records)
                     df_final = pd.concat([df_g, df_missing], ignore_index=True)
                     df_final.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                    st.success(f"Καταγράφηκαν οι απουσίες/ελλείψεις για όσους δεν είχαν τετράδιο σήμερα!")
+                    st.success("Missing records saved!")
                     st.rerun()
                 else:
-                    st.info("Όλοι οι μαθητές έχουν αξιολογηθεί για σήμερα!")
+                    st.info("All students evaluated!")
 
             if os.path.exists(GRADES_FILE):
                 df_all = pd.read_csv(GRADES_FILE)
@@ -848,44 +847,44 @@ if active_api_key:
                         if st_name not in pivot_df.index:
                             pivot_df.loc[st_name] = "Δεν έκανε ασκήσεις"
 
-                    st.markdown("### 📋 Πίνακας Βαθμολογίας & Πρόκρισης (Excel Format)")
+                    st.markdown("### 📋 Progress Matrix")
                     st.dataframe(pivot_df, use_container_width=True)
 
                     st.markdown("---")
-                    st.subheader("🗑️ Επιλογές Διαχείρισης & Διαγραφής")
+                    st.subheader("🗑️ Management")
                     
                     col_d1, col_d2 = st.columns(2)
                     
                     with col_d1:
                         available_dates = df_class["Ημερομηνία"].unique().tolist()
-                        selected_date_to_delete = st.selectbox("Ημερομηνία για μαζική διαγραφή:", ["-- Επιλέξτε --"] + available_dates)
-                        if st.button("🚨 Διαγραφή Ημέρας"):
-                            if selected_date_to_delete != "-- Επιλέξτε --":
+                        selected_date_to_delete = st.selectbox("Date to delete:", ["-- Select --"] + available_dates)
+                        if st.button("🚨 Delete Date"):
+                            if selected_date_to_delete != "-- Select --":
                                 df_all = df_all[~((df_all["Ημερομηνία"] == selected_date_to_delete) & (df_all["Τμήμα"] == selected_class))]
                                 df_all.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                                st.success(f"Η ημερομηνία {selected_date_to_delete} διαγράφηκε επιτυχώς!")
+                                st.success("Deleted!")
                                 st.rerun()
 
                     with col_d2:
-                        options_to_delete = ["-- Επιλέξτε εγγραφή --"]
+                        options_to_delete = ["-- Select entry --"]
                         indices_map = {}
                         for idx, row in df_class.iterrows():
                             label = f"{row['Ημερομηνία']} | {row['Μαθητής']} | {row['Ποσοστό']}"
                             options_to_delete.append(label)
                             indices_map[label] = idx
 
-                        selected_del = st.selectbox("Μεμονωμένη εγγραφή:", options_to_delete)
-                        if st.button("🗑️ Διαγραφή Επιλεγμένου"):
-                            if selected_del != "-- Επιλέξτε εγγραφή --":
+                        selected_del = st.selectbox("Single entry:", options_to_delete)
+                        if st.button("🗑️ Delete Selected"):
+                            if selected_del != "-- Select entry --":
                                 target_idx = indices_map[selected_del]
                                 df_all = df_all.drop(target_idx)
                                 df_all.to_csv(GRADES_FILE, index=False, encoding='utf-8-sig')
-                                st.success("Η εγγραφή διαγράφηκε!")
+                                st.success("Deleted!")
                                 st.rerun()
                 else:
-                    st.info(f"Δεν υπάρχουν καταγεγραμμένες βαθμολογίες για το τμήμα {selected_class} ακόμα. Ανεβάστε τετράδια στην 1η καρτέλα για να ξεκινήσετε!")
+                    st.info(f"No records for section {selected_class}.")
             else:
-                st.info("Δεν βρέθηκε αρχείο βαθμολογιών.")
+                st.info("No grades file found.")
 
     except Exception as e:
         st.error(f"Error: {e}")
