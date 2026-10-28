@@ -131,7 +131,66 @@ def call_gemini_with_retry(client, model_name, contents, max_retries=3):
 students_db = load_students()
 config_data = load_config()
 
+# Τα English είναι πρώτα ώστε να γίνουν default
 TRANSLATIONS = {
+    "English": {
+        "title": "🎓 GradeMind AI",
+        "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
+        "hw_section": "📖 Homework Prompt Photos",
+        "hw_desc": "📸 Take camera photo or upload assignment pages:",
+        "hw_saved": "Homework page(s) saved!",
+        "class_mgmt": "⚙️ Class Management & Sections",
+        "select_class": "Select Class/Section:",
+        "add_new_class": "➕ Add New Section (e.g. B3):",
+        "btn_add_class": "Add Section",
+        "remove_class": "❌ Delete Section:",
+        "btn_remove_class": "Delete Section",
+        "students_in": "Students in Section",
+        "add_student": "Add new student:",
+        "btn_add": "➕ Add Student",
+        "remove_student": "Remove student:",
+        "btn_remove": "❌ Delete Student",
+        "api_prompt": "Enter Google Gemini API Key",
+        "save_api": "💾 Save API Key",
+        "api_saved_success": "API Key saved successfully!",
+        "menu_title": "📌 Select Mode (Vertical Menu):",
+        "opt1": "📷 1. Automatic Grading",
+        "opt2": "📋 2. Import Roster",
+        "opt3": "📊 3. Progress Table & Reports",
+        "notebook_sec": "✨ Capture & Upload Student Notebooks",
+        "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
+        "batch_upload": "📸 Take photo with camera or select notebook files:",
+        "folder_found": "student notebook photos ready in folder.",
+        "btn_evaluate": "🚀 Start Grading (Fast Mode)",
+        "eval_success": "Successfully saved to Progress Table!",
+        "view_eval": "🔍 View Latest Evaluation",
+        "catalog_sec": "📷 Import Class Roster for Section",
+        "upload_catalog": "📸 Take roster photo with camera or upload file:",
+        "btn_read_names": "🤖 Read & Auto-Save Roster",
+        "stats_sec": "📊 Class Progress Matrix (Excel Style)",
+        "btn_close_day": "🚨 Mark Missing Homework for Today",
+        "manual_delete": "🗑️ Delete Records",
+        "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.<br><span style='font-size: 11px; font-weight: normal;'>(Scroll down to select Department)</span>",
+        "alert_box": "⚙️ Press the arrows <span class=\"red-badge\">&gt;&gt;</span> top left for Sections &amp; Language",
+        "uploader_label_hw": "📸 Camera or Assignment File",
+        "uploader_label_notebook": "📸 Take photo with camera or select notebook files:",
+        "expander_class": "🏫 Quick Class Selection & Management (Click here)",
+        "expander_lang": "🌐 Quick UI Language Change (Click here)",
+        "current_class_label": "Current Section:",
+        "change_class_label": "Change Section:",
+        "no_students_yet": "No students added yet.",
+        "section_students_text": "Students in section",
+        "lang_select_label": "UI Language / Language:",
+        "box1_title": "🗂️ Box 1: Automatic Homework Grading",
+        "box2_title": "🗂️ Box 2: Import Roster",
+        "box3_title": "🗂️ Box 3: Progress Table & Reports",
+        "view_photos_folder": "👁️ View folder photos",
+        "clear_folder": "🗑️ Clear Folder",
+        "roster_photo_caption": "Roster Photo",
+        "no_classes_warn": "⚠️ No sections available. Create a section from the left sidebar to get started.",
+        "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
+        "catalog_success": "✅ Class list registered successfully!"
+    },
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*",
@@ -189,64 +248,6 @@ TRANSLATIONS = {
         "no_classes_warn": "⚠️ Δεν υπάρχουν διαθέσιμα τμήματα. Δημιουργήστε ένα τμήμα από την αριστερή στήλη για να ξεκινήσετε.",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
         "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!"
-    },
-    "English": {
-        "title": "🎓 GradeMind AI",
-        "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
-        "hw_section": "📖 Homework Prompt Photos",
-        "hw_desc": "📸 Take camera photo or upload assignment pages:",
-        "hw_saved": "Homework page(s) saved!",
-        "class_mgmt": "⚙️ Class Management & Sections",
-        "select_class": "Select Class/Section:",
-        "add_new_class": "➕ Add New Section (e.g. B3):",
-        "btn_add_class": "Add Section",
-        "remove_class": "❌ Delete Section:",
-        "btn_remove_class": "Delete Section",
-        "students_in": "Students in Section",
-        "add_student": "Add new student:",
-        "btn_add": "➕ Add Student",
-        "remove_student": "Remove student:",
-        "btn_remove": "❌ Delete Student",
-        "api_prompt": "Enter Google Gemini API Key",
-        "save_api": "💾 Save API Key",
-        "api_saved_success": "API Key saved successfully!",
-        "menu_title": "📌 Select Mode (Vertical Menu):",
-        "opt1": "📷 1. Automatic Grading",
-        "opt2": "📋 2. Import Roster",
-        "opt3": "📊 3. Progress Table & Reports",
-        "notebook_sec": "✨ Capture & Upload Student Notebooks",
-        "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
-        "batch_upload": "📸 Take photo with camera or select notebook files:",
-        "folder_found": "student notebook photos ready in folder.",
-        "btn_evaluate": "🚀 Start Grading (Fast Mode)",
-        "eval_success": "Successfully saved to Progress Table!",
-        "view_eval": "🔍 View Latest Evaluation",
-        "catalog_sec": "📷 Import Class Roster for Section",
-        "upload_catalog": "📸 Take roster photo with camera or upload file:",
-        "btn_read_names": "🤖 Read & Auto-Save Roster",
-        "stats_sec": "📊 Class Progress Matrix (Excel Style)",
-        "btn_close_day": "🚨 Mark Missing Homework for Today",
-        "manual_delete": "🗑️ Delete Records",
-        "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.<br><span style='font-size: 11px; font-weight: normal;'>(Κάντε scroll κάτω για Τμήμα)</span>",
-        "alert_box": "⚙️ Press the arrows <span class=\"red-badge\">&gt;&gt;</span> top left for Sections &amp; Language",
-        "uploader_label_hw": "📸 Camera or Assignment File",
-        "uploader_label_notebook": "📸 Take photo with camera or select notebook files:",
-        "expander_class": "🏫 Quick Class Selection & Management (Click here)",
-        "expander_lang": "🌐 Quick UI Language Change (Click here)",
-        "current_class_label": "Current Section:",
-        "change_class_label": "Change Section:",
-        "no_students_yet": "No students added yet.",
-        "section_students_text": "Students in section",
-        "lang_select_label": "UI Language / Language:",
-        "box1_title": "🗂️ Box 1: Automatic Homework Grading",
-        "box2_title": "🗂️ Box 2: Import Roster",
-        "box3_title": "🗂️ Box 3: Progress Table & Reports",
-        "view_photos_folder": "👁️ View folder photos",
-        "clear_folder": "🗑️ Clear Folder",
-        "roster_photo_caption": "Roster Photo",
-        "no_classes_warn": "⚠️ No sections available. Create a section from the left sidebar to get started.",
-        "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
-        "catalog_success": "✅ Class list registered successfully!"
     },
     "Русский (Russian)": {
         "title": "🎓 GradeMind AI",
@@ -600,7 +601,7 @@ TRANSLATIONS = {
 
 # --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ & ΜΑΘΗΤΩΝ ---
 if "app_lang" not in st.session_state:
-    st.session_state["app_lang"] = "Ελληνικά"
+    st.session_state["app_lang"] = "English"
 
 st.sidebar.header("🌐 App Language / Γλώσσα")
 selected_sidebar_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(st.session_state["app_lang"]), key="sidebar_lang_select")
@@ -609,7 +610,7 @@ if selected_sidebar_lang != st.session_state["app_lang"]:
     st.rerun()
 
 app_lang = st.session_state["app_lang"]
-t = TRANSLATIONS.get(app_lang, TRANSLATIONS["Ελληνικά"])
+t = TRANSLATIONS.get(app_lang, TRANSLATIONS["English"])
 
 st.markdown(t["title"])
 st.markdown(t["subtitle"])
@@ -655,11 +656,11 @@ if st.sidebar.button(t["btn_add_class"]):
         if n_class not in students_db:
             students_db[n_class] = []
             save_students(students_db)
-            st.sidebar.success(f"Δημιουργήθηκε το τμήμα: {n_class}")
+            st.sidebar.success(f"Created section: {n_class}")
             st.session_state["selected_class"] = n_class
             st.rerun()
         else:
-            st.sidebar.warning("Το τμήμα υπάρχει ήδη.")
+            st.sidebar.warning("Section already exists.")
 
 if students_db:
     class_to_remove = st.sidebar.selectbox(t["remove_class"], ["-- Select --"] + list(students_db.keys()))
@@ -667,7 +668,7 @@ if students_db:
         if class_to_remove != "-- Select --":
             del students_db[class_to_remove]
             save_students(students_db)
-            st.sidebar.warning(f"Διαγράφηκε το τμήμα: {class_to_remove}")
+            st.sidebar.warning(f"Deleted section: {class_to_remove}")
             if students_db:
                 st.session_state["selected_class"] = list(students_db.keys())[0]
             else:
@@ -698,7 +699,7 @@ else:
         if new_student and new_student not in students_db[selected_class]:
             students_db[selected_class].append(new_student)
             save_students(students_db)
-            st.sidebar.success(f"Προστέθηκε ο/η {new_student}")
+            st.sidebar.success(f"Added {new_student}")
             st.rerun()
 
     if students_db[selected_class]:
@@ -707,7 +708,7 @@ else:
             if student_to_remove != "-- Select --":
                 students_db[selected_class].remove(student_to_remove)
                 save_students(students_db)
-                st.sidebar.warning(f"Αφαιρέθηκε ο/η {student_to_remove}")
+                st.sidebar.warning(f"Removed {student_to_remove}")
                 st.rerun()
     else:
         st.sidebar.info(t["no_students_yet"])
@@ -720,7 +721,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 if not students_db:
-    st.info("👈 Παρακαλώ δημιουργήστε τουλάχιστον ένα τμήμα από την αριστερή στήλη για να ξεκινήσετε.")
+    st.info("👈 Please create at least one section from the left sidebar to get started.")
 else:
     mode = st.radio(
         t["menu_title"],
@@ -765,7 +766,7 @@ else:
             if st.button(t["btn_read_names"]):
                 api_key_val = config_data.get("api_key", "").strip()
                 if not api_key_val:
-                    st.error("⚠️ Παρακαλώ εισάγετε πρώτα το Gemini API Key σας στις ρυθμίσεις ή στον κώδικα!")
+                    st.error("⚠️ Please enter your Gemini API Key first in settings or config!")
                 else:
                     try:
                         with st.spinner(t["catalog_spinner"]):
@@ -794,21 +795,21 @@ else:
                                             added_count += 1
                                     
                                     save_students(students_db)
-                                    st.success(f"✅ Επιτυχής ανάγνωση! Προστέθηκαν {added_count} νέοι μαθητές στο τμήμα {selected_class}.")
+                                    st.success(f"✅ Successfully read! Added {added_count} new students to section {selected_class}.")
                                     time.sleep(1)
                                     st.rerun()
                                 else:
-                                    st.error("⚠️ Δεν βρέθηκαν καθαρά ονόματα στη φωτογραφία. Δοκιμάστε μια πιο καθαρή λήψη.")
+                                    st.error("⚠️ No clear names found in the image. Please try a clearer picture.")
                             else:
                                 st.error("⚠️ Error reading roster, please try again.")
                     except Exception as e:
-                        st.error(f"⚠️ Σφάλμα επεξεργασίας: {str(e)}")
+                        st.error(f"⚠️ Processing error: {str(e)}")
 
     elif mode == t["opt3"]:
         st.subheader(t["box3_title"])
         st.write(f"📊 {t['stats_sec']} - {selected_class}")
         if students_db[selected_class]:
-            df_progress = pd.DataFrame({"Μαθητής": students_db[selected_class]})
+            df_progress = pd.DataFrame({"Student": students_db[selected_class]})
             st.dataframe(df_progress, use_container_width=True)
         else:
             st.info(t["no_students_yet"])
