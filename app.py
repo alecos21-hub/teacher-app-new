@@ -156,7 +156,8 @@ def call_gemini_with_retry(client, model_name, contents, max_retries=3):
 
 students_db = load_students()
 config_data = load_config()
-grades_df = load_grades()
+if "grades_df" not in st.session_state:
+    st.session_state["grades_df"] = load_grades()
 
 TRANSLATIONS = {
     "English": {
@@ -446,7 +447,6 @@ else:
                     
                     client = genai.Client(api_key=api_key_val)
                     
-                    # Εντοπισμός φωτογραφιών τετραδίων στον φάκελο
                     nb_images_paths = [os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
                     
                     if not nb_images_paths:
@@ -483,9 +483,8 @@ else:
                         
                         if new_records:
                             df_new = pd.DataFrame(new_records)
-                            global grades_df
-                            grades_df = pd.concat([grades_df, df_new], ignore_index=True)
-                            save_grades_df(grades_df)
+                            st.session_state["grades_df"] = pd.concat([st.session_state["grades_df"], df_new], ignore_index=True)
+                            save_grades_df(st.session_state["grades_df"])
                             st.success(f"✅ {t['eval_success']}")
                         else:
                             st.error("⚠️ Could not extract grading data from the submissions. Please try again.")
@@ -562,16 +561,13 @@ else:
         st.subheader(t["box3_title"])
         st.write(f"📊 {t['stats_sec']} - {selected_class}")
         
-        # Φίλτρο βαθμολογιών για το τρέχον τμήμα
-        section_grades = grades_df[grades_df["Section"] == selected_class] if not grades_df.empty else pd.DataFrame()
+        section_grades = st.session_state["grades_df"][st.session_state["grades_df"]["Section"] == selected_class] if not st.session_state["grades_df"].empty else pd.DataFrame()
         
         if students_db[selected_class]:
-            # Δημιουργία συνολικού πίνακα με μαθητές και τις βαθμολογίες τους
             students_list = students_db[selected_class]
             df_progress = pd.DataFrame({"Student": students_list})
             
             if not section_grades.empty:
-                # Συγχώνευση με τις βαθμολογίες αν υπάρχουν
                 df_progress = pd.merge(df_progress, section_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
             
             st.dataframe(df_progress, use_container_width=True)
