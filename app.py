@@ -92,7 +92,7 @@ def load_students():
                 return json.load(f)
         except Exception:
             pass
-    return {"Α1": [], "Α2": [], "Β1": [], "Β2": [], "Γ1": [], "Γ2": []}
+    return {}
 
 def save_students(students_dict):
     try:
@@ -142,6 +142,8 @@ TRANSLATIONS = {
         "select_class": "Επιλογή Τμήματος:",
         "add_new_class": "➕ Δημιουργία Νέου Τμήματος (π.χ. Β3):",
         "btn_add_class": "Προσθήκη Τμήματος",
+        "remove_class": "❌ Διαγραφή Τμήματος:",
+        "btn_remove_class": "Διαγραφή Τμήματος",
         "students_in": "Μαθητές Τμήματος",
         "add_student": "Προσθήκη νέου μαθητή:",
         "btn_add": "➕ Προσθήκη Μαθητή",
@@ -183,7 +185,8 @@ TRANSLATIONS = {
         "box3_title": "🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές",
         "view_photos_folder": "👁️ Προβολή φωτογραφιών στον φάκελο",
         "clear_folder": "🗑️ Εκκαθάριση Φακέλου",
-        "roster_photo_caption": "Φωτογραφία Καταλόγου"
+        "roster_photo_caption": "Φωτογραφία Καταλόγου",
+        "no_classes_warn": "⚠️ Δεν υπάρχουν διαθέσιμα τμήματα. Δημιουργήστε ένα τμήμα από την αριστερή στήλη για να ξεκινήσετε."
     },
     "English": {
         "title": "🎓 GradeMind AI",
@@ -195,6 +198,8 @@ TRANSLATIONS = {
         "select_class": "Select Class/Section:",
         "add_new_class": "➕ Add New Section (e.g. B3):",
         "btn_add_class": "Add Section",
+        "remove_class": "❌ Delete Section:",
+        "btn_remove_class": "Delete Section",
         "students_in": "Students in Section",
         "add_student": "Add new student:",
         "btn_add": "➕ Add Student",
@@ -236,7 +241,8 @@ TRANSLATIONS = {
         "box3_title": "🗂️ Box 3: Progress Table & Reports",
         "view_photos_folder": "👁️ View folder photos",
         "clear_folder": "🗑️ Clear Folder",
-        "roster_photo_caption": "Roster Photo"
+        "roster_photo_caption": "Roster Photo",
+        "no_classes_warn": "⚠️ No sections available. Create a section from the left sidebar to get started."
     },
     "Русский (Russian)": {
         "title": "🎓 GradeMind AI",
@@ -248,6 +254,8 @@ TRANSLATIONS = {
         "select_class": "Выберите класс:",
         "add_new_class": "➕ Добавить новый класс:",
         "btn_add_class": "Добавить класс",
+        "remove_class": "❌ Удалить класс:",
+        "btn_remove_class": "Удалить класс",
         "students_in": "Ученики класса",
         "add_student": "Добавить нового ученика:",
         "btn_add": "➕ Добавить ученика",
@@ -289,7 +297,8 @@ TRANSLATIONS = {
         "box3_title": "🗂️ Блок 3: Таблица успеваемости и отчеты",
         "view_photos_folder": "👁️ Просмотр фотографий в папке",
         "clear_folder": "🗑️ Очистить папку",
-        "roster_photo_caption": "Фото списка"
+        "roster_photo_caption": "Фото списка",
+        "no_classes_warn": "⚠️ Нет доступных классов. Создайте класс на левой панели."
     },
     "Français (French)": {
         "title": "🎓 GradeMind AI",
@@ -301,6 +310,8 @@ TRANSLATIONS = {
         "select_class": "Sélectionner la classe :",
         "add_new_class": "➕ Ajouter une nouvelle classe :",
         "btn_add_class": "Ajouter la classe",
+        "remove_class": "❌ Supprimer la classe :",
+        "btn_remove_class": "Supprimer la classe",
         "students_in": "Élèves de la classe",
         "add_student": "Ajouter un nouvel élève :",
         "btn_add": "➕ Ajouter l'élève",
@@ -342,7 +353,8 @@ TRANSLATIONS = {
         "box3_title": "🗂️ Bloc 3 : Tableau de progression et rapports",
         "view_photos_folder": "👁️ Afficher les photos du dossier",
         "clear_folder": "🗑️ Vider le dossier",
-        "roster_photo_caption": "Photo de la liste"
+        "roster_photo_caption": "Photo de la liste",
+        "no_classes_warn": "⚠️ Aucune classe disponible. Créez une classe dans la barre latérale."
     },
     "Italiano (Italian)": {
         "title": "🎓 GradeMind AI",
@@ -354,6 +366,8 @@ TRANSLATIONS = {
         "select_class": "Seleziona classe:",
         "add_new_class": "➕ Aggiungi nuova classe:",
         "btn_add_class": "Aggiungi classe",
+        "remove_class": "❌ Elimina classe:",
+        "btn_remove_class": "Elimina classe",
         "students_in": "Studenti nella classe",
         "add_student": "Aggiungi nuovo studente:",
         "btn_add": "➕ Aggiungi studente",
@@ -395,7 +409,8 @@ TRANSLATIONS = {
         "box3_title": "🗂️ Blocco 3: Tabella dei progressi e report",
         "view_photos_folder": "👁️ Visualizza foto nella cartella",
         "clear_folder": "🗑️ Pulisci cartella",
-        "roster_photo_caption": "Foto del registro"
+        "roster_photo_caption": "Foto del registro",
+        "no_classes_warn": "⚠️ Nessuna classe disponibile. Crea una classe dalla barra laterale."
     },
     "Deutsch (German)": {
         "title": "🎓 GradeMind AI",
@@ -407,6 +422,8 @@ TRANSLATIONS = {
         "select_class": "Klasse auswählen:",
         "add_new_class": "➕ Neue Klasse hinzufügen:",
         "btn_add_class": "Klasse hinzufügen",
+        "remove_class": "❌ Klasse löschen:",
+        "btn_remove_class": "Klasse löschen",
         "students_in": "Schüler in der Klasse",
         "add_student": "Schüler hinzufügen:",
         "btn_add": "➕ Schüler hinzufügen",
@@ -448,7 +465,8 @@ TRANSLATIONS = {
         "box3_title": "🗂️ Feld 3: Fortschrittstabelle und Berichte",
         "view_photos_folder": "👁️ Ordnerfotos anzeigen",
         "clear_folder": "🗑️ Ordner leeren",
-        "roster_photo_caption": "Listenfoto"
+        "roster_photo_caption": "Listenfoto",
+        "no_classes_warn": "⚠️ Keine Klassen verfügbar. Erstellen Sie eine Klasse in der Seitenleiste."
     },
     "中文 (Chinese)": {
         "title": "🎓 GradeMind AI",
@@ -460,6 +478,8 @@ TRANSLATIONS = {
         "select_class": "选择班级：",
         "add_new_class": "➕ 添加新班级：",
         "btn_add_class": "添加班级",
+        "remove_class": "❌ 删除班级：",
+        "btn_remove_class": "删除班级",
         "students_in": "班级学生",
         "add_student": "添加新学生：",
         "btn_add": "➕ 添加学生",
@@ -501,7 +521,8 @@ TRANSLATIONS = {
         "box3_title": "🗂️ 模块 3：进度表与报告",
         "view_photos_folder": "👁️ 查看文件夹照片",
         "clear_folder": "🗑️ 清空文件夹",
-        "roster_photo_caption": "花名册照片"
+        "roster_photo_caption": "花名册照片",
+        "no_classes_warn": "⚠️ 暂无班级。请在侧边栏创建一个班级。"
     },
     "日本語 (Japanese)": {
         "title": "🎓 GradeMind AI",
@@ -513,6 +534,8 @@ TRANSLATIONS = {
         "select_class": "クラスを選択：",
         "add_new_class": "➕ 新しいクラスを追加：",
         "btn_add_class": "クラスを追加",
+        "remove_class": "❌ クラスを削除：",
+        "btn_remove_class": "クラスを削除",
         "students_in": "クラスの生徒",
         "add_student": "新しい生徒を追加：",
         "btn_add": "➕ 生徒を追加",
@@ -554,7 +577,8 @@ TRANSLATIONS = {
         "box3_title": "🗂️ ブロック 3：進捗テーブルとレポート",
         "view_photos_folder": "👁️ フォルダの写真を表示",
         "clear_folder": "🗑️ フォルダをクリア",
-        "roster_photo_caption": "名簿の写真"
+        "roster_photo_caption": "名簿の写真",
+        "no_classes_warn": "⚠️ クラスがありません。サイドバーからクラスを作成してください。"
     }
 }
 
@@ -608,47 +632,70 @@ st.sidebar.markdown(f"""
 st.sidebar.markdown("---")
 st.sidebar.header(t["class_mgmt"])
 
+# Δημιουργία Νέου Τμήματος
 new_class_input = st.sidebar.text_input(t["add_new_class"])
 if st.sidebar.button(t["btn_add_class"]):
     n_class = new_class_input.strip().upper()
-    if n_class and n_class not in students_db:
-        students_db[n_class] = []
-        save_students(students_db)
-        st.sidebar.success(f"Δημιουργήθηκε το τμήμα: {n_class}")
-        st.session_state["selected_class"] = n_class
+    if n_class:
+        if n_class not in students_db:
+            students_db[n_class] = []
+            save_students(students_db)
+            st.sidebar.success(f"Δημιουργήθηκε το τμήμα: {n_class}")
+            st.session_state["selected_class"] = n_class
+            st.rerun()
+        else:
+            st.sidebar.warning("Το τμήμα υπάρχει ήδη.")
+
+# Διαγραφή Τμήματος
+if students_db:
+    class_to_remove = st.sidebar.selectbox(t["remove_class"], ["-- Select --"] + list(students_db.keys()))
+    if st.sidebar.button(t["btn_remove_class"]):
+        if class_to_remove != "-- Select --":
+            del students_db[class_to_remove]
+            save_students(students_db)
+            st.sidebar.warning(f"Διαγράφηκε το τμήμα: {class_to_remove}")
+            if students_db:
+                st.session_state["selected_class"] = list(students_db.keys())[0]
+            else:
+                if "selected_class" in st.session_state:
+                    del st.session_state["selected_class"]
+            st.rerun()
+
+# Έλεγχος αν υπάρχουν τμήματα
+if not students_db:
+    st.warning(t["no_classes_warn"])
+else:
+    if "selected_class" not in st.session_state or st.session_state["selected_class"] not in students_db:
+        st.session_state["selected_class"] = list(students_db.keys())[0]
+
+    selected_class_sidebar = st.sidebar.selectbox(
+        t["select_class"], 
+        list(students_db.keys()), 
+        index=list(students_db.keys()).index(st.session_state["selected_class"])
+    )
+    if selected_class_sidebar != st.session_state["selected_class"]:
+        st.session_state["selected_class"] = selected_class_sidebar
         st.rerun()
 
-if "selected_class" not in st.session_state or st.session_state["selected_class"] not in students_db:
-    st.session_state["selected_class"] = list(students_db.keys())[0]
+    selected_class = st.session_state["selected_class"]
 
-selected_class_sidebar = st.sidebar.selectbox(
-    t["select_class"], 
-    list(students_db.keys()), 
-    index=list(students_db.keys()).index(st.session_state["selected_class"])
-)
-if selected_class_sidebar != st.session_state["selected_class"]:
-    st.session_state["selected_class"] = selected_class_sidebar
-    st.rerun()
+    st.sidebar.subheader(f"{t['students_in']} {selected_class}")
+    new_student = st.sidebar.text_input(t["add_student"])
+    if st.sidebar.button(t["btn_add"]):
+        if new_student and new_student not in students_db[selected_class]:
+            students_db[selected_class].append(new_student)
+            students_db[selected_class].sort()
+            save_students(students_db)
+            st.sidebar.success(f"Added: {new_student}")
+            st.rerun()
 
-selected_class = st.session_state["selected_class"]
-
-st.sidebar.subheader(f"{t['students_in']} {selected_class}")
-new_student = st.sidebar.text_input(t["add_student"])
-if st.sidebar.button(t["btn_add"]):
-    if new_student and new_student not in students_db[selected_class]:
-        students_db[selected_class].append(new_student)
-        students_db[selected_class].sort()
-        save_students(students_db)
-        st.sidebar.success(f"Added: {new_student}")
-        st.rerun()
-
-student_to_remove = st.sidebar.selectbox(t["remove_student"], ["-- Select --"] + students_db[selected_class])
-if st.sidebar.button(t["btn_remove"]):
-    if student_to_remove != "-- Select --":
-        students_db[selected_class].remove(student_to_remove)
-        save_students(students_db)
-        st.sidebar.warning(f"Removed: {student_to_remove}")
-        st.rerun()
+    student_to_remove = st.sidebar.selectbox(t["remove_student"], ["-- Select --"] + students_db[selected_class])
+    if st.sidebar.button(t["btn_remove"]):
+        if student_to_remove != "-- Select --":
+            students_db[selected_class].remove(student_to_remove)
+            save_students(students_db)
+            st.sidebar.warning(f"Removed: {student_to_remove}")
+            st.rerun()
 
 saved_api_key = config_data.get("api_key", "")
 col_api1, col_api2 = st.columns([3, 1])
@@ -668,7 +715,7 @@ with col_api2:
 
 active_api_key = config_data.get("api_key", "") or api_key_input
 
-if active_api_key:
+if active_api_key and students_db:
     try:
         client = genai.Client(api_key=active_api_key)
         
@@ -1009,4 +1056,5 @@ if active_api_key:
     except Exception as e:
         st.error(f"Error: {e}")
 else:
-    st.warning("Please enter and save your API Key to continue.")
+    if not active_api_key:
+        st.warning("Please enter and save your API Key to continue.")
