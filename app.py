@@ -113,6 +113,20 @@ def save_students(students_dict):
     except Exception:
         pass
 
+def load_grades():
+    if os.path.exists(GRADES_FILE):
+        try:
+            return pd.read_csv(GRADES_FILE)
+        except Exception:
+            pass
+    return pd.DataFrame(columns=["Section", "Student", "Date", "Score", "Feedback"])
+
+def save_grades_df(df):
+    try:
+        df.to_csv(GRADES_FILE, index=False)
+    except Exception:
+        pass
+
 def clear_upload_folder():
     for f in os.listdir(UPLOAD_FOLDER):
         if not f.startswith('hw_page_'):
@@ -142,6 +156,7 @@ def call_gemini_with_retry(client, model_name, contents, max_retries=3):
 
 students_db = load_students()
 config_data = load_config()
+grades_df = load_grades()
 
 TRANSLATIONS = {
     "English": {
@@ -173,7 +188,7 @@ TRANSLATIONS = {
         "batch_upload": "📸 Take photo with camera or select notebook files:",
         "folder_found": "student notebook photos ready in folder.",
         "btn_evaluate": "🚀 Start Grading (Fast Mode)",
-        "eval_success": "Successfully saved to Progress Table!",
+        "eval_success": "Successfully evaluated and saved to Progress Table!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "📸 Take roster photo with camera or upload file:",
@@ -200,6 +215,7 @@ TRANSLATIONS = {
         "roster_photo_caption": "Roster Photo",
         "no_classes_warn": "⚠️ No sections available. Create a section from the left sidebar to get started.",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
+        "eval_spinner": "⏳ AI is grading student submissions...",
         "catalog_success": "✅ Class list registered successfully!"
     },
     "Ελληνικά": {
@@ -231,7 +247,7 @@ TRANSLATIONS = {
         "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Γρήγορη Λειτουργία)",
-        "eval_success": "Αποθηκεύτηκαν επιτυχώς στον πίνακα προόδου!",
+        "eval_success": "Η αξιολόγηση ολοκληρώθηκε και αποθηκεύτηκε στον πίνακα προόδου!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "📸 Τραβήξτε φωτογραφία καταλόγου με κάμερα ή ανεβάστε αρχείο:",
@@ -258,123 +274,8 @@ TRANSLATIONS = {
         "roster_photo_caption": "Φωτογραφία Καταλόγου",
         "no_classes_warn": "⚠️ Δεν υπάρχουν διαθέσιμα τμήματα. Δημιουργήστε ένα τμήμα από την αριστερή στήλη για να ξεκινήσετε.",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
+        "eval_spinner": "⏳ Το AI αξιολογεί τα τετράδια των μαθητών...",
         "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!"
-    },
-    "Русский (Russian)": {
-        "title": "🎓 GradeMind AI",
-        "subtitle": "### *Умный помощник учителя для проверки домашних заданий*",
-        "hw_section": "📖 Фотографии заданий",
-        "hw_desc": "📸 Сделайте фото или загрузите страницы задания:",
-        "hw_saved": "Страницы задания сохранены!",
-        "class_mgmt": "⚙️ Управление классами",
-        "select_class": "Выберите класс:",
-        "add_new_class": "➕ Добавить новый класс:",
-        "btn_add_class": "Добавить класс",
-        "remove_class": "❌ Удалить класс:",
-        "btn_remove_class": "Удалить класс",
-        "students_in": "Ученики класса",
-        "add_student": "Добавить нового ученика:",
-        "btn_add": "➕ Добавить ученика",
-        "remove_student": "Удалить ученика:",
-        "btn_remove": "❌ Удалить ученика",
-        "api_prompt": "Введите Google Gemini API Key",
-        "save_api": "💾 Сохранить API Key",
-        "api_saved_success": "API Key успешно сохранен!",
-        "menu_title": "📌 Выберите режим:",
-        "opt1": "📷 1. Автоматическая оценка",
-        "opt2": "📋 2. Импорт списка",
-        "opt3": "📊 3. Таблица успеваемости",
-        "notebook_sec": "✨ Загрузка тетрадей учеников",
-        "no_hw_warn": "⚠️ Внимание: Фотография задания не выбрана.",
-        "batch_upload": "📸 Сделайте фото или выберите файлы тетрадей:",
-        "folder_found": "фотографий тетрадей готовы в папке.",
-        "btn_evaluate": "🚀 Начать оценку",
-        "eval_success": "Успешно сохранено в таблицу!",
-        "view_eval": "🔍 Просмотр последней оценки",
-        "catalog_sec": "📷 Импорт списка класса",
-        "upload_catalog": "📸 Сделайте фото списка или загрузите файл:",
-        "btn_read_names": "🤖 Прочитать и сохранить список",
-        "stats_sec": "📊 Матрица успеваемости класса",
-        "btn_close_day": "🚨 Отметить отсутствующих на сегодня",
-        "manual_delete": "🗑️ Удалить записи",
-        "sidebar_stop_text": "🔴 ВАЖНО:<br>Прокрутите вниз 👇<br>для выбора класса.",
-        "alert_box": "⚙️ Нажмите стрелки <span class=\"red-badge\">&gt;&gt;</span> вверху слева для классов и языка",
-        "uploader_label_hw": "📸 Камера или файл задания",
-        "uploader_label_notebook": "📸 Сделайте фото или выберите файлы тетрадей:",
-        "expander_class": "🏫 Выбор класса и управление (Нажмите здесь)",
-        "expander_lang": "🌐 Смена языка интерфейса (Нажмите здесь)",
-        "current_class_label": "Текущий класс:",
-        "change_class_label": "Изменить класс:",
-        "no_students_yet": "Ученики еще не добавлены.",
-        "section_students_text": "Ученики класса",
-        "lang_select_label": "Язык интерфейса / Language:",
-        "box1_title": "🗂️ Блок 1: Автоматическая оценка заданий",
-        "box2_title": "🗂️ Блок 2: Импорт списка",
-        "box3_title": "🗂️ Блок 3: Таблица успеваемости и отчеты",
-        "view_photos_folder": "👁️ Просмотр фотографий в папке",
-        "clear_folder": "🗑️ Очистить папку",
-        "roster_photo_caption": "Фото списка",
-        "no_classes_warn": "⚠️ Нет доступных классов. Создайте класс на левой панели.",
-        "catalog_spinner": "⏳ ИИ анализирует и организует список класса... (Занимает 1-2 минуты)",
-        "catalog_success": "✅ Список класса успешно зарегистрирован!"
-    },
-    "Français (French)": {
-        "title": "🎓 GradeMind AI",
-        "subtitle": "### *Assistant intelligent pour l'évaluation des devoirs*",
-        "hw_section": "📖 Photos des consignes",
-        "hw_desc": "📸 Prenez une photo ou téléchargez les consignes:",
-        "hw_saved": "Page(s) de devoirs enregistrée(s) !",
-        "class_mgmt": "⚙️ Gestion des classes",
-        "select_class": "Sélectionner la classe :",
-        "add_new_class": "➕ Ajouter une nouvelle classe :",
-        "btn_add_class": "Ajouter la classe",
-        "remove_class": "❌ Supprimer la classe :",
-        "btn_remove_class": "Supprimer la classe",
-        "students_in": "Élèves de la classe",
-        "add_student": "Ajouter un nouvel élève :",
-        "btn_add": "➕ Ajouter l'élève",
-        "remove_student": "Supprimer un élève :",
-        "btn_remove": "❌ Supprimer l'élève",
-        "api_prompt": "Entrez la clé API Google Gemini",
-        "save_api": "💾 Enregistrer la clé API",
-        "api_saved_success": "Clé API enregistrée avec succès !",
-        "menu_title": "📌 Sélectionner le mode :",
-        "opt1": "📷 1. Correction automatique",
-        "opt2": "📋 2. Importer la liste",
-        "opt3": "📊 3. Tableau de progression",
-        "notebook_sec": "✨ Capturer et télécharger les cahiers",
-        "no_hw_warn": "⚠️ Remarque : Vous n'avez pas pris de photo de consigne.",
-        "batch_upload": "📸 Prenez une photo ou sélectionnez des fichiers :",
-        "folder_found": "photos de cahiers prêtes dans le dossier.",
-        "btn_evaluate": "🚀 Lancer la correction",
-        "eval_success": "Enregistré avec succès dans le tableau !",
-        "view_eval": "🔍 Voir la dernière évaluation",
-        "catalog_sec": "📷 Importer la liste de la classe",
-        "upload_catalog": "📸 Prenez en photo la liste ou téléchargez un fichier :",
-        "btn_read_names": "🤖 Lire et enregistrer la liste",
-        "stats_sec": "📊 Matrice de progression de la classe",
-        "btn_close_day": "🚨 Marquer les absents pour aujourd'hui",
-        "manual_delete": "🗑️ Supprimer des enregistrements",
-        "sidebar_stop_text": "🔴 IMPORTANT :<br>Faites défiler vers le bas 👇<br>pour choisir la classe.",
-        "alert_box": "⚙️ Appuyez sur les flèches <span class=\"red-badge\">&gt;&gt;</span> en haut à gauche pour les classes et la langue",
-        "uploader_label_hw": "📸 Appareil photo ou fichier de consigne",
-        "uploader_label_notebook": "📸 Prenez une photo ou sélectionnez des fichiers :",
-        "expander_class": "🏫 Sélection et gestion de classe (Cliquez ici)",
-        "expander_lang": "🌐 Changement de langue (Cliquez ici)",
-        "current_class_label": "Classe actuelle :",
-        "change_class_label": "Changer de classe :",
-        "no_students_yet": "Aucun élève ajouté pour l'instant.",
-        "section_students_text": "Élèves de la classe",
-        "lang_select_label": "Langue de l'interface / Language:",
-        "box1_title": "🗂️ Bloc 1 : Correction automatique des devoirs",
-        "box2_title": "🗂️ Bloc 2 : Importer la liste",
-        "box3_title": "🗂️ Bloc 3 : Tableau de progression et rapports",
-        "view_photos_folder": "👁️ Afficher les photos du dossier",
-        "clear_folder": "🗑️ Vider le dossier",
-        "roster_photo_caption": "Photo de la liste",
-        "no_classes_warn": "⚠️ Aucune classe disponible. Créez une classe dans la barre latérale.",
-        "catalog_spinner": "⏳ L'IA analyse et organise la liste de la classe... (Prend 1-2 minutes)",
-        "catalog_success": "✅ Liste de classe enregistrée avec succès !"
     }
 }
 
@@ -530,13 +431,68 @@ else:
             notebook_count = len(notebook_files)
             st.success(f"✅ {notebook_count} {t['folder_found']}")
         
-        # Ενσωμάτωση του κουμπιού έναρξης αξιολόγησης ασκήσεων
         if st.button(t["btn_evaluate"]):
             api_key_val = config_data.get("api_key", "").strip()
             if not api_key_val:
                 st.error("⚠️ Please enter your Gemini API Key first in settings or config!")
             else:
-                st.success(t["eval_success"])
+                try:
+                    spinner_placeholder = st.empty()
+                    spinner_placeholder.markdown(f"""
+                        <div class="custom-spinner-box">
+                            {t["eval_spinner"]}
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    client = genai.Client(api_key=api_key_val)
+                    
+                    # Εντοπισμός φωτογραφιών τετραδίων στον φάκελο
+                    nb_images_paths = [os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
+                    
+                    if not nb_images_paths:
+                        spinner_placeholder.empty()
+                        st.warning("⚠️ No student notebook photos found. Please upload or take photos first.")
+                    else:
+                        new_records = []
+                        today_str = datetime.date.today().strftime("%Y-%m-%d")
+                        
+                        for nb_p in nb_images_paths:
+                            nb_img = Image.open(nb_p)
+                            contents_to_send = homework_images + [nb_img, "Analyze this student's solution against the homework prompt. Identify the student's name if written, give a score from 0 to 100, and short feedback. Return ONLY valid JSON format: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"]
+                            
+                            resp_text = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_to_send)
+                            if resp_text:
+                                clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
+                                try:
+                                    res_data = json.loads(clean_resp)
+                                    s_name = res_data.get("student_name", "Unknown")
+                                    s_score = res_data.get("score", 0)
+                                    s_feedback = res_data.get("feedback", "")
+                                    
+                                    new_records.append({
+                                        "Section": selected_class,
+                                        "Student": s_name,
+                                        "Date": today_str,
+                                        "Score": s_score,
+                                        "Feedback": s_feedback
+                                    })
+                                except Exception:
+                                    pass
+                        
+                        spinner_placeholder.empty()
+                        
+                        if new_records:
+                            df_new = pd.DataFrame(new_records)
+                            global grades_df
+                            grades_df = pd.concat([grades_df, df_new], ignore_index=True)
+                            save_grades_df(grades_df)
+                            st.success(f"✅ {t['eval_success']}")
+                        else:
+                            st.error("⚠️ Could not extract grading data from the submissions. Please try again.")
+                except Exception as e:
+                    if 'spinner_placeholder' in locals():
+                        spinner_placeholder.empty()
+                    st.error(f"⚠️ Processing error: {str(e)}")
 
     elif mode == t["opt2"]:
         st.subheader(t["box2_title"])
@@ -605,8 +561,19 @@ else:
     elif mode == t["opt3"]:
         st.subheader(t["box3_title"])
         st.write(f"📊 {t['stats_sec']} - {selected_class}")
+        
+        # Φίλτρο βαθμολογιών για το τρέχον τμήμα
+        section_grades = grades_df[grades_df["Section"] == selected_class] if not grades_df.empty else pd.DataFrame()
+        
         if students_db[selected_class]:
-            df_progress = pd.DataFrame({"Student": students_db[selected_class]})
+            # Δημιουργία συνολικού πίνακα με μαθητές και τις βαθμολογίες τους
+            students_list = students_db[selected_class]
+            df_progress = pd.DataFrame({"Student": students_list})
+            
+            if not section_grades.empty:
+                # Συγχώνευση με τις βαθμολογίες αν υπάρχουν
+                df_progress = pd.merge(df_progress, section_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
+            
             st.dataframe(df_progress, use_container_width=True)
         else:
             st.info(t["no_students_yet"])
