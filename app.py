@@ -280,10 +280,25 @@ TRANSLATIONS = {
     }
 }
 
-# --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ, ΓΛΩΣΣΑΣ & API KEY ---
+# --- 3. SIDEBAR: API KEY ΣΤΗΝ ΑΡΧΗ, ΕΠΕΙΤΑ ΓΛΩΣΣΑ & ΤΜΗΜΑΤΑ ---
 if "app_lang" not in st.session_state:
     st.session_state["app_lang"] = "English"
 
+# --- API KEY ΣΤΗΝ ΑΡΧΗ ΤΗΣ ΑΡΙΣΤΕΡΗΣ ΣΤΗΛΗΣ ---
+st.sidebar.header("🔑 Google Gemini API Key")
+current_api_key = config_data.get("api_key", "")
+api_key_input = st.sidebar.text_input("Enter API Key:", value=current_api_key, type="password", key="sidebar_api_key_input")
+if st.sidebar.button("💾 Save API Key"):
+    if api_key_input.strip():
+        config_data["api_key"] = api_key_input.strip()
+        save_config(config_data)
+        st.sidebar.success("API Key saved successfully!")
+        time.sleep(1)
+        st.rerun()
+    else:
+        st.sidebar.warning("Please enter a valid API Key.")
+
+st.sidebar.markdown("---")
 st.sidebar.header("🌐 App Language / Γλώσσα")
 selected_sidebar_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(st.session_state["app_lang"]), key="sidebar_lang_select")
 if selected_sidebar_lang != st.session_state["app_lang"]:
@@ -292,21 +307,6 @@ if selected_sidebar_lang != st.session_state["app_lang"]:
 
 app_lang = st.session_state["app_lang"]
 t = TRANSLATIONS.get(app_lang, TRANSLATIONS["English"])
-
-# --- ΡΥΘΜΙΣΗ API KEY ΣΤΟ SIDEBAR ---
-st.sidebar.markdown("---")
-st.sidebar.header("🔑 Google Gemini API Key")
-current_api_key = config_data.get("api_key", "")
-api_key_input = st.sidebar.text_input("Enter API Key:", value=current_api_key, type="password")
-if st.sidebar.button(t["save_api"]):
-    if api_key_input.strip():
-        config_data["api_key"] = api_key_input.strip()
-        save_config(config_data)
-        st.sidebar.success(t["api_saved_success"])
-        time.sleep(1)
-        st.rerun()
-    else:
-        st.sidebar.warning("Please enter a valid API Key.")
 
 st.markdown(t["title"])
 st.markdown(t["subtitle"])
@@ -422,169 +422,3 @@ else:
     mode = st.radio(
         t["menu_title"],
         (t["opt1"], t["opt2"], t["opt3"]),
-        horizontal=True
-    )
-
-    if mode == t["opt1"]:
-        st.subheader(t["box1_title"])
-        if not homework_images:
-            st.warning(t["no_hw_warn"])
-        
-        notebook_files = st.file_uploader(
-            t["batch_upload"],
-            type=["png", "jpg", "jpeg"],
-            accept_multiple_files=True,
-            key="notebook_batch_uploader"
-        )
-        
-        if notebook_files:
-            clear_upload_folder()
-            for idx, nb_file in enumerate(notebook_files):
-                nb_path = os.path.join(UPLOAD_FOLDER, f"student_page_{idx}.jpg")
-                with open(nb_path, "wb") as f:
-                    f.write(nb_file.getbuffer())
-            
-            notebook_count = len(notebook_files)
-            st.success(f"✅ {notebook_count} {t['folder_found']}")
-        
-        if st.button(t["btn_evaluate"]):
-            api_key_val = config_data.get("api_key", "").strip()
-            if not api_key_val:
-                st.error("⚠️ Please enter your Gemini API Key first in the sidebar settings!")
-            else:
-                try:
-                    spinner_placeholder = st.empty()
-                    spinner_placeholder.markdown(f"""
-                        <div class="custom-spinner-box">
-                            {t["eval_spinner"]}
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    client = genai.Client(api_key=api_key_val)
-                    
-                    nb_images_paths = [os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
-                    
-                    if not nb_images_paths:
-                        spinner_placeholder.empty()
-                        st.warning("⚠️ No student notebook photos found. Please upload or take photos first.")
-                    else:
-                        new_records = []
-                        today_str = datetime.date.today().strftime("%Y-%m-%d")
-                        
-                        for nb_p in nb_images_paths:
-                            nb_img = Image.open(nb_p)
-                            contents_to_send = homework_images + [nb_img, "Analyze this student's solution against the homework prompt. Identify the student's name if written, give a score from 0 to 100, and short feedback. Return ONLY valid JSON format: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"]
-                            
-                            resp_text = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_to_send)
-                            if resp_text:
-                                clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
-                                try:
-                                    res_data = json.loads(clean_resp)
-                                    s_name = res_data.get("student_name", "Unknown")
-                                    s_score = res_data.get("score", 0)
-                                    s_feedback = res_data.get("feedback", "")
-                                    
-                                    new_records.append({
-                                        "Section": selected_class,
-                                        "Student": s_name,
-                                        "Date": today_str,
-                                        "Score": s_score,
-                                        "Feedback": s_feedback
-                                    })
-                                except Exception:
-                                    pass
-                        
-                        spinner_placeholder.empty()
-                        
-                        if new_records:
-                            df_new = pd.DataFrame(new_records)
-                            st.session_state["grades_df"] = pd.concat([st.session_state["grades_df"], df_new], ignore_index=True)
-                            save_grades_df(st.session_state["grades_df"])
-                            st.success(f"✅ {t['eval_success']}")
-                        else:
-                            st.error("⚠️ Could not extract grading data from the submissions. Please try again.")
-                except Exception as e:
-                    if 'spinner_placeholder' in locals():
-                        spinner_placeholder.empty()
-                    st.error(f"⚠️ Processing error: {str(e)}")
-
-    elif mode == t["opt2"]:
-        st.subheader(t["box2_title"])
-        st.write(f"**{t['current_class_label']} {selected_class}**")
-        
-        catalog_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="catalog_uploader")
-        if catalog_file:
-            catalog_path = os.path.join(UPLOAD_FOLDER, "catalog_temp.jpg")
-            with open(catalog_path, "wb") as f:
-                f.write(catalog_file.getbuffer())
-            
-            st.image(catalog_path, caption=t["roster_photo_caption"], width=300)
-            
-            if st.button(t["btn_read_names"]):
-                api_key_val = config_data.get("api_key", "").strip()
-                if not api_key_val:
-                    st.error("⚠️ Please enter your Gemini API Key first in the sidebar settings!")
-                else:
-                    try:
-                        spinner_placeholder = st.empty()
-                        spinner_placeholder.markdown(f"""
-                            <div class="custom-spinner-box">
-                                {t["catalog_spinner"]}
-                            </div>
-                        """, unsafe_allow_html=True)
-                        
-                        client = genai.Client(api_key=api_key_val)
-                        img_to_send = Image.open(catalog_path)
-                        
-                        prompt = (
-                            "Look at this image containing a class roster or list of student names. "
-                            "Extract all student names. Return ONLY a valid JSON list of strings, "
-                            "where each string is a student's full name (e.g., [\"John Doe\", \"Maria Smith\"]). "
-                            "Do not include any extra text, markdown formatting blocks like ```json, or explanations."
-                        )
-                        
-                        response_text = call_gemini_with_retry(client, 'gemini-3.8-flash', [img_to_send, prompt])
-                        
-                        spinner_placeholder.empty()
-                        
-                        if response_text:
-                            clean_text = response_text.replace("```json", "").replace("```", "").strip()
-                            parsed_names = json.loads(clean_text)
-                            
-                            if isinstance(parsed_names, list) and parsed_names:
-                                added_count = 0
-                                for name in parsed_names:
-                                    clean_name = str(name).strip()
-                                    if clean_name and clean_name not in students_db[selected_class]:
-                                        students_db[selected_class].append(clean_name)
-                                        added_count += 1
-                                
-                                save_students(students_db)
-                                st.success(f"✅ Successfully read! Added {added_count} new students to section {selected_class}.")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.error("⚠️ No clear names found in the image. Please try a clearer picture.")
-                        else:
-                            st.error("⚠️ Error reading roster, please try again.")
-                    except Exception as e:
-                        if 'spinner_placeholder' in locals():
-                            spinner_placeholder.empty()
-                        st.error(f"⚠️ Processing error: {str(e)}")
-
-    elif mode == t["opt3"]:
-        st.subheader(t["box3_title"])
-        st.write(f"📊 {t['stats_sec']} - {selected_class}")
-        
-        section_grades = st.session_state["grades_df"][st.session_state["grades_df"]["Section"] == selected_class] if not st.session_state["grades_df"].empty else pd.DataFrame()
-        
-        if students_db[selected_class]:
-            students_list = students_db[selected_class]
-            df_progress = pd.DataFrame({"Student": students_list})
-            
-            if not section_grades.empty:
-                df_progress = pd.merge(df_progress, section_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
-            
-            st.dataframe(df_progress, use_container_width=True)
-        else:
-            st.info(t["no_students_yet"])
