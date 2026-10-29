@@ -42,6 +42,13 @@ st.markdown("""
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             border: 2px solid #8b0000;
         }
+        .api-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
         .red-badge {
             background-color: #8b0000;
             color: white;
@@ -177,7 +184,7 @@ TRANSLATIONS = {
         "btn_add": "➕ Add Student",
         "remove_student": "Remove student:",
         "btn_remove": "❌ Delete Student",
-        "api_prompt": "Enter Google Gemini API Key",
+        "api_prompt": "🔑 Google Gemini API Key",
         "save_api": "💾 Save API Key",
         "api_saved_success": "API Key saved successfully!",
         "menu_title": "📌 Select Mode (Vertical Menu):",
@@ -198,7 +205,7 @@ TRANSLATIONS = {
         "btn_close_day": "🚨 Mark Missing Homework for Today",
         "manual_delete": "🗑️ Delete Records",
         "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.<br><span style='font-size: 11px; font-weight: normal;'>(Scroll down to select Department)</span>",
-        "alert_box": "⚙️ Press the arrows <span class=\"red-badge\">&gt;&gt;</span> top left for Sections &amp; Language",
+        "alert_box": "⚙️ Manage sections and language from the sidebar, and enter your API Key below.",
         "uploader_label_hw": "📸 Camera or Assignment File",
         "uploader_label_notebook": "📸 Take photo with camera or select notebook files:",
         "expander_class": "🏫 Quick Class Selection & Management (Click here)",
@@ -214,7 +221,7 @@ TRANSLATIONS = {
         "view_photos_folder": "👁️ View folder photos",
         "clear_folder": "🗑️ Clear Folder",
         "roster_photo_caption": "Roster Photo",
-        "no_classes_warn": "⚠️ No sections available. Create a section from the left sidebar to get started.",
+        "no_classes_warn": "⚠️ No sections available. Create a section from the sidebar to get started.",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
         "eval_spinner": "⏳ AI is grading student submissions...",
         "catalog_success": "✅ Class list registered successfully!"
@@ -236,7 +243,7 @@ TRANSLATIONS = {
         "btn_add": "➕ Προσθήκη Μαθητή",
         "remove_student": "Αφαίρεση μαθητή:",
         "btn_remove": "❌ Διαγραφή Μαθητή",
-        "api_prompt": "Εισάγετε Google Gemini API Key",
+        "api_prompt": "🔑 Google Gemini API Key",
         "save_api": "💾 Αποθήκευση API Key",
         "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
         "menu_title": "📌 Επιλέξτε Λειτουργία (Κάθετο Μενού):",
@@ -244,7 +251,7 @@ TRANSLATIONS = {
         "opt2": "📋 2. Εισαγωγή Καταλόγου",
         "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
         "notebook_sec": "✨ Φωτογράφηση & Μεταφόρτωση Τετραδίων Μαθητών",
-        "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από την αριστερή στήλη.",
+        "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από το πλαϊνό μενού.",
         "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Γρήγορη Λειτουργία)",
@@ -256,8 +263,8 @@ TRANSLATIONS = {
         "stats_sec": "📊 Συνολικός Πίνακας Προόδου Τμήματος (Excel Style)",
         "btn_close_day": "🚨 Καταγραφή Απουσιών/Ελλείψεων για Σήμερα",
         "manual_delete": "🗑️ Διαγραφή Δεδομένων",
-        "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ:<br>Κάντε scroll προς τα κάτω 👇<br>για να επιλέξετε Τμήμα.<br><span style='font-size: 11px; font-weight: normal;'>(Scroll down to select Department)</span>",
-        "alert_box": "⚙️ Πατήστε τα βελάκια <span class=\"red-badge\">&gt;&gt;</span> πάνω αριστερά για Τμήματα &amp; Γλώσσα",
+        "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ:<br>Κάντε scroll προς τα κάτω 👇<br>για να επιλέξετε Τμήμα.",
+        "alert_box": "⚙️ Διαχειριστείτε τα τμήματα από την πλαϊνή μπάρα και εισάγετε το API Key σας παρακάτω.",
         "uploader_label_hw": "📸 Κάμερα ή Αρχείο Εκφώνησης",
         "uploader_label_notebook": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
         "expander_class": "🏫 Γρήγορη Επιλογή & Διαχείριση Τμήματος (Πατήστε εδώ)",
@@ -273,32 +280,17 @@ TRANSLATIONS = {
         "view_photos_folder": "👁️ Προβολή φωτογραφιών στον φάκελο",
         "clear_folder": "🗑️ Εκκαθάριση Φακέλου",
         "roster_photo_caption": "Φωτογραφία Καταλόγου",
-        "no_classes_warn": "⚠️ Δεν υπάρχουν διαθέσιμα τμήματα. Δημιουργήστε ένα τμήμα από την αριστερή στήλη για να ξεκινήσετε.",
+        "no_classes_warn": "⚠️ Δεν υπάρχουν διαθέσιμα τμήματα. Δημιουργήστε ένα τμήμα από την πλαϊνή μπάρα για να ξεκινήσετε.",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
         "eval_spinner": "⏳ Το AI αξιολογεί τα τετράδια των μαθητών...",
         "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!"
     }
 }
 
-# --- 3. SIDEBAR: API KEY ΣΤΗΝ ΑΡΧΗ, ΕΠΕΙΤΑ ΓΛΩΣΣΑ & ΤΜΗΜΑΤΑ ---
+# --- 3. SIDEBAR: ΜΟΝΟ ΓΛΩΣΣΑ, ΕΚΦΩΝΗΣΗ & ΤΜΗΜΑΤΑ ---
 if "app_lang" not in st.session_state:
     st.session_state["app_lang"] = "English"
 
-# --- API KEY ΣΤΗΝ ΑΡΧΗ ΤΗΣ ΑΡΙΣΤΕΡΗΣ ΣΤΗΛΗΣ ---
-st.sidebar.header("🔑 Google Gemini API Key")
-current_api_key = config_data.get("api_key", "")
-api_key_input = st.sidebar.text_input("Enter API Key:", value=current_api_key, type="password", key="sidebar_api_key_input")
-if st.sidebar.button("💾 Save API Key"):
-    if api_key_input.strip():
-        config_data["api_key"] = api_key_input.strip()
-        save_config(config_data)
-        st.sidebar.success("API Key saved successfully!")
-        time.sleep(1)
-        st.rerun()
-    else:
-        st.sidebar.warning("Please enter a valid API Key.")
-
-st.sidebar.markdown("---")
 st.sidebar.header("🌐 App Language / Γλώσσα")
 selected_sidebar_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(st.session_state["app_lang"]), key="sidebar_lang_select")
 if selected_sidebar_lang != st.session_state["app_lang"]:
@@ -409,15 +401,32 @@ else:
     else:
         st.sidebar.info(t["no_students_yet"])
 
-# --- 4. ΚΥΡΙΩΣ ΠΕΡΙΕΧΟΜΕΝΟ & ΜΕΝΟΥ ---
+# --- 4. ΚΥΡΙΩΣ ΠΕΡΙΕΧΟΜΕΝΟ & API KEY ΣΤΗ ΔΕΞΙΑ/ΚΕΝΤΡΙΚΗ ΟΘΟΝΗ ---
 st.markdown(f"""
     <div class="custom-alert-box">
         {t["alert_box"]}
     </div>
 """, unsafe_allow_html=True)
 
+# Κεντρικό πεδίο API Key
+with st.container():
+    st.markdown("### " + t["api_prompt"])
+    current_api_key = config_data.get("api_key", "")
+    api_key_input = st.text_input("API Key:", value=current_api_key, type="password", key="main_api_key_input", label_visibility="collapsed")
+    if st.button(t["save_api"]):
+        if api_key_input.strip():
+            config_data["api_key"] = api_key_input.strip()
+            save_config(config_data)
+            st.success(t["api_saved_success"])
+            time.sleep(1)
+            st.rerun()
+        else:
+            st.warning("Please enter a valid API Key.")
+
+st.markdown("---")
+
 if not students_db:
-    st.info("👈 Please create at least one section from the left sidebar to get started.")
+    st.info("👈 Please create at least one section from the sidebar to get started.")
 else:
     mode = st.radio(
         t["menu_title"],
@@ -450,7 +459,7 @@ else:
         if st.button(t["btn_evaluate"]):
             api_key_val = config_data.get("api_key", "").strip()
             if not api_key_val:
-                st.error("⚠️ Please enter your Gemini API Key first in the sidebar settings!")
+                st.error("⚠️ Please enter your Gemini API Key first above!")
             else:
                 try:
                     spinner_placeholder = st.empty()
@@ -523,7 +532,7 @@ else:
             if st.button(t["btn_read_names"]):
                 api_key_val = config_data.get("api_key", "").strip()
                 if not api_key_val:
-                    st.error("⚠️ Please enter your Gemini API Key first in the sidebar settings!")
+                    st.error("⚠️ Please enter your Gemini API Key first above!")
                 else:
                     try:
                         spinner_placeholder = st.empty()
