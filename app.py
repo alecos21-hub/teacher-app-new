@@ -280,7 +280,7 @@ TRANSLATIONS = {
     }
 }
 
-# --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ & ΜΑΘΗΤΩΝ ---
+# --- 3. SIDEBAR: ΔΙΑΧΕΙΡΙΣΗ ΤΜΗΜΑΤΩΝ, ΓΛΩΣΣΑΣ & API KEY ---
 if "app_lang" not in st.session_state:
     st.session_state["app_lang"] = "English"
 
@@ -292,6 +292,21 @@ if selected_sidebar_lang != st.session_state["app_lang"]:
 
 app_lang = st.session_state["app_lang"]
 t = TRANSLATIONS.get(app_lang, TRANSLATIONS["English"])
+
+# --- ΡΥΘΜΙΣΗ API KEY ΣΤΟ SIDEBAR ---
+st.sidebar.markdown("---")
+st.sidebar.header("🔑 Google Gemini API Key")
+current_api_key = config_data.get("api_key", "")
+api_key_input = st.sidebar.text_input("Enter API Key:", value=current_api_key, type="password")
+if st.sidebar.button(t["save_api"]):
+    if api_key_input.strip():
+        config_data["api_key"] = api_key_input.strip()
+        save_config(config_data)
+        st.sidebar.success(t["api_saved_success"])
+        time.sleep(1)
+        st.rerun()
+    else:
+        st.sidebar.warning("Please enter a valid API Key.")
 
 st.markdown(t["title"])
 st.markdown(t["subtitle"])
@@ -435,7 +450,7 @@ else:
         if st.button(t["btn_evaluate"]):
             api_key_val = config_data.get("api_key", "").strip()
             if not api_key_val:
-                st.error("⚠️ Please enter your Gemini API Key first in settings or config!")
+                st.error("⚠️ Please enter your Gemini API Key first in the sidebar settings!")
             else:
                 try:
                     spinner_placeholder = st.empty()
@@ -508,7 +523,7 @@ else:
             if st.button(t["btn_read_names"]):
                 api_key_val = config_data.get("api_key", "").strip()
                 if not api_key_val:
-                    st.error("⚠️ Please enter your Gemini API Key first in settings or config!")
+                    st.error("⚠️ Please enter your Gemini API Key first in the sidebar settings!")
                 else:
                     try:
                         spinner_placeholder = st.empty()
