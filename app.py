@@ -221,6 +221,7 @@ TRANSLATIONS = {
         "box3_title": "🗂️ Box 3: Progress Table & Reports",
         "roster_photo_caption": "Roster Photo",
         "no_classes_warn": "⚠️ No sections available. Create a section from the sidebar to get started.",
+        "no_students_yet": "No students added yet.",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
         "eval_spinner": "⏳ AI is grading student submissions...",
         "catalog_success": "✅ Class list registered successfully!"
@@ -271,6 +272,7 @@ TRANSLATIONS = {
         "box3_title": "🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές",
         "roster_photo_caption": "Φωτογραφία Καταλόγου",
         "no_classes_warn": "⚠️ Δεν υπάρχουν διαθέσιμα τμήματα. Δημιουργήστε ένα τμήμα από την πλαϊνή μπάρα για να ξεκινήσετε.",
+        "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
         "eval_spinner": "⏳ Το AI αξιολογεί τα τετράδια των μαθητών...",
         "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!"
