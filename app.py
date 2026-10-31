@@ -279,7 +279,10 @@ TRANSLATIONS = {
 
 # --- 3. SIDEBAR: ΓΛΩΣΣΑ, ΕΚΦΩΝΗΣΗ & ΤΜΗΜΑΤΑ ---
 st.sidebar.header("🌐 App Language / Γλώσσα")
-selected_sidebar_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys().astype ? list(TRANSLATIONS.keys()).index(st.session_state["app_lang"]) : 0), key="sidebar_lang_select")
+lang_keys = list(TRANSLATIONS.keys())
+current_lang_index = lang_keys.index(st.session_state["app_lang"]) if st.session_state["app_lang"] in lang_keys else 0
+
+selected_sidebar_lang = st.sidebar.selectbox("Choose UI Language:", lang_keys, index=current_lang_index, key="sidebar_lang_select")
 if selected_sidebar_lang != st.session_state["app_lang"]:
     st.session_state["app_lang"] = selected_sidebar_lang
     st.rerun()
