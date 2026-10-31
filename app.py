@@ -122,7 +122,7 @@ def load_grades():
     if os.path.exists(GRADES_FILE):
         try:
             df = pd.read_csv(GRADES_FILE)
-            if not df.empty:
+            if not df.empty and "Section" in df.columns:
                 return df
         except Exception:
             pass
@@ -222,6 +222,7 @@ TRANSLATIONS = {
         "roster_photo_caption": "Roster Photo",
         "no_classes_warn": "⚠️ No sections available. Create a section from the sidebar to get started.",
         "no_students_yet": "No students added yet.",
+        "current_class_label": "Current Section:",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
         "eval_spinner": "⏳ AI is grading student submissions...",
         "catalog_success": "✅ Class list registered successfully!"
@@ -273,6 +274,7 @@ TRANSLATIONS = {
         "roster_photo_caption": "Φωτογραφία Καταλόγου",
         "no_classes_warn": "⚠️ Δεν υπάρχουν διαθέσιμα τμήματα. Δημιουργήστε ένα τμήμα από την πλαϊνή μπάρα για να ξεκινήσετε.",
         "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
+        "current_class_label": "Τρέχον Τμήμα:",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
         "eval_spinner": "⏳ Το AI αξιολογεί τα τετράδια των μαθητών...",
         "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!"
@@ -577,7 +579,8 @@ else:
         st.subheader(t["box3_title"])
         st.write(f"📊 {t['stats_sec']} - {selected_class}")
         
-        section_grades = st.session_state["grades_df"][st.session_state["grades_df"]["Section"] == selected_class] if not st.session_state["grades_df"].empty else pd.DataFrame()
+        grades_data = st.session_state["grades_df"]
+        section_grades = grades_data[grades_data["Section"] == selected_class] if not grades_data.empty and "Section" in grades_data.columns else pd.DataFrame()
         
         if st.session_state["students_db"][selected_class]:
             students_list = st.session_state["students_db"][selected_class]
