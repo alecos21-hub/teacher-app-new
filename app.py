@@ -42,13 +42,6 @@ st.markdown("""
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             border: 2px solid #8b0000;
         }
-        .api-box {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            margin-bottom: 20px;
-        }
         .red-badge {
             background-color: #8b0000;
             color: white;
@@ -88,11 +81,14 @@ STUDENTS_FILE = "students_db.json"
 GRADES_FILE = "grades_db.csv"
 CONFIG_FILE = "config.json"
 
+# --- 2. ROBUST DATA LOADING & SAVING FUNCTIONS ---
 def load_config():
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
         except Exception:
             pass
     return {"api_key": ""}
@@ -108,7 +104,9 @@ def load_students():
     if os.path.exists(STUDENTS_FILE):
         try:
             with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
         except Exception:
             pass
     return {}
@@ -123,7 +121,9 @@ def save_students(students_dict):
 def load_grades():
     if os.path.exists(GRADES_FILE):
         try:
-            return pd.read_csv(GRADES_FILE)
+            df = pd.read_csv(GRADES_FILE)
+            if not df.empty:
+                return df
         except Exception:
             pass
     return pd.DataFrame(columns=["Section", "Student", "Date", "Score", "Feedback"])
@@ -133,6 +133,19 @@ def save_grades_df(df):
         df.to_csv(GRADES_FILE, index=False)
     except Exception:
         pass
+
+# --- SESSION STATE INITIALIZATION ---
+if "config" not in st.session_state:
+    st.session_state["config"] = load_config()
+
+if "students_db" not in st.session_state:
+    st.session_state["students_db"] = load_students()
+
+if "grades_df" not in st.session_state:
+    st.session_state["grades_df"] = load_grades()
+
+if "app_lang" not in st.session_state:
+    st.session_state["app_lang"] = "English"
 
 def clear_upload_folder():
     for f in os.listdir(UPLOAD_FOLDER):
@@ -161,11 +174,6 @@ def call_gemini_with_retry(client, model_name, contents, max_retries=3):
             delay *= 2
     return None
 
-students_db = load_students()
-config_data = load_config()
-if "grades_df" not in st.session_state:
-    st.session_state["grades_df"] = load_grades()
-
 TRANSLATIONS = {
     "English": {
         "title": "🎓 GradeMind AI",
@@ -192,7 +200,7 @@ TRANSLATIONS = {
         "opt2": "📋 2. Import Roster",
         "opt3": "📊 3. Progress Table & Reports",
         "notebook_sec": "✨ Capture & Upload Student Notebooks",
-        "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the left sidebar.",
+        "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the sidebar.",
         "batch_upload": "📸 Take photo with camera or select notebook files:",
         "folder_found": "student notebook photos ready in folder.",
         "btn_evaluate": "🚀 Start Grading (Fast Mode)",
@@ -208,18 +216,9 @@ TRANSLATIONS = {
         "alert_box": "⚙️ Manage sections and language from the sidebar, and enter your API Key below.",
         "uploader_label_hw": "📸 Camera or Assignment File",
         "uploader_label_notebook": "📸 Take photo with camera or select notebook files:",
-        "expander_class": "🏫 Quick Class Selection & Management (Click here)",
-        "expander_lang": "🌐 Quick UI Language Change (Click here)",
-        "current_class_label": "Current Section:",
-        "change_class_label": "Change Section:",
-        "no_students_yet": "No students added yet.",
-        "section_students_text": "Students in section",
-        "lang_select_label": "UI Language / Language:",
         "box1_title": "🗂️ Box 1: Automatic Homework Grading",
         "box2_title": "🗂️ Box 2: Import Roster",
         "box3_title": "🗂️ Box 3: Progress Table & Reports",
-        "view_photos_folder": "👁️ View folder photos",
-        "clear_folder": "🗑️ Clear Folder",
         "roster_photo_caption": "Roster Photo",
         "no_classes_warn": "⚠️ No sections available. Create a section from the sidebar to get started.",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
@@ -267,18 +266,9 @@ TRANSLATIONS = {
         "alert_box": "⚙️ Διαχειριστείτε τα τμήματα από την πλαϊνή μπάρα και εισάγετε το API Key σας παρακάτω.",
         "uploader_label_hw": "📸 Κάμερα ή Αρχείο Εκφώνησης",
         "uploader_label_notebook": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
-        "expander_class": "🏫 Γρήγορη Επιλογή & Διαχείριση Τμήματος (Πατήστε εδώ)",
-        "expander_lang": "🌐 Γρήγορη Αλλαγή Γλώσσας UI (Πατήστε εδώ)",
-        "current_class_label": "Τρέχον Τμήμα:",
-        "change_class_label": "Αλλαγή Τμήματος:",
-        "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
-        "section_students_text": "Μαθητές τμήματος",
-        "lang_select_label": "Επιλογή Γλώσσας / Language:",
         "box1_title": "🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης",
         "box2_title": "🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου",
         "box3_title": "🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές",
-        "view_photos_folder": "👁️ Προβολή φωτογραφιών στον φάκελο",
-        "clear_folder": "🗑️ Εκκαθάριση Φακέλου",
         "roster_photo_caption": "Φωτογραφία Καταλόγου",
         "no_classes_warn": "⚠️ Δεν υπάρχουν διαθέσιμα τμήματα. Δημιουργήστε ένα τμήμα από την πλαϊνή μπάρα για να ξεκινήσετε.",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
@@ -287,12 +277,9 @@ TRANSLATIONS = {
     }
 }
 
-# --- 3. SIDEBAR: ΜΟΝΟ ΓΛΩΣΣΑ, ΕΚΦΩΝΗΣΗ & ΤΜΗΜΑΤΑ ---
-if "app_lang" not in st.session_state:
-    st.session_state["app_lang"] = "English"
-
+# --- 3. SIDEBAR: ΓΛΩΣΣΑ, ΕΚΦΩΝΗΣΗ & ΤΜΗΜΑΤΑ ---
 st.sidebar.header("🌐 App Language / Γλώσσα")
-selected_sidebar_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys()).index(st.session_state["app_lang"]), key="sidebar_lang_select")
+selected_sidebar_lang = st.sidebar.selectbox("Choose UI Language:", list(TRANSLATIONS.keys()), index=list(TRANSLATIONS.keys().astype ? list(TRANSLATIONS.keys()).index(st.session_state["app_lang"]) : 0), key="sidebar_lang_select")
 if selected_sidebar_lang != st.session_state["app_lang"]:
     st.session_state["app_lang"] = selected_sidebar_lang
     st.rerun()
@@ -341,39 +328,39 @@ new_class_input = st.sidebar.text_input(t["add_new_class"])
 if st.sidebar.button(t["btn_add_class"]):
     n_class = new_class_input.strip().upper()
     if n_class:
-        if n_class not in students_db:
-            students_db[n_class] = []
-            save_students(students_db)
+        if n_class not in st.session_state["students_db"]:
+            st.session_state["students_db"][n_class] = []
+            save_students(st.session_state["students_db"])
             st.sidebar.success(f"Created section: {n_class}")
             st.session_state["selected_class"] = n_class
             st.rerun()
         else:
             st.sidebar.warning("Section already exists.")
 
-if students_db:
-    class_to_remove = st.sidebar.selectbox(t["remove_class"], ["-- Select --"] + list(students_db.keys()))
+if st.session_state["students_db"]:
+    class_to_remove = st.sidebar.selectbox(t["remove_class"], ["-- Select --"] + list(st.session_state["students_db"].keys()))
     if st.sidebar.button(t["btn_remove_class"]):
         if class_to_remove != "-- Select --":
-            del students_db[class_to_remove]
-            save_students(students_db)
+            del st.session_state["students_db"][class_to_remove]
+            save_students(st.session_state["students_db"])
             st.sidebar.warning(f"Deleted section: {class_to_remove}")
-            if students_db:
-                st.session_state["selected_class"] = list(students_db.keys())[0]
+            if st.session_state["students_db"]:
+                st.session_state["selected_class"] = list(st.session_state["students_db"].keys())[0]
             else:
                 if "selected_class" in st.session_state:
                     del st.session_state["selected_class"]
             st.rerun()
 
-if not students_db:
+if not st.session_state["students_db"]:
     st.warning(t["no_classes_warn"])
 else:
-    if "selected_class" not in st.session_state or st.session_state["selected_class"] not in students_db:
-        st.session_state["selected_class"] = list(students_db.keys())[0]
+    if "selected_class" not in st.session_state or st.session_state["selected_class"] not in st.session_state["students_db"]:
+        st.session_state["selected_class"] = list(st.session_state["students_db"].keys())[0]
 
     selected_class_sidebar = st.sidebar.selectbox(
         t["select_class"], 
-        list(students_db.keys()), 
-        index=list(students_db.keys()).index(st.session_state["selected_class"])
+        list(st.session_state["students_db"].keys()), 
+        index=list(st.session_state["students_db"].keys()).index(st.session_state["selected_class"])
     )
     if selected_class_sidebar != st.session_state["selected_class"]:
         st.session_state["selected_class"] = selected_class_sidebar
@@ -384,18 +371,18 @@ else:
     st.sidebar.subheader(f"{t['students_in']} {selected_class}")
     new_student = st.sidebar.text_input(t["add_student"])
     if st.sidebar.button(t["btn_add"]):
-        if new_student and new_student not in students_db[selected_class]:
-            students_db[selected_class].append(new_student)
-            save_students(students_db)
+        if new_student and new_student not in st.session_state["students_db"][selected_class]:
+            st.session_state["students_db"][selected_class].append(new_student)
+            save_students(st.session_state["students_db"])
             st.sidebar.success(f"Added {new_student}")
             st.rerun()
 
-    if students_db[selected_class]:
-        student_to_remove = st.sidebar.selectbox(t["remove_student"], ["-- Select --"] + students_db[selected_class])
+    if st.session_state["students_db"][selected_class]:
+        student_to_remove = st.sidebar.selectbox(t["remove_student"], ["-- Select --"] + st.session_state["students_db"][selected_class])
         if st.sidebar.button(t["btn_remove"]):
             if student_to_remove != "-- Select --":
-                students_db[selected_class].remove(student_to_remove)
-                save_students(students_db)
+                st.session_state["students_db"][selected_class].remove(student_to_remove)
+                save_students(st.session_state["students_db"])
                 st.sidebar.warning(f"Removed {student_to_remove}")
                 st.rerun()
     else:
@@ -408,15 +395,15 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# Κεντρικό πεδίο API Key
+# Κεντρικό πεδίο API Key με άμεση αποθήκευση στο Session State και στο αρχείο
 with st.container():
     st.markdown("### " + t["api_prompt"])
-    current_api_key = config_data.get("api_key", "")
+    current_api_key = st.session_state["config"].get("api_key", "")
     api_key_input = st.text_input("API Key:", value=current_api_key, type="password", key="main_api_key_input", label_visibility="collapsed")
     if st.button(t["save_api"]):
         if api_key_input.strip():
-            config_data["api_key"] = api_key_input.strip()
-            save_config(config_data)
+            st.session_state["config"]["api_key"] = api_key_input.strip()
+            save_config(st.session_state["config"])
             st.success(t["api_saved_success"])
             time.sleep(1)
             st.rerun()
@@ -425,7 +412,7 @@ with st.container():
 
 st.markdown("---")
 
-if not students_db:
+if not st.session_state["students_db"]:
     st.info("👈 Please create at least one section from the sidebar to get started.")
 else:
     mode = st.radio(
@@ -457,7 +444,7 @@ else:
             st.success(f"✅ {notebook_count} {t['folder_found']}")
         
         if st.button(t["btn_evaluate"]):
-            api_key_val = config_data.get("api_key", "").strip()
+            api_key_val = st.session_state["config"].get("api_key", "").strip()
             if not api_key_val:
                 st.error("⚠️ Please enter your Gemini API Key first above!")
             else:
@@ -530,7 +517,7 @@ else:
             st.image(catalog_path, caption=t["roster_photo_caption"], width=300)
             
             if st.button(t["btn_read_names"]):
-                api_key_val = config_data.get("api_key", "").strip()
+                api_key_val = st.session_state["config"].get("api_key", "").strip()
                 if not api_key_val:
                     st.error("⚠️ Please enter your Gemini API Key first above!")
                 else:
@@ -564,11 +551,11 @@ else:
                                 added_count = 0
                                 for name in parsed_names:
                                     clean_name = str(name).strip()
-                                    if clean_name and clean_name not in students_db[selected_class]:
-                                        students_db[selected_class].append(clean_name)
+                                    if clean_name and clean_name not in st.session_state["students_db"][selected_class]:
+                                        st.session_state["students_db"][selected_class].append(clean_name)
                                         added_count += 1
                                 
-                                save_students(students_db)
+                                save_students(st.session_state["students_db"])
                                 st.success(f"✅ Successfully read! Added {added_count} new students to section {selected_class}.")
                                 time.sleep(1)
                                 st.rerun()
@@ -587,8 +574,8 @@ else:
         
         section_grades = st.session_state["grades_df"][st.session_state["grades_df"]["Section"] == selected_class] if not st.session_state["grades_df"].empty else pd.DataFrame()
         
-        if students_db[selected_class]:
-            students_list = students_db[selected_class]
+        if st.session_state["students_db"][selected_class]:
+            students_list = st.session_state["students_db"][selected_class]
             df_progress = pd.DataFrame({"Student": students_list})
             
             if not section_grades.empty:
