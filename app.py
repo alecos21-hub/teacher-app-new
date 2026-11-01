@@ -541,14 +541,14 @@ else:
                 if not api_key_val:
                     st.error("⚠️ Please enter your Gemini API Key first above!")
                 else:
+                    spinner_placeholder = st.empty()
+                    spinner_placeholder.markdown(f"""
+                        <div class="custom-spinner-box">
+                            {t["catalog_spinner"]}
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
                     try:
-                        spinner_placeholder = st.empty()
-                        spinner_placeholder.markdown(f"""
-                            <div class="custom-spinner-box">
-                                {t["catalog_spinner"]}
-                            </div>
-                        """, unsafe_allow_html=True)
-                        
                         client = genai.Client(api_key=api_key_val)
                         img_to_send = Image.open(catalog_path)
                         
@@ -575,3 +575,36 @@ else:
                                         if clean_name and clean_name not in st.session_state["students_db"][selected_class]:
                                             st.session_state["students_db"][selected_class].append(clean_name)
                                             added_count += 1
+                                    
+                                    save_students(st.session_state["students_db"])
+                                    st.success(f"✅ Successfully read! Added {added_count} new students to section {selected_class}.")
+                                    time.sleep(1)
+                                    st.rerun()
+                                else:
+                                    st.error("⚠️ No clear names found in the image. Please try a clearer picture.")
+                            else:
+                                st.error("⚠️ Error parsing roster data. Please try again.")
+                        else:
+                            st.error("⚠️ Error reading roster, please try again.")
+                    except Exception as e:
+                        if 'spinner_placeholder' in locals():
+                            spinner_placeholder.empty()
+                        st.error(f"⚠️ Processing error: {str(e)}")
+
+    elif mode == t["opt3"]:
+        st.subheader(t["box3_title"])
+        st.write(f"📊 {t['stats_sec']} - {selected_class}")
+        
+        grades_data = st.session_state["grades_df"]
+        section_grades = grades_data[grades_data["Section"] == selected_class] if not grades_data.empty and "Section" in grades_data.columns else pd.DataFrame()
+        
+        if st.session_state["students_db"][selected_class]:
+            students_list = st.session_state["students_db"][selected_class]
+            df_progress = pd.DataFrame({"Student": students_list})
+            
+            if not section_grades.empty:
+                df_progress = pd.merge(df_progress, section_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
+            
+            st.dataframe(df_progress, use_container_width=True)
+        else:
+            st.info(t["no_students_yet"])
