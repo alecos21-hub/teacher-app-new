@@ -435,13 +435,11 @@ else:
         
         if notebook_files:
             for idx, nb_file in enumerate(notebook_files):
-                # Χρησιμοποιούμε μοναδικό όνομα αρχείου με timestamp για να μην επικαλύπτονται
                 unique_filename = f"student_page_{int(time.time())}_{idx}.jpg"
                 nb_path = os.path.join(UPLOAD_FOLDER, unique_filename)
                 with open(nb_path, "wb") as f:
                     f.write(nb_file.getbuffer())
         
-        # Υπολογισμός συνολικών αποθηκευμένων σελίδων τετραδίων στον φάκελο
         existing_notebooks = [f for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
         notebook_count = len(existing_notebooks)
         
@@ -483,7 +481,7 @@ else:
                             nb_img = Image.open(nb_p)
                             contents_to_send = homework_images + [nb_img, "Analyze this student's solution against the homework prompt. Identify the student's name if written, give a score from 0 to 100, and short feedback. Return ONLY valid JSON format: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"]
                             
-                            resp_text = call_gemini_with_retry(client, 'gemini-2.5-flash', contents_to_send)
+                            resp_text = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_to_send)
                             if resp_text:
                                 clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
                                 try:
@@ -551,7 +549,7 @@ else:
                             "Do not include any extra text, markdown formatting blocks like ```json, or explanations."
                         )
                         
-                        response_text = call_gemini_with_retry(client, 'gemini-2.5-flash', [img_to_send, prompt])
+                        response_text = call_gemini_with_retry(client, 'gemini-3.8-flash', [img_to_send, prompt])
                         
                         spinner_placeholder.empty()
                         
