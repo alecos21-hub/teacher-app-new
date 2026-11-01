@@ -147,21 +147,17 @@ if "grades_df" not in st.session_state:
 if "app_lang" not in st.session_state:
     st.session_state["app_lang"] = "English"
 
-def call_gemini_with_retry(client, model_name, contents, max_retries=3):
-    delay = 1
-    for attempt in range(max_retries):
-        try:
-            response = client.models.generate_content(
-                model=model_name,
-                contents=contents
-            )
-            if response and response.text:
-                return response.text
-        except Exception as e:
-            if attempt == max_retries - 1:
-                raise e
-            time.sleep(delay)
-            delay *= 2
+def call_gemini_safe(client, model_name, contents):
+    try:
+        response = client.models.generate_content(
+            model=model_name,
+            contents=contents
+        )
+        if response and response.text:
+            return response.text
+    except Exception as e:
+        # Επιστρέφει None αν υπάρξει σφάλμα API, αποτρέποντας το κρασάρισμα της εφαρμογής
+        print(f"Gemini API Error: {e}")
     return None
 
 TRANSLATIONS = {
@@ -475,11 +471,11 @@ else:
                             file_name_display = os.path.basename(nb_p)
                             status_text.markdown(f"🔄 **Αξιολόγηση σε εξέλιξη...** (Φωτογραφία {i+1} από {total_files}: `{file_name_display}`)")
                             
-                            nb_img = Image.open(nb_p)
-                            contents_to_send = homework_images + [nb_img, "Analyze this student's solution against the homework prompt. Identify the student's name if written, give a score from 0 to 100, and short feedback. Return ONLY valid JSON format: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"]
-                            
                             try:
-                                resp_text = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_to_send)
+                                nb_img = Image.open(nb_p)
+                                contents_to_send = homework_images + [nb_img, "Analyze this student's solution against the homework prompt. Identify the student's name if written, give a score from 0 to 100, and short feedback. Return ONLY valid JSON format: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"]
+                                
+                                resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
                                 if resp_text:
                                     clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
                                     json_match = re.search(r'\{.*\}', clean_resp, re.DOTALL)
@@ -492,8 +488,8 @@ else:
                                             "Score": res_data.get("score", 0),
                                             "Feedback": res_data.get("feedback", "")
                                         })
-                            except Exception:
-                                pass
+                            except Exception as inner_e:
+                                print(f"Skipping image due to error: {inner_e}")
                             
                             progress_bar.progress((i + 1) / total_files)
                         
@@ -545,7 +541,7 @@ else:
                             "Do not include any extra text, markdown formatting blocks like ```json, or explanations."
                         )
                         
-                        response_text = call_gemini_with_retry(client, 'gemini-3.8-flash', [img_to_send, prompt])
+                        response_text = call_gemini_safe(client, 'gemini-3.8-flash', [img_to_send, prompt])
                         spinner_placeholder.empty()
                         
                         if response_text:
