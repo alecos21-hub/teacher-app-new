@@ -147,16 +147,6 @@ if "grades_df" not in st.session_state:
 if "app_lang" not in st.session_state:
     st.session_state["app_lang"] = "English"
 
-def clear_upload_folder():
-    for f in os.listdir(UPLOAD_FOLDER):
-        if not f.startswith('hw_page_'):
-            file_path = os.path.join(UPLOAD_FOLDER, f)
-            try:
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-            except Exception:
-                pass
-
 def call_gemini_with_retry(client, model_name, contents, max_retries=3):
     delay = 1
     for attempt in range(max_retries):
@@ -201,8 +191,9 @@ TRANSLATIONS = {
         "opt3": "📊 3. Progress Table & Reports",
         "notebook_sec": "✨ Capture & Upload Student Notebooks",
         "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the sidebar.",
-        "batch_upload": "📸 Take photo with camera or select notebook files:",
+        "batch_upload": "📸 Take photo with camera or select notebook files (accumulates photos):",
         "folder_found": "student notebook photos ready in folder.",
+        "clear_notebooks": "🗑️ Clear Notebooks Folder",
         "btn_evaluate": "🚀 Start Grading (Fast Mode)",
         "eval_success": "Successfully evaluated and saved to Progress Table!",
         "view_eval": "🔍 View Latest Evaluation",
@@ -253,8 +244,9 @@ TRANSLATIONS = {
         "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
         "notebook_sec": "✨ Φωτογράφηση & Μεταφόρτωση Τετραδίων Μαθητών",
         "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από το πλαϊνό μενού.",
-        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
+        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων (προστίθενται διαδοχικά):",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
+        "clear_notebooks": "🗑️ Εκκαθάριση Φακέλου Τετραδίων",
         "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Γρήγορη Λειτουργία)",
         "eval_success": "Η αξιολόγηση ολοκληρώθηκε και αποθηκεύτηκε στον πίνακα προόδου!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
@@ -433,6 +425,7 @@ else:
         if not homework_images:
             st.warning(t["no_hw_warn"])
         
+        # --- ΑΘΡΟΙΣΤΙΚΗ ΦΟΡΤΩΣΗ ΦΩΤΟΓΡΑΦΙΩΝ ΤΕΤΡΑΔΙΩΝ ---
         notebook_files = st.file_uploader(
             t["batch_upload"],
             type=["png", "jpg", "jpeg"],
@@ -441,14 +434,26 @@ else:
         )
         
         if notebook_files:
-            clear_upload_folder()
             for idx, nb_file in enumerate(notebook_files):
-                nb_path = os.path.join(UPLOAD_FOLDER, f"student_page_{idx}.jpg")
+                # Χρησιμοποιούμε μοναδικό όνομα αρχείου με timestamp για να μην επικαλύπτονται
+                unique_filename = f"student_page_{int(time.time())}_{idx}.jpg"
+                nb_path = os.path.join(UPLOAD_FOLDER, unique_filename)
                 with open(nb_path, "wb") as f:
                     f.write(nb_file.getbuffer())
-            
-            notebook_count = len(notebook_files)
+        
+        # Υπολογισμός συνολικών αποθηκευμένων σελίδων τετραδίων στον φάκελο
+        existing_notebooks = [f for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
+        notebook_count = len(existing_notebooks)
+        
+        if notebook_count > 0:
             st.success(f"✅ {notebook_count} {t['folder_found']}")
+            if st.button(t["clear_notebooks"]):
+                for f in existing_notebooks:
+                    try:
+                        os.remove(os.path.join(UPLOAD_FOLDER, f))
+                    except:
+                        pass
+                st.rerun()
         
         if st.button(t["btn_evaluate"]):
             api_key_val = st.session_state["config"].get("api_key", "").strip()
@@ -478,7 +483,7 @@ else:
                             nb_img = Image.open(nb_p)
                             contents_to_send = homework_images + [nb_img, "Analyze this student's solution against the homework prompt. Identify the student's name if written, give a score from 0 to 100, and short feedback. Return ONLY valid JSON format: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"]
                             
-                            resp_text = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_to_send)
+                            resp_text = call_gemini_with_retry(client, 'gemini-2.5-flash', contents_to_send)
                             if resp_text:
                                 clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
                                 try:
@@ -546,7 +551,7 @@ else:
                             "Do not include any extra text, markdown formatting blocks like ```json, or explanations."
                         )
                         
-                        response_text = call_gemini_with_retry(client, 'gemini-3.8-flash', [img_to_send, prompt])
+                        response_text = call_gemini_with_retry(client, 'gemini-2.5-flash', [img_to_send, prompt])
                         
                         spinner_placeholder.empty()
                         
