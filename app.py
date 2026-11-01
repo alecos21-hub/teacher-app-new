@@ -194,7 +194,7 @@ TRANSLATIONS = {
         "batch_upload": "📸 Take photo with camera or select notebook files (accumulates photos):",
         "folder_found": "student notebook photos ready in folder.",
         "clear_notebooks": "🗑️ Clear Notebooks Folder",
-        "btn_evaluate": "🚀 Start Grading (Fast Mode)",
+        "btn_evaluate": "🚀 Start Grading (Instant Batch Mode)",
         "eval_success": "Successfully evaluated and saved to Progress Table!",
         "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
@@ -215,7 +215,7 @@ TRANSLATIONS = {
         "no_students_yet": "No students added yet.",
         "current_class_label": "Current Section:",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
-        "eval_spinner": "⏳ AI is grading student submissions...",
+        "eval_spinner": "⏳ AI is grading all student submissions at once... (Takes a few seconds)",
         "catalog_success": "✅ Class list registered successfully!"
     },
     "Ελληνικά": {
@@ -247,7 +247,7 @@ TRANSLATIONS = {
         "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων (προστίθενται διαδοχικά):",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "clear_notebooks": "🗑️ Εκκαθάριση Φακέλου Τετραδίων",
-        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Γρήγορη Λειτουργία)",
+        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Αστραπιαία Μαζική Λειτουργία)",
         "eval_success": "Η αξιολόγηση ολοκληρώθηκε και αποθηκεύτηκε στον πίνακα προόδου!",
         "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
@@ -268,7 +268,7 @@ TRANSLATIONS = {
         "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
         "current_class_label": "Τρέχον Τμήμα:",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
-        "eval_spinner": "⏳ Το AI αξιολογεί τα τετράδια των μαθητών...",
+        "eval_spinner": "⏳ Το AI αξιολογεί όλα τα τετράδια μαζικά σε λίγα δευτερόλεπτα...",
         "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!"
     }
 }
@@ -474,41 +474,50 @@ else:
                         spinner_placeholder.empty()
                         st.warning("⚠️ No student notebook photos found. Please upload or take photos first.")
                     else:
-                        new_records = []
+                        # Φόρτωση όλων των εικόνων των μαθητών μαζικά
+                        student_images = [Image.open(p) for p in nb_images_paths]
                         today_str = datetime.date.today().strftime("%Y-%m-%d")
                         
-                        for nb_p in nb_images_paths:
-                            nb_img = Image.open(nb_p)
-                            contents_to_send = homework_images + [nb_img, "Analyze this student's solution against the homework prompt. Identify the student's name if written, give a score from 0 to 100, and short feedback. Return ONLY valid JSON format: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"]
-                            
-                            resp_text = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_to_send)
-                            if resp_text:
-                                clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
-                                try:
-                                    res_data = json.loads(clean_resp)
-                                    s_name = res_data.get("student_name", "Unknown")
-                                    s_score = res_data.get("score", 0)
-                                    s_feedback = res_data.get("feedback", "")
-                                    
-                                    new_records.append({
-                                        "Section": selected_class,
-                                        "Student": s_name,
-                                        "Date": today_str,
-                                        "Score": s_score,
-                                        "Feedback": s_feedback
-                                    })
-                                except Exception:
-                                    pass
+                        # Δημιουργία ενός ενιαίου, μαζικού prompt
+                        prompt_text = (
+                            "Here are the homework prompt pages followed by all student notebook solution pages. "
+                            "Analyze all pages, group multiple pages belonging to the same student together based on the student's name, "
+                            "grade each student's work from 0 to 100 against the prompt, and write short feedback. "
+                            "Return ONLY a valid JSON list of objects (no extra text or markdown formatting blocks like ```json): "
+                            "[{\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}, ...]"
+                        )
                         
+                        contents_to_send = homework_images + student_images + [prompt_text]
+                        
+                        resp_text = call_gemini_with_retry(client, 'gemini-3.8-flash', contents_to_send)
                         spinner_placeholder.empty()
                         
-                        if new_records:
-                            df_new = pd.DataFrame(new_records)
-                            st.session_state["grades_df"] = pd.concat([st.session_state["grades_df"], df_new], ignore_index=True)
-                            save_grades_df(st.session_state["grades_df"])
-                            st.success(f"✅ {t['eval_success']}")
+                        if resp_text:
+                            clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
+                            try:
+                                res_data = json.loads(clean_resp)
+                                new_records = []
+                                if isinstance(res_data, list):
+                                    for item in res_data:
+                                        new_records.append({
+                                            "Section": selected_class,
+                                            "Student": item.get("student_name", "Unknown"),
+                                            "Date": today_str,
+                                            "Score": item.get("score", 0),
+                                            "Feedback": item.get("feedback", "")
+                                        })
+                                
+                                if new_records:
+                                    df_new = pd.DataFrame(new_records)
+                                    st.session_state["grades_df"] = pd.concat([st.session_state["grades_df"], df_new], ignore_index=True)
+                                    save_grades_df(st.session_state["grades_df"])
+                                    st.success(f"✅ {t['eval_success']}")
+                                else:
+                                    st.error("⚠️ Could not extract grading data from the submissions. Please try again.")
+                            except Exception as json_err:
+                                st.error(f"⚠️ Error parsing AI response: {str(json_err)}")
                         else:
-                            st.error("⚠️ Could not extract grading data from the submissions. Please try again.")
+                            st.error("⚠️ Error evaluating submissions, please try again.")
                 except Exception as e:
                     if 'spinner_placeholder' in locals():
                         spinner_placeholder.empty()
