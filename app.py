@@ -30,6 +30,16 @@ st.markdown("""
             margin-bottom: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
+        .custom-info-card {
+            background-color: #eef6ff;
+            color: #1e3a8a;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 5px solid #2563eb;
+            font-size: 14px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
         .custom-spinner-box {
             background-color: #ff4b4b;
             color: white;
@@ -156,7 +166,6 @@ def call_gemini_safe(client, model_name, contents):
         if response and response.text:
             return response.text
     except Exception as e:
-        # Επιστρέφει None αν υπάρξει σφάλμα API, αποτρέποντας το κρασάρισμα της εφαρμογής
         print(f"Gemini API Error: {e}")
     return None
 
@@ -211,7 +220,8 @@ TRANSLATIONS = {
         "no_students_yet": "No students added yet.",
         "current_class_label": "Current Section:",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
-        "catalog_success": "✅ Class list registered successfully!"
+        "catalog_success": "✅ Class list registered successfully!",
+        "workflow_info": "💡 <b>Quick Guide:</b> You can capture student notebooks directly from your phone. Photos are safely collected without using API credits until you press <b>'🚀 Start Grading'</b>. For fast multi-page evaluation, you can also launch the grading process from your PC!"
     },
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -263,7 +273,8 @@ TRANSLATIONS = {
         "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
         "current_class_label": "Τρέχον Τμήμα:",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
-        "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!"
+        "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!",
+        "workflow_info": "💡 <b>Οδηγός Χρήσης:</b> Μπορείτε να φωτογραφίζετε τα τετράδια απευθείας από το κινητό. Οι φωτογραφίες συγκεντρώνονται με ασφάλεια και η αξιολόγηση **ΔΕΝ** ξεκινά μέχρι να πατήσετε το κουμπί <b>«🚀 Έναρξη Αξιολόγησης»</b>. Για μέγιστη ταχύτητα σε πολλά γραπτά, μπορείτε να πατήσετε το κουμπί από τον υπολογιστή σας!"
     }
 }
 
@@ -388,7 +399,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# Κεντρικό πεδίο API Key με άμεση αποθήκευση στο Session State και στο αρχείο
+# Κεντρικό πεδίο API Key
 with st.container():
     st.markdown("### " + t["api_prompt"])
     current_api_key = st.session_state["config"].get("api_key", "")
@@ -404,6 +415,13 @@ with st.container():
             st.warning("Please enter a valid API Key.")
 
 st.markdown("---")
+
+# ΕΝΗΜΕΡΩΤΙΚΗ ΚΑΡΤΑ ΡΟΗΣ ΕΡΓΑΣΙΑΣ (INFO CARD)
+st.markdown(f"""
+    <div class="custom-info-card">
+        {t["workflow_info"]}
+    </div>
+""", unsafe_allow_html=True)
 
 if not st.session_state["students_db"]:
     st.info("👈 Please create at least one section from the sidebar to get started.")
@@ -557,36 +575,3 @@ else:
                                         if clean_name and clean_name not in st.session_state["students_db"][selected_class]:
                                             st.session_state["students_db"][selected_class].append(clean_name)
                                             added_count += 1
-                                    
-                                    save_students(st.session_state["students_db"])
-                                    st.success(f"✅ Successfully read! Added {added_count} new students to section {selected_class}.")
-                                    time.sleep(1)
-                                    st.rerun()
-                                else:
-                                    st.error("⚠️ No clear names found in the image. Please try a clearer picture.")
-                            else:
-                                st.error("⚠️ Error parsing roster data. Please try again.")
-                        else:
-                            st.error("⚠️ Error reading roster, please try again.")
-                    except Exception as e:
-                        if 'spinner_placeholder' in locals():
-                            spinner_placeholder.empty()
-                        st.error(f"⚠️ Processing error: {str(e)}")
-
-    elif mode == t["opt3"]:
-        st.subheader(t["box3_title"])
-        st.write(f"📊 {t['stats_sec']} - {selected_class}")
-        
-        grades_data = st.session_state["grades_df"]
-        section_grades = grades_data[grades_data["Section"] == selected_class] if not grades_data.empty and "Section" in grades_data.columns else pd.DataFrame()
-        
-        if st.session_state["students_db"][selected_class]:
-            students_list = st.session_state["students_db"][selected_class]
-            df_progress = pd.DataFrame({"Student": students_list})
-            
-            if not section_grades.empty:
-                df_progress = pd.merge(df_progress, section_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
-            
-            st.dataframe(df_progress, use_container_width=True)
-        else:
-            st.info(t["no_students_yet"])
