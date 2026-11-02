@@ -553,37 +553,41 @@ else:
                         img_to_send = Image.open(catalog_path)
                         
                         prompt = (
-                            "Look at this image containing a class roster or list of student names. "
-                            "Extract all student names. Return ONLY a valid JSON list of strings, "
-                            "where each string is a student's full name (e.g., [\"John Doe\", \"Maria Smith\"]). "
-                            "Do not include any extra text, markdown formatting blocks like ```json, or explanations."
+                            "Look at this school class roster image. "
+                            "Check the table layout: the student names might be in a single combined column (e.g., 'ΟΝΟΜΑΤΕΠΩΝΥΜΟ') "
+                            "OR in separate columns (e.g., Last Name / Επώνυμο and First Name / Όνομα). "
+                            "Extract all student full names, combining the last name and first name if they are in separate columns, "
+                            "or reading them directly if they are in a single column. "
+                            "Return the full names line by line, one student per line. "
+                            "Do not include serial numbers, registration numbers, codes, or any extra text."
                         )
                         
                         response_text = call_gemini_safe(client, 'gemini-3.8-flash', [img_to_send, prompt])
                         spinner_placeholder.empty()
                         
                         if response_text:
-                            clean_text = response_text.replace("```json", "").replace("```", "").strip()
-                            json_match = re.search(r'\[.*\]', clean_text, re.DOTALL)
-                            if json_match:
-                                parsed_names = json.loads(json_match.group(0))
+                            lines = response_text.replace("```", "").split("\n")
+                            parsed_names = []
+                            for line in lines:
+                                clean_line = line.strip()
+                                # Αφαίρεση τυχόν αριθμών ή συμβόλων στην αρχή
+                                clean_line = re.sub(r'^[\d\-\.\)]+\s*', '', clean_line).strip()
+                                if len(clean_line) > 3:
+                                    parsed_names.append(clean_line)
+                            
+                            if parsed_names:
+                                added_count = 0
+                                for name in parsed_names:
+                                    if name not in st.session_state["students_db"][selected_class]:
+                                        st.session_state["students_db"][selected_class].append(name)
+                                        added_count += 1
                                 
-                                if isinstance(parsed_names, list) and parsed_names:
-                                    added_count = 0
-                                    for name in parsed_names:
-                                        clean_name = str(name).strip()
-                                        if clean_name and clean_name not in st.session_state["students_db"][selected_class]:
-                                            st.session_state["students_db"][selected_class].append(clean_name)
-                                            added_count += 1
-                                    
-                                    save_students(st.session_state["students_db"])
-                                    st.success(f"✅ Successfully read! Added {added_count} new students to section {selected_class}.")
-                                    time.sleep(1)
-                                    st.rerun()
-                                else:
-                                    st.error("⚠️ No clear names found in the image. Please try a clearer picture.")
+                                save_students(st.session_state["students_db"])
+                                st.success(f"✅ Successfully read! Added {added_count} new students to section {selected_class}.")
+                                time.sleep(1)
+                                st.rerun()
                             else:
-                                st.error("⚠️ Error parsing roster data. Please try again.")
+                                st.error("⚠️ No clear names found in the image. Please try a clearer picture.")
                         else:
                             st.error("⚠️ Error reading roster, please try again.")
                     except Exception as e:
