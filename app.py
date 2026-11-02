@@ -41,15 +41,6 @@ st.markdown("""
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .answer-key-box {
-            background-color: #f0fdf4;
-            color: #166534;
-            padding: 15px 20px;
-            border-radius: 10px;
-            border-left: 5px solid #22c55e;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
         .custom-spinner-box {
             background-color: #ff4b4b;
             color: white;
@@ -105,7 +96,6 @@ def compress_image(image_bytes, max_size=(1200, 1200), quality=80):
     except Exception:
         return image_bytes
 
-# --- Data Helper Functions ---
 def load_config():
     if os.path.exists(CONFIG_FILE):
         try:
@@ -232,7 +222,7 @@ TRANSLATIONS = {
         "no_students_yet": "No students added yet.",
         "current_class_label": "Current Section:",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
-        "workflow_info": "💡 <b>Quick Guide:</b> Photos are compressed automatically to ensure fast uploading. Step 1 generates the official Answer Key for approval. Step 2 grades student notebooks against that approved criteria."
+        "workflow_info": "💡 <b>Quick Guide:</b> Photos are compressed automatically. Step 1 generates the official Answer Key. Step 2 grades student notebooks against that approved criteria."
     },
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -279,7 +269,7 @@ TRANSLATIONS = {
         "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
         "current_class_label": "Τρέχον Τμήμα:",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
-        "workflow_info": "💡 <b>Οδηγός Χρήσης:</b> Οι φωτογραφίες συμπιέζονται αυτόματα για στιγμιαίο ανέβασμα. Στο Βήμα 1 παράγεται η Πρότυπη Λύση προς επισκόπηση. Στο Βήμα 2 εγκρίνεται η λύση και ξεκινά η βαθμολόγηση των τετραδίων."
+        "workflow_info": "💡 <b>Οδηγός Χρήσης:</b> Οι φωτογραφίες συμπιέζονται αυτόματα. Στο Βήμα 1 παράγεται η Πρότυπη Λύση. Στο Βήμα 2 εγκρίνεται η λύση και ξεκινά η βαθμολόγηση."
     }
 }
 
@@ -310,18 +300,23 @@ hw_files = st.sidebar.file_uploader(
     key="hw_high_res_uploader"
 )
 
-homework_images = []
 if hw_files:
     for idx, hw_f in enumerate(hw_files):
         compressed_bytes = compress_image(hw_f.getbuffer())
         hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{idx}.jpg")
         with open(hw_path, "wb") as f:
             f.write(compressed_bytes)
-        try:
-            img = Image.open(hw_path)
-            homework_images.append(img)
-        except Exception:
-            pass
+
+# Φόρτωση εκφώνησης απευθείας από τον φάκελο (για να μην χάνεται ποτέ)
+homework_images = []
+hw_paths_in_folder = sorted([os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('hw_page_')])
+for p in hw_paths_in_folder:
+    try:
+        homework_images.append(Image.open(p))
+    except Exception:
+        pass
+
+if homework_images:
     st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
 
 st.sidebar.markdown(f"""
@@ -440,7 +435,6 @@ else:
         if not homework_images:
             st.warning("⚠️ Σημείωση: Ανεβάστε πρώτα την εκφώνηση της άσκησης από το πλαϊνό μενού (Sidebar).")
         
-        # Ανεβαστήρι Τετραδίων με Αυτόματη Συμπίεση
         notebook_files = st.file_uploader(
             t["batch_upload"],
             type=["png", "jpg", "jpeg"],
@@ -472,7 +466,7 @@ else:
         
         st.markdown("---")
         
-        # --- ΒΗΜΑ 1: ΔΗΜΙΟΥΡΓΙΑ ΠΡΟΤΥΠΗΣ ΛΥΣΗΣ (ANSWER KEY) ---
+        # --- ΒΗΜΑ 1: ΔΗΜΙΟΥΡΓΙΑ ΠΡΟΤΥΠΗΣ ΛΥΣΗΣ ---
         if st.button(t["btn_generate_key"]):
             api_key_val = st.session_state["config"].get("api_key", "").strip()
             if not api_key_val:
@@ -480,14 +474,13 @@ else:
             elif not homework_images:
                 st.error("⚠️ Παρακαλώ ανεβάστε πρώτα την εκφώνηση της άσκησης στο πλαϊνό μενού!")
             else:
-                with st.spinner("⏳ Το AI αναλύει την εκφώνηση και δημιουργεί την Πρότυπη Λύση (μαζί με εναλλακτικούς τρόπους)..."):
+                with st.spinner("⏳ Το AI αναλύει την εκφώνηση και δημιουργεί την Πρότυπη Λύση..."):
                     try:
                         client = genai.Client(api_key=api_key_val)
                         prompt_key = (
                             "Solve the homework assignment in this image step-by-step in Greek.\n"
                             "1. Provide the main correct step-by-step solution.\n"
-                            "2. Explicitly list any alternative valid mathematical/conceptual methods that a student might use to reach the correct answer.\n"
-                            "3. If only ONE specific solution method exists, clearly state that no alternatives apply."
+                            "2. Explicitly list any alternative valid methods that a student might use to reach the correct answer."
                         )
                         key_resp = call_gemini_safe(client, 'gemini-3.8-flash', homework_images + [prompt_key])
                         if not key_resp:
@@ -495,13 +488,13 @@ else:
                         
                         if key_resp:
                             st.session_state["approved_answer_key"] = key_resp
-                            st.success("✅ Η Πρότυπη Λύση δημιουργήθηκε! Παρακαλώ επιθεωρήστε την παρακάτω.")
+                            st.success("✅ Η Πρότυπη Λύση δημιουργήθηκε επιτυχώς!")
                         else:
                             st.error("⚠️ Αποτυχία δημιουργίας πρότυπης λύσης. Προσπαθήστε ξανά.")
                     except Exception as e:
                         st.error(f"⚠️ Σφάλμα: {str(e)}")
 
-        # Εμφάνιση της Πρότυπης Λύσης αν έχει δημιουργηθεί
+        # Εμφάνιση Πρότυπης Λύσης
         if st.session_state["approved_answer_key"]:
             st.markdown("### 📋 Πρότυπη Λύση & Εναλλακτικοί Τρόποι (Answer Key)")
             answer_key_input = st.text_area(
@@ -541,7 +534,7 @@ else:
                                     f"Official Roster: {class_students}\n"
                                     f"Approved Answer Key & Valid Alternatives:\n\"\"\"{st.session_state['approved_answer_key']}\"\"\"\n\n"
                                     "Task: Grade this student's notebook page against the Approved Answer Key above.\n"
-                                    "1. Read the student's name on the page and match to the roster (or use fallback).\n"
+                                    "1. Read the student's name on the page and match to the roster.\n"
                                     "2. Check if the student solved it correctly using the main solution OR any valid alternative listed.\n"
                                     "3. Assign a fair score from 0 to 100 (0 for blank/wrong, 40-70 for partial, 80-100 for correct).\n"
                                     "4. Write brief Greek feedback explaining the evaluation.\n"
