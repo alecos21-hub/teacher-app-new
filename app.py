@@ -161,9 +161,6 @@ if "grades_df" not in st.session_state:
 if "app_lang" not in st.session_state:
     st.session_state["app_lang"] = "English"
 
-if "approved_answer_key" not in st.session_state:
-    st.session_state["approved_answer_key"] = ""
-
 def call_gemini_safe(client, model_name, contents):
     try:
         response = client.models.generate_content(
@@ -204,8 +201,7 @@ TRANSLATIONS = {
         "batch_upload": "📸 Take photo with camera or select notebook files (compressed automatically):",
         "folder_found": "student notebook photos ready in folder.",
         "clear_notebooks": "🗑️ Clear Notebooks Folder",
-        "btn_generate_key": "🔍 1. Generate & Review Answer Key",
-        "btn_evaluate": "🚀 2. Approve & Start Grading Notebooks",
+        "btn_evaluate": "🚀 Start Grading Notebooks",
         "eval_success": "Successfully evaluated and saved to Progress Table!",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "📸 Take roster photo with camera or upload file:",
@@ -222,7 +218,7 @@ TRANSLATIONS = {
         "no_students_yet": "No students added yet.",
         "current_class_label": "Current Section:",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
-        "workflow_info": "💡 <b>Quick Guide:</b> Photos are compressed automatically. Step 1 generates the official Answer Key. Step 2 grades student notebooks against that approved criteria."
+        "workflow_info": "💡 <b>Quick Guide:</b> Photos are compressed automatically for instant upload. Press 'Start Grading' to evaluate all student notebooks directly against the homework prompt."
     },
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -251,8 +247,7 @@ TRANSLATIONS = {
         "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων (συμπιέζονται αυτόματα):",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "clear_notebooks": "🗑️ Εκκαθάριση Φακέλου Τετραδίων",
-        "btn_generate_key": "🔍 1. Δημιουργία & Επισκόπηση Πρότυπης Λύσης (Answer Key)",
-        "btn_evaluate": "🚀 2. Έγκριση Λύσης & Έναρξη Βαθμολόγησης Τετραδίων",
+        "btn_evaluate": "🚀 Έναρξη Βαθμολόγησης Τετραδίων",
         "eval_success": "Η αξιολόγηση ολοκληρώθηκε και αποθηκεύτηκε στον πίνακα προόδου!",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "📸 Τραβήξτε φωτογραφία καταλόγου με κάμερα ή ανεβάστε αρχείο:",
@@ -269,7 +264,7 @@ TRANSLATIONS = {
         "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
         "current_class_label": "Τρέχον Τμήμα:",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
-        "workflow_info": "💡 <b>Οδηγός Χρήσης:</b> Οι φωτογραφίες συμπιέζονται αυτόματα. Στο Βήμα 1 παράγεται η Πρότυπη Λύση. Στο Βήμα 2 εγκρίνεται η λύση και ξεκινά η βαθμολόγηση."
+        "workflow_info": "💡 <b>Οδηγός Χρήσης:</b> Οι φωτογραφίες συμπιέζονται αυτόματα για στιγμιαίο ανέβασμα. Πατήστε 'Έναρξη Βαθμολόγησης' για να αξιολογηθούν απευθείας τα τετράδια βάσει της εκφώνησης."
     }
 }
 
@@ -307,7 +302,6 @@ if hw_files:
         with open(hw_path, "wb") as f:
             f.write(compressed_bytes)
 
-# Φόρτωση εκφώνησης απευθείας από τον φάκελο (για να μην χάνεται ποτέ)
 homework_images = []
 hw_paths_in_folder = sorted([os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('hw_page_')])
 for p in hw_paths_in_folder:
@@ -461,56 +455,19 @@ else:
                         os.remove(os.path.join(UPLOAD_FOLDER, f))
                     except:
                         pass
-                st.session_state["approved_answer_key"] = ""
                 st.rerun()
         
         st.markdown("---")
         
-        # --- ΒΗΜΑ 1: ΔΗΜΙΟΥΡΓΙΑ ΠΡΟΤΥΠΗΣ ΛΥΣΗΣ ---
-        if st.button(t["btn_generate_key"]):
+        # --- ΑΜΕΣΗ ΕΝΑΡΞΗ ΒΑΘΜΟΛΟΓΗΣΗΣ (ΧΩΡΙΣ ΕΝΔΙΑΜΕΣΟ ΒΗΜΑ ΛΥΣΗΣ) ---
+        if st.button(t["btn_evaluate"]):
             api_key_val = st.session_state["config"].get("api_key", "").strip()
             if not api_key_val:
                 st.error("⚠️ Please enter your Gemini API Key first above!")
             elif not homework_images:
                 st.error("⚠️ Παρακαλώ ανεβάστε πρώτα την εκφώνηση της άσκησης στο πλαϊνό μενού!")
             else:
-                with st.spinner("⏳ Το AI αναλύει την εκφώνηση και δημιουργεί την Πρότυπη Λύση..."):
-                    try:
-                        client = genai.Client(api_key=api_key_val)
-                        prompt_key = (
-                            "Solve the homework assignment in this image step-by-step in Greek.\n"
-                            "1. Provide the main correct step-by-step solution.\n"
-                            "2. Explicitly list any alternative valid methods that a student might use to reach the correct answer."
-                        )
-                        key_resp = call_gemini_safe(client, 'gemini-3.8-flash', homework_images + [prompt_key])
-                        if not key_resp:
-                            key_resp = call_gemini_safe(client, 'gemini-2.5-flash', homework_images + [prompt_key])
-                        
-                        if key_resp:
-                            st.session_state["approved_answer_key"] = key_resp
-                            st.success("✅ Η Πρότυπη Λύση δημιουργήθηκε επιτυχώς!")
-                        else:
-                            st.error("⚠️ Αποτυχία δημιουργίας πρότυπης λύσης. Προσπαθήστε ξανά.")
-                    except Exception as e:
-                        st.error(f"⚠️ Σφάλμα: {str(e)}")
-
-        # Εμφάνιση Πρότυπης Λύσης
-        if st.session_state["approved_answer_key"]:
-            st.markdown("### 📋 Πρότυπη Λύση & Εναλλακτικοί Τρόποι (Answer Key)")
-            answer_key_input = st.text_area(
-                "Μπορείτε να τροποποιήσετε ή να εγκρίνετε τη λύση πριν τη βαθμολόγηση:",
-                value=st.session_state["approved_answer_key"],
-                height=180
-            )
-            st.session_state["approved_answer_key"] = answer_key_input
-
-            st.markdown("---")
-
-            # --- ΒΗΜΑ 2: ΕΓΚΡΙΣΗ & ΕΝΑΡΞΗ ΒΑΘΜΟΛΟΓΗΣΗΣ ---
-            if st.button(t["btn_evaluate"]):
-                api_key_val = st.session_state["config"].get("api_key", "").strip()
                 nb_images_paths = [os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
-                
                 if not nb_images_paths:
                     st.warning("⚠️ Δεν βρέθηκαν φωτογραφίες τετραδίων. Ανεβάστε πρώτα φωτογραφίες τετραδίων.")
                 else:
@@ -531,24 +488,24 @@ else:
                             try:
                                 nb_img = Image.open(nb_p)
                                 prompt_eval = (
-                                    f"Official Roster: {class_students}\n"
-                                    f"Approved Answer Key & Valid Alternatives:\n\"\"\"{st.session_state['approved_answer_key']}\"\"\"\n\n"
-                                    "Task: Grade this student's notebook page against the Approved Answer Key above.\n"
-                                    "1. Read the student's name on the page and match to the roster.\n"
-                                    "2. Check if the student solved it correctly using the main solution OR any valid alternative listed.\n"
-                                    "3. Assign a fair score from 0 to 100 (0 for blank/wrong, 40-70 for partial, 80-100 for correct).\n"
-                                    "4. Write brief Greek feedback explaining the evaluation.\n"
-                                    "Return ONLY valid JSON: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"
+                                    f"Official Roster list: {class_students}\n"
+                                    "Compare the student's notebook page against the homework prompt image(s) provided.\n"
+                                    "1. Identify the student's name on the page and match it precisely to the official roster list.\n"
+                                    "2. Grade the student's work from 0 to 100 based on accuracy (0 for wrong/blank, up to 100 for correct).\n"
+                                    "3. Write constructive feedback in Greek.\n"
+                                    "Return ONLY valid JSON with keys: \"student_name\", \"score\", \"feedback\"."
                                 )
                                 
-                                resp_text = call_gemini_safe(client, 'gemini-3.8-flash', [nb_img, prompt_eval])
+                                contents_to_send = homework_images + [nb_img, prompt_eval]
+                                resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
                                 if not resp_text:
-                                    resp_text = call_gemini_safe(client, 'gemini-2.5-flash', [nb_img, prompt_eval])
+                                    resp_text = call_gemini_safe(client, 'gemini-2.5-flash', contents_to_send)
                                 
                                 matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
                                 score_val = 50
-                                feedback_val = "Αξιολογήθηκε βάσει της πρότυπης λύσης."
+                                feedback_val = "Αξιολογήθηκε από το σύστημα."
                                 
+                                parsed_successfully = False
                                 if resp_text:
                                     clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
                                     json_match = re.search(r'\{.*\}', clean_resp, re.DOTALL)
@@ -562,13 +519,15 @@ else:
                                                     break
                                             score_val = int(res_data.get("score", 50))
                                             feedback_val = str(res_data.get("feedback", "Χωρίς σχόλιο."))
+                                            parsed_successfully = True
                                         except:
                                             pass
-                                    else:
-                                        nums = re.findall(r'\b(100|[1-9]?[0-9])\b', resp_text)
-                                        if nums:
-                                            score_val = int(nums[0])
-                                        feedback_val = resp_text[:120]
+                                
+                                if not parsed_successfully and resp_text:
+                                    nums = re.findall(r'\b(100|[1-9]?[0-9])\b', resp_text)
+                                    if nums:
+                                        score_val = int(nums[0])
+                                    feedback_val = resp_text[:120]
 
                                 new_records.append({
                                     "Section": selected_class,
