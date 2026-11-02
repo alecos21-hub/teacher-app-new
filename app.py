@@ -552,16 +552,15 @@ else:
                         client = genai.Client(api_key=api_key_val)
                         img_to_send = Image.open(catalog_path)
                         
+                        # Πιο απλό και άμεσο prompt για αποφυγή λαθών
                         prompt = (
-                            "Look at this school class roster image. "
-                            "Check the table layout: the student names might be in a single combined column (e.g., 'ΟΝΟΜΑΤΕΠΩΝΥΜΟ') "
-                            "OR in separate columns (e.g., Last Name / Επώνυμο and First Name / Όνομα). "
-                            "Extract all student full names, combining the last name and first name if they are in separate columns, "
-                            "or reading them directly if they are in a single column. "
-                            "Return the full names line by line, one student per line. "
-                            "Do not include serial numbers, registration numbers, codes, or any extra text."
+                            "Read all student names from this school roster image. "
+                            "If last name and first name are in separate columns, combine them (e.g. 'ΕΠΩΝΥΜΟ ΟΝΟΜΑ'). "
+                            "If they are in a single column, read them as they are. "
+                            "List only the full names, one per line. Do not include numbers, codes, or extra characters."
                         )
                         
+                        # Δοκιμή με gemini-3.8-flash ή εναλλακτικά gemini-2.5-flash αν χρειαστεί
                         response_text = call_gemini_safe(client, 'gemini-3.8-flash', [img_to_send, prompt])
                         spinner_placeholder.empty()
                         
@@ -570,9 +569,9 @@ else:
                             parsed_names = []
                             for line in lines:
                                 clean_line = line.strip()
-                                # Αφαίρεση τυχόν αριθμών ή συμβόλων στην αρχή
+                                # Αφαίρεση τυχόν αριθμών, κουκκίδων ή κωδικών μητρώου στην αρχή
                                 clean_line = re.sub(r'^[\d\-\.\)]+\s*', '', clean_line).strip()
-                                if len(clean_line) > 3:
+                                if len(clean_line) > 2:
                                     parsed_names.append(clean_line)
                             
                             if parsed_names:
@@ -587,7 +586,7 @@ else:
                                 time.sleep(1)
                                 st.rerun()
                             else:
-                                st.error("⚠️ No clear names found in the image. Please try a clearer picture.")
+                                st.error("⚠️ No clear names found. Please try taking a closer or clearer picture.")
                         else:
                             st.error("⚠️ Error reading roster, please try again.")
                     except Exception as e:
