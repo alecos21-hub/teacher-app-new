@@ -9,6 +9,7 @@ import shutil
 import json
 import re
 import time
+import io
 
 # --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & CUSTOM CSS ---
 st.set_page_config(
@@ -40,6 +41,15 @@ st.markdown("""
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
+        .answer-key-box {
+            background-color: #f0fdf4;
+            color: #166534;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 5px solid #22c55e;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
         .custom-spinner-box {
             background-color: #ff4b4b;
             color: white;
@@ -51,15 +61,6 @@ st.markdown("""
             margin: 15px 0;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             border: 2px solid #8b0000;
-        }
-        .red-badge {
-            background-color: #8b0000;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 18px;
-            border: 1px solid #ff4b4b;
         }
         .sidebar-stop-box {
             background-color: #ff4b4b;
@@ -91,7 +92,20 @@ STUDENTS_FILE = "students_db.json"
 GRADES_FILE = "grades_db.csv"
 CONFIG_FILE = "config.json"
 
-# --- 2. ROBUST DATA LOADING & SAVING FUNCTIONS ---
+# --- 2. ΣΥΜΠΙΕΣΗ ΕΙΚΟΝΩΝ ΓΙΑ ΓΡΗΓΟΡΟ UPLOAD ---
+def compress_image(image_bytes, max_size=(1200, 1200), quality=80):
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG", quality=quality, optimize=True)
+        return buffer.getvalue()
+    except Exception:
+        return image_bytes
+
+# --- Data Helper Functions ---
 def load_config():
     if os.path.exists(CONFIG_FILE):
         try:
@@ -157,6 +171,9 @@ if "grades_df" not in st.session_state:
 if "app_lang" not in st.session_state:
     st.session_state["app_lang"] = "English"
 
+if "approved_answer_key" not in st.session_state:
+    st.session_state["approved_answer_key"] = ""
+
 def call_gemini_safe(client, model_name, contents):
     try:
         response = client.models.generate_content(
@@ -175,7 +192,7 @@ TRANSLATIONS = {
         "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
         "hw_section": "📖 Homework Prompt Photos",
         "hw_desc": "📸 Take camera photo or upload assignment pages:",
-        "hw_saved": "Homework page(s) saved!",
+        "hw_saved": "Homework page(s) saved & compressed!",
         "class_mgmt": "⚙️ Class Management & Sections",
         "select_class": "Select Class/Section:",
         "add_new_class": "➕ Add New Section (e.g. B3):",
@@ -194,24 +211,19 @@ TRANSLATIONS = {
         "opt1": "📷 1. Automatic Grading",
         "opt2": "📋 2. Import Roster",
         "opt3": "📊 3. Progress Table & Reports",
-        "notebook_sec": "✨ Capture & Upload Student Notebooks",
-        "no_hw_warn": "⚠️ Note: You have not taken a Homework prompt photo from the sidebar.",
-        "batch_upload": "📸 Take photo with camera or select notebook files (accumulates photos):",
+        "batch_upload": "📸 Take photo with camera or select notebook files (compressed automatically):",
         "folder_found": "student notebook photos ready in folder.",
         "clear_notebooks": "🗑️ Clear Notebooks Folder",
-        "btn_evaluate": "🚀 Start Grading (Live Progress Mode)",
+        "btn_generate_key": "🔍 1. Generate & Review Answer Key",
+        "btn_evaluate": "🚀 2. Approve & Start Grading Notebooks",
         "eval_success": "Successfully evaluated and saved to Progress Table!",
-        "view_eval": "🔍 View Latest Evaluation",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "📸 Take roster photo with camera or upload file:",
         "btn_read_names": "🤖 Read & Auto-Save Roster",
         "stats_sec": "📊 Class Progress Matrix (Excel Style)",
-        "btn_close_day": "🚨 Mark Missing Homework for Today",
-        "manual_delete": "🗑️ Delete Records",
-        "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.<br><span style='font-size: 11px; font-weight: normal;'>(Scroll down to select Department)</span>",
+        "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.",
         "alert_box": "⚙️ Manage sections and language from the sidebar, and enter your API Key below.",
         "uploader_label_hw": "📸 Camera or Assignment File",
-        "uploader_label_notebook": "📸 Take photo with camera or select notebook files:",
         "box1_title": "🗂️ Box 1: Automatic Homework Grading",
         "box2_title": "🗂️ Box 2: Import Roster",
         "box3_title": "🗂️ Box 3: Progress Table & Reports",
@@ -220,15 +232,14 @@ TRANSLATIONS = {
         "no_students_yet": "No students added yet.",
         "current_class_label": "Current Section:",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
-        "catalog_success": "✅ Class list registered successfully!",
-        "workflow_info": "💡 <b>Quick Guide:</b> You can capture student notebooks directly from your phone. Photos are safely collected without using API credits until you press <b>'🚀 Start Grading'</b>. For fast multi-page evaluation, you can also launch the grading process from your PC!"
+        "workflow_info": "💡 <b>Quick Guide:</b> Photos are compressed automatically to ensure fast uploading. Step 1 generates the official Answer Key for approval. Step 2 grades student notebooks against that approved criteria."
     },
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
         "subtitle": "### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*",
         "hw_section": "📖 Φωτογραφίες Εκφώνησης (Homework)",
         "hw_desc": "📸 Τραβήξτε φωτογραφία κάμερας ή ανεβάστε εκφώνηση:",
-        "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν!",
+        "hw_saved": "σελίδα/σελίδες Homework αποθηκεύτηκαν & συμπιέστηκαν!",
         "class_mgmt": "⚙️ Διαχείριση Τάξης & Τμημάτων",
         "select_class": "Επιλογή Τμήματος:",
         "add_new_class": "➕ Δημιουργία Νέου Τμήματος (π.χ. Β3):",
@@ -247,24 +258,19 @@ TRANSLATIONS = {
         "opt1": "📷 1. Αυτόματη Αξιολόγηση Άσκησης",
         "opt2": "📋 2. Εισαγωγή Καταλόγου",
         "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
-        "notebook_sec": "✨ Φωτογράφηση & Μεταφόρτωση Τετραδίων Μαθητών",
-        "no_hw_warn": "⚠️ Σημείωση: Δεν έχετε τραβήξει φωτογραφία Homework από το πλαϊνό μενού.",
-        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων (προστίθενται διαδοχικά):",
+        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων (συμπιέζονται αυτόματα):",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "clear_notebooks": "🗑️ Εκκαθάριση Φακέλου Τετραδίων",
-        "btn_evaluate": "🚀 Έναρξη Αξιολόγησης (Με Ζωντανή Μπάρα Προόδου)",
+        "btn_generate_key": "🔍 1. Δημιουργία & Επισκόπηση Πρότυπης Λύσης (Answer Key)",
+        "btn_evaluate": "🚀 2. Έγκριση Λύσης & Έναρξη Βαθμολόγησης Τετραδίων",
         "eval_success": "Η αξιολόγηση ολοκληρώθηκε και αποθηκεύτηκε στον πίνακα προόδου!",
-        "view_eval": "🔍 Προβολή Τελευταίας Αξιολόγησης",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "📸 Τραβήξτε φωτογραφία καταλόγου με κάμερα ή ανεβάστε αρχείο:",
         "btn_read_names": "🤖 Ανάγνωση & Αυτόματη Αποθήκευση Καταλόγου",
         "stats_sec": "📊 Συνολικός Πίνακας Προόδου Τμήματος (Excel Style)",
-        "btn_close_day": "🚨 Καταγραφή Απουσιών/Ελλείψεων για Σήμερα",
-        "manual_delete": "🗑️ Διαγραφή Δεδομένων",
         "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ:<br>Κάντε scroll προς τα κάτω 👇<br>για να επιλέξετε Τμήμα.",
         "alert_box": "⚙️ Διαχειριστείτε τα τμήματα από την πλαϊνή μπάρα και εισάγετε το API Key σας παρακάτω.",
         "uploader_label_hw": "📸 Κάμερα ή Αρχείο Εκφώνησης",
-        "uploader_label_notebook": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
         "box1_title": "🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης",
         "box2_title": "🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου",
         "box3_title": "🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές",
@@ -273,8 +279,7 @@ TRANSLATIONS = {
         "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
         "current_class_label": "Τρέχον Τμήμα:",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
-        "catalog_success": "✅ Ο κατάλογος της τάξης καταχωρήθηκε με επιτυχία!",
-        "workflow_info": "💡 <b>Οδηγός Χρήσης:</b> Μπορείτε να φωτογραφίζετε τα τετράδια απευθείας από το κινητό. Οι φωτογραφίες συγκεντρώνονται με ασφάλεια και η αξιολόγηση **ΔΕΝ** ξεκινά μέχρι να πατήσετε το κουμπί <b>«🚀 Έναρξη Αξιολόγησης»</b>. Για μέγιστη ταχύτητα σε πολλά γραπτά, μπορείτε να πατήσετε το κουμπί από τον υπολογιστή σας!"
+        "workflow_info": "💡 <b>Οδηγός Χρήσης:</b> Οι φωτογραφίες συμπιέζονται αυτόματα για στιγμιαίο ανέβασμα. Στο Βήμα 1 παράγεται η Πρότυπη Λύση προς επισκόπηση. Στο Βήμα 2 εγκρίνεται η λύση και ξεκινά η βαθμολόγηση των τετραδίων."
     }
 }
 
@@ -308,13 +313,13 @@ hw_files = st.sidebar.file_uploader(
 homework_images = []
 if hw_files:
     for idx, hw_f in enumerate(hw_files):
+        compressed_bytes = compress_image(hw_f.getbuffer())
         hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{idx}.jpg")
         with open(hw_path, "wb") as f:
-            f.write(hw_f.getbuffer())
+            f.write(compressed_bytes)
         try:
             img = Image.open(hw_path)
-            img.verify()
-            homework_images.append(Image.open(hw_path))
+            homework_images.append(img)
         except Exception:
             pass
     st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
@@ -392,14 +397,13 @@ else:
     else:
         st.sidebar.info(t["no_students_yet"])
 
-# --- 4. ΚΥΡΙΩΣ ΠΕΡΙΕΧΟΜΕΝΟ & API KEY ΣΤΗ ΔΕΞΙΑ/ΚΕΝΤΡΙΚΗ ΟΘΟΝΗ ---
+# --- 4. ΚΥΡΙΩΣ ΠΕΡΙΕΧΟΜΕΝΟ & API KEY ---
 st.markdown(f"""
     <div class="custom-alert-box">
         {t["alert_box"]}
     </div>
 """, unsafe_allow_html=True)
 
-# Κεντρικό πεδίο API Key
 with st.container():
     st.markdown("### " + t["api_prompt"])
     current_api_key = st.session_state["config"].get("api_key", "")
@@ -416,7 +420,6 @@ with st.container():
 
 st.markdown("---")
 
-# ΕΝΗΜΕΡΩΤΙΚΗ ΚΑΡΤΑ ΡΟΗΣ ΕΡΓΑΣΙΑΣ (INFO CARD)
 st.markdown(f"""
     <div class="custom-info-card">
         {t["workflow_info"]}
@@ -435,9 +438,9 @@ else:
     if mode == t["opt1"]:
         st.subheader(t["box1_title"])
         if not homework_images:
-            st.warning(t["no_hw_warn"])
+            st.warning("⚠️ Σημείωση: Ανεβάστε πρώτα την εκφώνηση της άσκησης από το πλαϊνό μενού (Sidebar).")
         
-        # --- ΑΘΡΟΙΣΤΙΚΗ ΦΟΡΤΩΣΗ ΦΩΤΟΓΡΑΦΙΩΝ ΤΕΤΡΑΔΙΩΝ ---
+        # Ανεβαστήρι Τετραδίων με Αυτόματη Συμπίεση
         notebook_files = st.file_uploader(
             t["batch_upload"],
             type=["png", "jpg", "jpeg"],
@@ -447,10 +450,11 @@ else:
         
         if notebook_files:
             for idx, nb_file in enumerate(notebook_files):
+                compressed_bytes = compress_image(nb_file.getbuffer())
                 unique_filename = f"student_page_{int(time.time())}_{idx}.jpg"
                 nb_path = os.path.join(UPLOAD_FOLDER, unique_filename)
                 with open(nb_path, "wb") as f:
-                    f.write(nb_file.getbuffer())
+                    f.write(compressed_bytes)
         
         existing_notebooks = [f for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
         notebook_count = len(existing_notebooks)
@@ -463,20 +467,62 @@ else:
                         os.remove(os.path.join(UPLOAD_FOLDER, f))
                     except:
                         pass
+                st.session_state["approved_answer_key"] = ""
                 st.rerun()
         
-        if st.button(t["btn_evaluate"]):
+        st.markdown("---")
+        
+        # --- ΒΗΜΑ 1: ΔΗΜΙΟΥΡΓΙΑ ΠΡΟΤΥΠΗΣ ΛΥΣΗΣ (ANSWER KEY) ---
+        if st.button(t["btn_generate_key"]):
             api_key_val = st.session_state["config"].get("api_key", "").strip()
             if not api_key_val:
                 st.error("⚠️ Please enter your Gemini API Key first above!")
+            elif not homework_images:
+                st.error("⚠️ Παρακαλώ ανεβάστε πρώτα την εκφώνηση της άσκησης στο πλαϊνό μενού!")
             else:
-                try:
-                    client = genai.Client(api_key=api_key_val)
-                    nb_images_paths = [os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
-                    
-                    if not nb_images_paths:
-                        st.warning("⚠️ No student notebook photos found. Please upload or take photos first.")
-                    else:
+                with st.spinner("⏳ Το AI αναλύει την εκφώνηση και δημιουργεί την Πρότυπη Λύση (μαζί με εναλλακτικούς τρόπους)..."):
+                    try:
+                        client = genai.Client(api_key=api_key_val)
+                        prompt_key = (
+                            "Solve the homework assignment in this image step-by-step in Greek.\n"
+                            "1. Provide the main correct step-by-step solution.\n"
+                            "2. Explicitly list any alternative valid mathematical/conceptual methods that a student might use to reach the correct answer.\n"
+                            "3. If only ONE specific solution method exists, clearly state that no alternatives apply."
+                        )
+                        key_resp = call_gemini_safe(client, 'gemini-3.8-flash', homework_images + [prompt_key])
+                        if not key_resp:
+                            key_resp = call_gemini_safe(client, 'gemini-2.5-flash', homework_images + [prompt_key])
+                        
+                        if key_resp:
+                            st.session_state["approved_answer_key"] = key_resp
+                            st.success("✅ Η Πρότυπη Λύση δημιουργήθηκε! Παρακαλώ επιθεωρήστε την παρακάτω.")
+                        else:
+                            st.error("⚠️ Αποτυχία δημιουργίας πρότυπης λύσης. Προσπαθήστε ξανά.")
+                    except Exception as e:
+                        st.error(f"⚠️ Σφάλμα: {str(e)}")
+
+        # Εμφάνιση της Πρότυπης Λύσης αν έχει δημιουργηθεί
+        if st.session_state["approved_answer_key"]:
+            st.markdown("### 📋 Πρότυπη Λύση & Εναλλακτικοί Τρόποι (Answer Key)")
+            answer_key_input = st.text_area(
+                "Μπορείτε να τροποποιήσετε ή να εγκρίνετε τη λύση πριν τη βαθμολόγηση:",
+                value=st.session_state["approved_answer_key"],
+                height=180
+            )
+            st.session_state["approved_answer_key"] = answer_key_input
+
+            st.markdown("---")
+
+            # --- ΒΗΜΑ 2: ΕΓΚΡΙΣΗ & ΕΝΑΡΞΗ ΒΑΘΜΟΛΟΓΗΣΗΣ ---
+            if st.button(t["btn_evaluate"]):
+                api_key_val = st.session_state["config"].get("api_key", "").strip()
+                nb_images_paths = [os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
+                
+                if not nb_images_paths:
+                    st.warning("⚠️ Δεν βρέθηκαν φωτογραφίες τετραδίων. Ανεβάστε πρώτα φωτογραφίες τετραδίων.")
+                else:
+                    try:
+                        client = genai.Client(api_key=api_key_val)
                         new_records = []
                         today_str = datetime.date.today().strftime("%Y-%m-%d")
                         class_students = st.session_state["students_db"].get(selected_class, [])
@@ -487,38 +533,29 @@ else:
                         
                         for i, nb_p in enumerate(nb_images_paths):
                             file_name_display = os.path.basename(nb_p)
-                            status_text.markdown(f"🔄 **Αξιολόγηση σε εξέλιξη...** (Φωτογραφία {i+1} από {total_files}: `{file_name_display}`)")
+                            status_text.markdown(f"🔄 **Βαθμολόγηση σε εξέλιξη...** (Φωτογραφία {i+1} από {total_files}: `{file_name_display}`)")
                             
                             try:
                                 nb_img = Image.open(nb_p)
-                                
-                                # ΠΟΛΥ ΑΥΣΤΗΡΟ ΚΑΙ ΕΞΥΠΝΟ PROMPT ΓΙΑ ΑΚΡΙΒΗ ΒΑΘΜΟΛΟΓΗΣΗ
-                                prompt_text = (
-                                    f"Official class roster students: {class_students}\n"
-                                    "You are an expert, strict teacher. Look at the homework prompt image(s) first, then carefully examine this student's notebook page.\n"
-                                    "1. Read the student's name written on the page and match it precisely to the official roster list.\n"
-                                    "2. Compare the student's written solution step-by-step against the homework prompt. Evaluate mathematically/conceptually:\n"
-                                    "   - If only the name is written or it's completely wrong: score = 0.\n"
-                                    "   - If partially correct with errors: score = 30 to 60.\n"
-                                    "   - If mostly correct with minor slips: score = 70 to 90.\n"
-                                    "   - If fully correct: score = 100.\n"
-                                    "3. Write constructive feedback in Greek pointing out what was right or wrong.\n"
-                                    "Return ONLY a valid JSON object with keys: "
-                                    "\"student_name\", \"score\", \"feedback\"."
+                                prompt_eval = (
+                                    f"Official Roster: {class_students}\n"
+                                    f"Approved Answer Key & Valid Alternatives:\n\"\"\"{st.session_state['approved_answer_key']}\"\"\"\n\n"
+                                    "Task: Grade this student's notebook page against the Approved Answer Key above.\n"
+                                    "1. Read the student's name on the page and match to the roster (or use fallback).\n"
+                                    "2. Check if the student solved it correctly using the main solution OR any valid alternative listed.\n"
+                                    "3. Assign a fair score from 0 to 100 (0 for blank/wrong, 40-70 for partial, 80-100 for correct).\n"
+                                    "4. Write brief Greek feedback explaining the evaluation.\n"
+                                    "Return ONLY valid JSON: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"
                                 )
                                 
-                                # Στέλνουμε όλες τις σελίδες εκφώνησης + το συγκεκριμένο τετράδιο
-                                contents_to_send = homework_images + [nb_img, prompt_text]
-                                
-                                resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
+                                resp_text = call_gemini_safe(client, 'gemini-3.8-flash', [nb_img, prompt_eval])
                                 if not resp_text:
-                                    resp_text = call_gemini_safe(client, 'gemini-2.5-flash', contents_to_send)
+                                    resp_text = call_gemini_safe(client, 'gemini-2.5-flash', [nb_img, prompt_eval])
                                 
                                 matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
-                                score_val = 0
-                                feedback_val = "Μηδενική ή ελλιπής λύση."
+                                score_val = 50
+                                feedback_val = "Αξιολογήθηκε βάσει της πρότυπης λύσης."
                                 
-                                parsed_successfully = False
                                 if resp_text:
                                     clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
                                     json_match = re.search(r'\{.*\}', clean_resp, re.DOTALL)
@@ -530,18 +567,15 @@ else:
                                                 if s.lower() in raw_name.lower() or raw_name.lower() in s.lower():
                                                     matched_student = s
                                                     break
-                                            score_val = int(res_data.get("score", 0))
+                                            score_val = int(res_data.get("score", 50))
                                             feedback_val = str(res_data.get("feedback", "Χωρίς σχόλιο."))
-                                            parsed_successfully = True
                                         except:
                                             pass
-                                
-                                # Αν απέτυχε το JSON αλλά πήραμε κείμενο, προσπαθούμε να εξαγάγουμε τον βαθμό
-                                if not parsed_successfully and resp_text:
-                                    nums = re.findall(r'\b(100|[1-9]?[0-9])\b', resp_text)
-                                    if nums:
-                                        score_val = int(nums[0])
-                                    feedback_val = resp_text[:120]
+                                    else:
+                                        nums = re.findall(r'\b(100|[1-9]?[0-9])\b', resp_text)
+                                        if nums:
+                                            score_val = int(nums[0])
+                                        feedback_val = resp_text[:120]
 
                                 new_records.append({
                                     "Section": selected_class,
@@ -568,9 +602,9 @@ else:
                             save_grades_df(st.session_state["grades_df"])
                             st.success(f"✅ {t['eval_success']}")
                         else:
-                            st.error("⚠️ Could not extract grading data from the submissions. Please try again.")
-                except Exception as e:
-                    st.error(f"⚠️ Processing error: {str(e)}")
+                            st.error("⚠️ Αποτυχία βαθμολόγησης. Παρακαλώ δοκιμάστε ξανά.")
+                    except Exception as e:
+                        st.error(f"⚠️ Processing error: {str(e)}")
 
     elif mode == t["opt2"]:
         st.subheader(t["box2_title"])
@@ -580,7 +614,7 @@ else:
         if catalog_file:
             catalog_path = os.path.join(UPLOAD_FOLDER, "catalog_temp.jpg")
             with open(catalog_path, "wb") as f:
-                f.write(catalog_file.getbuffer())
+                f.write(compress_image(catalog_file.getbuffer()))
             
             st.image(catalog_path, caption=t["roster_photo_caption"], width=300)
             
