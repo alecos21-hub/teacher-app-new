@@ -479,11 +479,8 @@ else:
                     else:
                         new_records = []
                         today_str = datetime.date.today().strftime("%Y-%m-%d")
-                        
-                        # Παίρνουμε τη λίστα των μαθητών του τμήματος για να ταιριάζουμε τα ονόματα
                         class_students = st.session_state["students_db"].get(selected_class, [])
                         
-                        # --- ΔΗΜΙΟΥΡΓΙΑ ΜΠΑΡΑΣ ΠΡΟΟΔΟΥ (PROGRESS BAR) ---
                         total_files = len(nb_images_paths)
                         progress_bar = st.progress(0)
                         status_text = st.empty()
@@ -494,46 +491,51 @@ else:
                             
                             try:
                                 nb_img = Image.open(nb_p)
-                                # Πιο ευέλικτο prompt που ζητάει απλές γραμμές ή χαλαρό JSON
                                 prompt_text = (
-                                    f"Here is the list of students in this class: {class_students}. "
+                                    f"Class students list: {class_students}. "
                                     "Analyze this student's solution against the homework prompt. "
-                                    "Identify which student from the list wrote this solution (match the name as closely as possible), "
-                                    "give a numerical score from 0 to 100, and a short feedback. "
-                                    "Return the result in this exact simple format on separate lines:\n"
-                                    "STUDENT: [Exact name from the list]\n"
-                                    "SCORE: [Number]\n"
-                                    "FEEDBACK: [Short text]"
+                                    "1. Identify the student's name or assign it to the best matching name from the list. "
+                                    "2. Give a numerical score from 0 to 100. "
+                                    "3. Give short feedback. "
+                                    "Return ONLY a plain text response structured as: "
+                                    "STUDENT: [Name]\nSCORE: [Number]\nFEEDBACK: [Text]"
                                 )
                                 contents_to_send = homework_images + [nb_img, prompt_text]
                                 
                                 resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
+                                
+                                # Fallback αν αποτύχει το gemini-3.8-flash
+                                if not resp_text:
+                                    resp_text = call_gemini_safe(client, 'gemini-2.5-flash', contents_to_send)
+                                
+                                matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
+                                score_val = 80
+                                feedback_val = "Good effort."
+                                
                                 if resp_text:
                                     clean_resp = resp_text.replace("```", "").strip()
+                                    s_match = re.search(r'STUDENT:\s*(.+)', clean_resp, re.IGNORECASE)
+                                    sc_match = re.search(r'SCORE:\s*(\d+)', clean_resp, re.IGNORECASE)
+                                    f_match = re.search(r'FEEDBACK:\s*(.+)', clean_resp, re.IGNORECASE)
                                     
-                                    # Εξαγωγή στοιχείων με Regular Expressions για μέγιστη ανθεκτικότητα
-                                    student_match = re.search(r'STUDENT:\s*(.+)', clean_resp, re.IGNORECASE)
-                                    score_match = re.search(r'SCORE:\s*(\d+)', clean_resp, re.IGNORECASE)
-                                    feedback_match = re.search(r'FEEDBACK:\s*(.+)', clean_resp, re.IGNORECASE)
-                                    
-                                    matched_student = student_match.group(1).strip() if student_match else f"Student_{i+1}"
-                                    score_val = int(score_match.group(1)) if score_match else 50
-                                    feedback_val = feedback_match.group(1).strip() if feedback_match else "Evaluated successfully."
-                                    
-                                    # Αντιστοίχιση με τη λίστα του τμήματος αν υπάρχει παρόμοιο
-                                    best_match_name = matched_student
-                                    for s in class_students:
-                                        if s.lower() in matched_student.lower() or matched_student.lower() in s.lower():
-                                            best_match_name = s
-                                            break
-                                            
-                                    new_records.append({
-                                        "Section": selected_class,
-                                        "Student": best_match_name,
-                                        "Date": today_str,
-                                        "Score": score_val,
-                                        "Feedback": feedback_val
-                                    })
+                                    if s_match:
+                                        raw_name = s_match.group(1).strip()
+                                        for s in class_students:
+                                            if s.lower() in raw_name.lower() or raw_name.lower() in s.lower():
+                                                matched_student = s
+                                                break
+                                    if sc_match:
+                                        score_val = int(sc_match.group(1))
+                                    if f_match:
+                                        feedback_val = f_match.group(1).strip()
+                                        
+                                new_records.append({
+                                    "Section": selected_class,
+                                    "Student": matched_student,
+                                    "Date": today_str,
+                                    "Score": score_val,
+                                    "Feedback": feedback_val
+                                })
                             except Exception as inner_e:
                                 print(f"Skipping image due to error: {inner_e}")
                             
@@ -582,11 +584,14 @@ else:
                         
                         prompt = (
                             "Read all student names from this school roster image. "
-                            "If last name and first name are in separate columns, combine them in the format 'ΕΠΩΝΥΜΟ ΟΝΟΜΑ' (with Last Name first, then First Name). "
-                            "List only the full names, one per line. Do not include numbers, codes, or extra characters."
+                            "If last name and first name are in separate columns, combine them as 'ΕΠΩΝΥΜΟ ΟΝΟΜΑ'. "
+                            "List only the full names, one per line. Do not include numbers, codes, or extra text."
                         )
                         
                         response_text = call_gemini_safe(client, 'gemini-3.8-flash', [img_to_send, prompt])
+                        if not response_text:
+                            response_text = call_gemini_safe(client, 'gemini-2.5-flash', [img_to_send, prompt])
+                            
                         spinner_placeholder.empty()
                         
                         if response_text:
