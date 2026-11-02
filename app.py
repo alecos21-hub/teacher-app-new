@@ -491,16 +491,19 @@ else:
                             
                             try:
                                 nb_img = Image.open(nb_p)
+                                # Αποστολή ΜΟΝΟ της εκφώνησης (ή περιγραφής) και του συγκεκριμένου τετραδίου ξεχωριστά
                                 prompt_text = (
-                                    f"Class students list: {class_students}. "
-                                    "Compare this student's solution against the homework prompt. "
-                                    "1. Identify the student's name from the list. "
-                                    "2. Grade strictly from 0 to 100 based on accuracy (0 if only name or completely wrong, 100 if correct). "
-                                    "3. Provide a brief feedback in Greek. "
-                                    "Return ONLY valid JSON format like this: "
-                                    "{\"student_name\": \"...\", \"score\": 45, \"feedback\": \"...\"}"
+                                    f"Available official class students list: {class_students}\n"
+                                    "Task: Grade this specific student's solution notebook page by comparing it to the homework prompt.\n"
+                                    "1. Read the student's name written on the notebook page and match it to the closest official name from the list.\n"
+                                    "2. Evaluate the work objectively from 0 to 100 based strictly on mathematical/conceptual correctness (0 if wrong or only name, 100 if fully correct).\n"
+                                    "3. Write a short constructive feedback in Greek.\n"
+                                    "Return ONLY a valid JSON object with keys: "
+                                    "\"student_name\", \"score\", \"feedback\"."
                                 )
-                                contents_to_send = homework_images + [nb_img, prompt_text]
+                                
+                                # Στέλνουμε την πρώτη σελίδα εκφώνησης (αν υπάρχει) + το τρέχον τετράδιο + το prompt
+                                contents_to_send = (homework_images[:1] if homework_images else []) + [nb_img, prompt_text]
                                 
                                 resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
                                 if not resp_text:
@@ -515,7 +518,7 @@ else:
                                     json_match = re.search(r'\{.*\}', clean_resp, re.DOTALL)
                                     if json_match:
                                         res_data = json.loads(json_match.group(0))
-                                        raw_name = res_data.get("student_name", "")
+                                        raw_name = str(res_data.get("student_name", ""))
                                         for s in class_students:
                                             if s.lower() in raw_name.lower() or raw_name.lower() in s.lower():
                                                 matched_student = s
@@ -523,8 +526,8 @@ else:
                                         score_val = int(res_data.get("score", 0))
                                         feedback_val = str(res_data.get("feedback", "Χωρίς σχόλιο."))
                                     else:
-                                        # Fallback αν δεν βρει JSON, ψάχνουμε αριθμούς στο κείμενο
-                                        nums = re.findall(r'\b\d{1,3}\b', clean_resp)
+                                        # Εξαγωγή βαθμού από τυχόν αριθμούς στο κείμενο
+                                        nums = re.findall(r'\b(100|[1-9]?[0-9])\b', clean_resp)
                                         if nums:
                                             score_val = int(nums[0])
                                         feedback_val = clean_resp[:100]
