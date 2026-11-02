@@ -493,41 +493,41 @@ else:
                                 nb_img = Image.open(nb_p)
                                 prompt_text = (
                                     f"Class students list: {class_students}. "
-                                    "Analyze this student's solution against the homework prompt. "
-                                    "1. Identify the student's name or assign it to the best matching name from the list. "
-                                    "2. Give a numerical score from 0 to 100. "
-                                    "3. Give short feedback. "
-                                    "Return ONLY a plain text response structured as: "
-                                    "STUDENT: [Name]\nSCORE: [Number]\nFEEDBACK: [Text]"
+                                    "Compare this student's solution against the homework prompt. "
+                                    "1. Identify the student's name from the list. "
+                                    "2. Grade strictly from 0 to 100 based on accuracy (0 if only name or completely wrong, 100 if correct). "
+                                    "3. Provide a brief feedback in Greek. "
+                                    "Return ONLY valid JSON format like this: "
+                                    "{\"student_name\": \"...\", \"score\": 45, \"feedback\": \"...\"}"
                                 )
                                 contents_to_send = homework_images + [nb_img, prompt_text]
                                 
                                 resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
-                                
-                                # Fallback αν αποτύχει το gemini-3.8-flash
                                 if not resp_text:
                                     resp_text = call_gemini_safe(client, 'gemini-2.5-flash', contents_to_send)
                                 
                                 matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
-                                score_val = 80
-                                feedback_val = "Good effort."
+                                score_val = 0
+                                feedback_val = "Μηδενική ή ελλιπής λύση."
                                 
                                 if resp_text:
-                                    clean_resp = resp_text.replace("```", "").strip()
-                                    s_match = re.search(r'STUDENT:\s*(.+)', clean_resp, re.IGNORECASE)
-                                    sc_match = re.search(r'SCORE:\s*(\d+)', clean_resp, re.IGNORECASE)
-                                    f_match = re.search(r'FEEDBACK:\s*(.+)', clean_resp, re.IGNORECASE)
-                                    
-                                    if s_match:
-                                        raw_name = s_match.group(1).strip()
+                                    clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
+                                    json_match = re.search(r'\{.*\}', clean_resp, re.DOTALL)
+                                    if json_match:
+                                        res_data = json.loads(json_match.group(0))
+                                        raw_name = res_data.get("student_name", "")
                                         for s in class_students:
                                             if s.lower() in raw_name.lower() or raw_name.lower() in s.lower():
                                                 matched_student = s
                                                 break
-                                    if sc_match:
-                                        score_val = int(sc_match.group(1))
-                                    if f_match:
-                                        feedback_val = f_match.group(1).strip()
+                                        score_val = int(res_data.get("score", 0))
+                                        feedback_val = str(res_data.get("feedback", "Χωρίς σχόλιο."))
+                                    else:
+                                        # Fallback αν δεν βρει JSON, ψάχνουμε αριθμούς στο κείμενο
+                                        nums = re.findall(r'\b\d{1,3}\b', clean_resp)
+                                        if nums:
+                                            score_val = int(nums[0])
+                                        feedback_val = clean_resp[:100]
                                         
                                 new_records.append({
                                     "Section": selected_class,
