@@ -480,6 +480,9 @@ else:
                         new_records = []
                         today_str = datetime.date.today().strftime("%Y-%m-%d")
                         
+                        # Παίρνουμε τη λίστα των μαθητών του τμήματος για να ταιριάζουμε τα ονόματα
+                        class_students = st.session_state["students_db"].get(selected_class, [])
+                        
                         # --- ΔΗΜΙΟΥΡΓΙΑ ΜΠΑΡΑΣ ΠΡΟΟΔΟΥ (PROGRESS BAR) ---
                         total_files = len(nb_images_paths)
                         progress_bar = st.progress(0)
@@ -491,21 +494,46 @@ else:
                             
                             try:
                                 nb_img = Image.open(nb_p)
-                                contents_to_send = homework_images + [nb_img, "Analyze this student's solution against the homework prompt. Identify the student's name if written, give a score from 0 to 100, and short feedback. Return ONLY valid JSON format: {\"student_name\": \"...\", \"score\": 85, \"feedback\": \"...\"}"]
+                                # Πιο ευέλικτο prompt που ζητάει απλές γραμμές ή χαλαρό JSON
+                                prompt_text = (
+                                    f"Here is the list of students in this class: {class_students}. "
+                                    "Analyze this student's solution against the homework prompt. "
+                                    "Identify which student from the list wrote this solution (match the name as closely as possible), "
+                                    "give a numerical score from 0 to 100, and a short feedback. "
+                                    "Return the result in this exact simple format on separate lines:\n"
+                                    "STUDENT: [Exact name from the list]\n"
+                                    "SCORE: [Number]\n"
+                                    "FEEDBACK: [Short text]"
+                                )
+                                contents_to_send = homework_images + [nb_img, prompt_text]
                                 
                                 resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
                                 if resp_text:
-                                    clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
-                                    json_match = re.search(r'\{.*\}', clean_resp, re.DOTALL)
-                                    if json_match:
-                                        res_data = json.loads(json_match.group(0))
-                                        new_records.append({
-                                            "Section": selected_class,
-                                            "Student": res_data.get("student_name", "Unknown"),
-                                            "Date": today_str,
-                                            "Score": res_data.get("score", 0),
-                                            "Feedback": res_data.get("feedback", "")
-                                        })
+                                    clean_resp = resp_text.replace("```", "").strip()
+                                    
+                                    # Εξαγωγή στοιχείων με Regular Expressions για μέγιστη ανθεκτικότητα
+                                    student_match = re.search(r'STUDENT:\s*(.+)', clean_resp, re.IGNORECASE)
+                                    score_match = re.search(r'SCORE:\s*(\d+)', clean_resp, re.IGNORECASE)
+                                    feedback_match = re.search(r'FEEDBACK:\s*(.+)', clean_resp, re.IGNORECASE)
+                                    
+                                    matched_student = student_match.group(1).strip() if student_match else f"Student_{i+1}"
+                                    score_val = int(score_match.group(1)) if score_match else 50
+                                    feedback_val = feedback_match.group(1).strip() if feedback_match else "Evaluated successfully."
+                                    
+                                    # Αντιστοίχιση με τη λίστα του τμήματος αν υπάρχει παρόμοιο
+                                    best_match_name = matched_student
+                                    for s in class_students:
+                                        if s.lower() in matched_student.lower() or matched_student.lower() in s.lower():
+                                            best_match_name = s
+                                            break
+                                            
+                                    new_records.append({
+                                        "Section": selected_class,
+                                        "Student": best_match_name,
+                                        "Date": today_str,
+                                        "Score": score_val,
+                                        "Feedback": feedback_val
+                                    })
                             except Exception as inner_e:
                                 print(f"Skipping image due to error: {inner_e}")
                             
@@ -552,15 +580,12 @@ else:
                         client = genai.Client(api_key=api_key_val)
                         img_to_send = Image.open(catalog_path)
                         
-                        # Πιο απλό και άμεσο prompt για αποφυγή λαθών
                         prompt = (
                             "Read all student names from this school roster image. "
-                            "If last name and first name are in separate columns, combine them (e.g. 'ΕΠΩΝΥΜΟ ΟΝΟΜΑ'). "
-                            "If they are in a single column, read them as they are. "
+                            "If last name and first name are in separate columns, combine them in the format 'ΕΠΩΝΥΜΟ ΟΝΟΜΑ' (with Last Name first, then First Name). "
                             "List only the full names, one per line. Do not include numbers, codes, or extra characters."
                         )
                         
-                        # Δοκιμή με gemini-3.8-flash ή εναλλακτικά gemini-2.5-flash αν χρειαστεί
                         response_text = call_gemini_safe(client, 'gemini-3.8-flash', [img_to_send, prompt])
                         spinner_placeholder.empty()
                         
@@ -569,7 +594,6 @@ else:
                             parsed_names = []
                             for line in lines:
                                 clean_line = line.strip()
-                                # Αφαίρεση τυχόν αριθμών, κουκκίδων ή κωδικών μητρώου στην αρχή
                                 clean_line = re.sub(r'^[\d\-\.\)]+\s*', '', clean_line).strip()
                                 if len(clean_line) > 2:
                                     parsed_names.append(clean_line)
