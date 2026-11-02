@@ -491,19 +491,24 @@ else:
                             
                             try:
                                 nb_img = Image.open(nb_p)
-                                # Αποστολή ΜΟΝΟ της εκφώνησης (ή περιγραφής) και του συγκεκριμένου τετραδίου ξεχωριστά
+                                
+                                # ΠΟΛΥ ΑΥΣΤΗΡΟ ΚΑΙ ΕΞΥΠΝΟ PROMPT ΓΙΑ ΑΚΡΙΒΗ ΒΑΘΜΟΛΟΓΗΣΗ
                                 prompt_text = (
-                                    f"Available official class students list: {class_students}\n"
-                                    "Task: Grade this specific student's solution notebook page by comparing it to the homework prompt.\n"
-                                    "1. Read the student's name written on the notebook page and match it to the closest official name from the list.\n"
-                                    "2. Evaluate the work objectively from 0 to 100 based strictly on mathematical/conceptual correctness (0 if wrong or only name, 100 if fully correct).\n"
-                                    "3. Write a short constructive feedback in Greek.\n"
+                                    f"Official class roster students: {class_students}\n"
+                                    "You are an expert, strict teacher. Look at the homework prompt image(s) first, then carefully examine this student's notebook page.\n"
+                                    "1. Read the student's name written on the page and match it precisely to the official roster list.\n"
+                                    "2. Compare the student's written solution step-by-step against the homework prompt. Evaluate mathematically/conceptually:\n"
+                                    "   - If only the name is written or it's completely wrong: score = 0.\n"
+                                    "   - If partially correct with errors: score = 30 to 60.\n"
+                                    "   - If mostly correct with minor slips: score = 70 to 90.\n"
+                                    "   - If fully correct: score = 100.\n"
+                                    "3. Write constructive feedback in Greek pointing out what was right or wrong.\n"
                                     "Return ONLY a valid JSON object with keys: "
                                     "\"student_name\", \"score\", \"feedback\"."
                                 )
                                 
-                                # Στέλνουμε την πρώτη σελίδα εκφώνησης (αν υπάρχει) + το τρέχον τετράδιο + το prompt
-                                contents_to_send = (homework_images[:1] if homework_images else []) + [nb_img, prompt_text]
+                                # Στέλνουμε όλες τις σελίδες εκφώνησης + το συγκεκριμένο τετράδιο
+                                contents_to_send = homework_images + [nb_img, prompt_text]
                                 
                                 resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
                                 if not resp_text:
@@ -513,25 +518,31 @@ else:
                                 score_val = 0
                                 feedback_val = "Μηδενική ή ελλιπής λύση."
                                 
+                                parsed_successfully = False
                                 if resp_text:
                                     clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
                                     json_match = re.search(r'\{.*\}', clean_resp, re.DOTALL)
                                     if json_match:
-                                        res_data = json.loads(json_match.group(0))
-                                        raw_name = str(res_data.get("student_name", ""))
-                                        for s in class_students:
-                                            if s.lower() in raw_name.lower() or raw_name.lower() in s.lower():
-                                                matched_student = s
-                                                break
-                                        score_val = int(res_data.get("score", 0))
-                                        feedback_val = str(res_data.get("feedback", "Χωρίς σχόλιο."))
-                                    else:
-                                        # Εξαγωγή βαθμού από τυχόν αριθμούς στο κείμενο
-                                        nums = re.findall(r'\b(100|[1-9]?[0-9])\b', clean_resp)
-                                        if nums:
-                                            score_val = int(nums[0])
-                                        feedback_val = clean_resp[:100]
-                                        
+                                        try:
+                                            res_data = json.loads(json_match.group(0))
+                                            raw_name = str(res_data.get("student_name", ""))
+                                            for s in class_students:
+                                                if s.lower() in raw_name.lower() or raw_name.lower() in s.lower():
+                                                    matched_student = s
+                                                    break
+                                            score_val = int(res_data.get("score", 0))
+                                            feedback_val = str(res_data.get("feedback", "Χωρίς σχόλιο."))
+                                            parsed_successfully = True
+                                        except:
+                                            pass
+                                
+                                # Αν απέτυχε το JSON αλλά πήραμε κείμενο, προσπαθούμε να εξαγάγουμε τον βαθμό
+                                if not parsed_successfully and resp_text:
+                                    nums = re.findall(r'\b(100|[1-9]?[0-9])\b', resp_text)
+                                    if nums:
+                                        score_val = int(nums[0])
+                                    feedback_val = resp_text[:120]
+
                                 new_records.append({
                                     "Section": selected_class,
                                     "Student": matched_student,
@@ -549,7 +560,11 @@ else:
                         
                         if new_records:
                             df_new = pd.DataFrame(new_records)
-                            st.session_state["grades_df"] = pd.concat([st.session_state["grades_df"], df_new], ignore_index=True)
+                            existing_df = st.session_state["grades_df"]
+                            if not existing_df.empty:
+                                existing_df = existing_df[~((existing_df["Section"] == selected_class) & (existing_df["Date"] == today_str))]
+                            
+                            st.session_state["grades_df"] = pd.concat([existing_df, df_new], ignore_index=True)
                             save_grades_df(st.session_state["grades_df"])
                             st.success(f"✅ {t['eval_success']}")
                         else:
@@ -638,7 +653,8 @@ else:
             df_progress = pd.DataFrame({"Student": students_list})
             
             if not section_grades.empty:
-                df_progress = pd.merge(df_progress, section_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
+                latest_grades = section_grades.drop_duplicates(subset=["Student"], keep="last")
+                df_progress = pd.merge(df_progress, latest_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
             
             st.dataframe(df_progress, use_container_width=True)
         else:
