@@ -41,18 +41,6 @@ st.markdown("""
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .custom-spinner-box {
-            background-color: #ff4b4b;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 16px;
-            text-align: center;
-            margin: 15px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            border: 2px solid #8b0000;
-        }
         .sidebar-stop-box {
             background-color: #ff4b4b;
             color: white;
@@ -161,6 +149,9 @@ if "grades_df" not in st.session_state:
 if "app_lang" not in st.session_state:
     st.session_state["app_lang"] = "English"
 
+if "pending_evaluations" not in st.session_state:
+    st.session_state["pending_evaluations"] = []
+
 def call_gemini_safe(client, model_name, contents):
     try:
         response = client.models.generate_content(
@@ -195,13 +186,13 @@ TRANSLATIONS = {
         "save_api": "💾 Save API Key",
         "api_saved_success": "API Key saved successfully!",
         "menu_title": "📌 Select Mode (Vertical Menu):",
-        "opt1": "📷 1. Automatic Grading",
+        "opt1": "📷 1. Assisted Grading",
         "opt2": "📋 2. Import Roster",
         "opt3": "📊 3. Progress Table & Reports",
         "batch_upload": "📸 Take photo with camera or select notebook files (compressed automatically):",
         "folder_found": "student notebook photos ready in folder.",
         "clear_notebooks": "🗑️ Clear Notebooks Folder",
-        "btn_evaluate": "🚀 Start Grading Notebooks",
+        "btn_evaluate": "🔍 Generate Proposed Evaluations",
         "eval_success": "Successfully evaluated and saved to Progress Table!",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "📸 Take roster photo with camera or upload file:",
@@ -210,7 +201,7 @@ TRANSLATIONS = {
         "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.",
         "alert_box": "⚙️ Manage sections and language from the sidebar, and enter your API Key below.",
         "uploader_label_hw": "📸 Camera or Assignment File",
-        "box1_title": "🗂️ Box 1: Automatic Homework Grading",
+        "box1_title": "🗂️ Box 1: AI-Assisted Homework Grading",
         "box2_title": "🗂️ Box 2: Import Roster",
         "box3_title": "🗂️ Box 3: Progress Table & Reports",
         "roster_photo_caption": "Roster Photo",
@@ -218,7 +209,7 @@ TRANSLATIONS = {
         "no_students_yet": "No students added yet.",
         "current_class_label": "Current Section:",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list... (Takes 1-2 minutes)",
-        "workflow_info": "💡 <b>Quick Guide:</b> Photos are compressed automatically for instant upload. Press 'Start Grading' to evaluate all student notebooks directly against the homework prompt."
+        "workflow_info": "💡 <b>Hybrid Workflow:</b> AI proposes scores and Greek feedback. Review individually or use Fast-Track Bulk Approval for large classes!"
     },
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -241,13 +232,13 @@ TRANSLATIONS = {
         "save_api": "💾 Αποθήκευση API Key",
         "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
         "menu_title": "📌 Επιλέξτε Λειτουργία (Κάθετο Μενού):",
-        "opt1": "📷 1. Αυτόματη Αξιολόγηση Άσκησης",
+        "opt1": "📷 1. Υποβοηθούμενη Αξιολόγηση",
         "opt2": "📋 2. Εισαγωγή Καταλόγου",
         "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
         "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων (συμπιέζονται αυτόματα):",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "clear_notebooks": "🗑️ Εκκαθάριση Φακέλου Τετραδίων",
-        "btn_evaluate": "🚀 Έναρξη Βαθμολόγησης Τετραδίων",
+        "btn_evaluate": "🔍 Δημιουργία Προτεινόμενων Αξιολογήσεων",
         "eval_success": "Η αξιολόγηση ολοκληρώθηκε και αποθηκεύτηκε στον πίνακα προόδου!",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "📸 Τραβήξτε φωτογραφία καταλόγου με κάμερα ή ανεβάστε αρχείο:",
@@ -256,7 +247,7 @@ TRANSLATIONS = {
         "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ:<br>Κάντε scroll προς τα κάτω 👇<br>για να επιλέξετε Τμήμα.",
         "alert_box": "⚙️ Διαχειριστείτε τα τμήματα από την πλαϊνή μπάρα και εισάγετε το API Key σας παρακάτω.",
         "uploader_label_hw": "📸 Κάμερα ή Αρχείο Εκφώνησης",
-        "box1_title": "🗂️ Κουτάκι 1: Αυτόματη Αξιολόγηση Άσκησης",
+        "box1_title": "🗂️ Κουτάκι 1: Υποβοηθούμενη Αξιολόγηση Άσκησης",
         "box2_title": "🗂️ Κουτάκι 2: Εισαγωγή Καταλόγου",
         "box3_title": "🗂️ Κουτάκι 3: Πίνακας Προόδου & Αναφορές",
         "roster_photo_caption": "Φωτογραφία Καταλόγου",
@@ -264,7 +255,7 @@ TRANSLATIONS = {
         "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
         "current_class_label": "Τρέχον Τμήμα:",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης... (Διαρκεί 1-2 λεπτά)",
-        "workflow_info": "💡 <b>Οδηγός Χρήσης:</b> Οι φωτογραφίες συμπιέζονται αυτόματα για στιγμιαίο ανέβασμα. Πατήστε 'Έναρξη Βαθμολόγησης' για να αξιολογηθούν απευθείας τα τετράδια βάσει της εκφώνησης."
+        "workflow_info": "💡 <b>Υβριδική Λειτουργία:</b> Το AI προτείνει βαθμούς και σχόλια. Ελέγξτε τους ή χρησιμοποιήστε τη Μαζική Έγκριση για γρήγορο κλείσιμο τάξης!"
     }
 }
 
@@ -296,6 +287,13 @@ hw_files = st.sidebar.file_uploader(
 )
 
 if hw_files:
+    old_hw = [os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('hw_page_')]
+    for p in old_hw:
+        try:
+            os.remove(p)
+        except:
+            pass
+
     for idx, hw_f in enumerate(hw_files):
         compressed_bytes = compress_image(hw_f.getbuffer())
         hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{idx}.jpg")
@@ -312,6 +310,13 @@ for p in hw_paths_in_folder:
 
 if homework_images:
     st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
+    if st.sidebar.button("🗑️ Διαγραφή Εκφώνησης", key="clear_hw_btn"):
+        for p in hw_paths_in_folder:
+            try:
+                os.remove(p)
+            except:
+                pass
+        st.rerun()
 
 st.sidebar.markdown(f"""
     <div class="sidebar-stop-box">
@@ -455,11 +460,12 @@ else:
                         os.remove(os.path.join(UPLOAD_FOLDER, f))
                     except:
                         pass
+                st.session_state["pending_evaluations"] = []
                 st.rerun()
         
         st.markdown("---")
         
-        # --- ΑΜΕΣΗ ΕΝΑΡΞΗ ΒΑΘΜΟΛΟΓΗΣΗΣ ΜΕ ΕΞΥΠΝΗ ΑΝΑΓΝΩΣΗ ---
+        # --- ΔΗΜΙΟΥΡΓΙΑ ΠΡΟΤΕΙΝΟΜΕΝΩΝ ΑΞΙΟΛΟΓΗΣΕΩΝ ΜΕ ΖΩΝΤΑΝΗ ΜΠΑΡΑ ΠΡΟΟΔΟΥ & ΧΡΟΝΟ ---
         if st.button(t["btn_evaluate"]):
             api_key_val = st.session_state["config"].get("api_key", "").strip()
             if not api_key_val:
@@ -473,27 +479,38 @@ else:
                 else:
                     try:
                         client = genai.Client(api_key=api_key_val)
-                        new_records = []
-                        today_str = datetime.date.today().strftime("%Y-%m-%d")
+                        st.session_state["pending_evaluations"] = []
                         class_students = st.session_state["students_db"].get(selected_class, [])
                         
                         total_files = len(nb_images_paths)
                         progress_bar = st.progress(0)
                         status_text = st.empty()
                         
+                        start_time = time.time()
+                        
                         for i, nb_p in enumerate(nb_images_paths):
                             file_name_display = os.path.basename(nb_p)
-                            status_text.markdown(f"🔄 **Βαθμολόγηση σε εξέλιξη...** (Φωτογραφία {i+1} από {total_files}: `{file_name_display}`)")
+                            
+                            # Υπολογισμός εκτιμώμενου υπολειπόμενου χρόνου (ETA)
+                            elapsed = time.time() - start_time
+                            avg_time_per_item = elapsed / (i + 1) if i > 0 else 3.0
+                            remaining_items = total_files - (i + 1)
+                            est_sec = int(avg_time_per_item * remaining_items)
+                            
+                            status_text.markdown(f"🔄 **Ανάλυση AI σε εξέλιξη...** (Φωτογραφία {i+1} από {total_files}) | ⏱️ *Εκτιμώμενος χρόνος: ~{est_sec} δευτ.*")
                             
                             try:
                                 nb_img = Image.open(nb_p)
                                 prompt_eval = (
-                                    f"Official Roster list: {class_students}\n"
-                                    "Compare the student's notebook page against the homework prompt image(s).\n"
-                                    "1. Identify the student's name on the page and match it precisely to the official roster list.\n"
-                                    "2. Grade the student's work from 0 to 100 based on accuracy.\n"
-                                    "3. Write constructive feedback in Greek.\n"
-                                    "Return ONLY valid JSON with keys: \"student_name\", \"score\", \"feedback\"."
+                                    f"Official Roster: {class_students}\n"
+                                    "Evaluate this student notebook page against the homework prompt.\n"
+                                    "1. Match student name to roster.\n"
+                                    "2. Suggest score: 100 (Correct), 50 (Partial), 0 (Incorrect).\n"
+                                    "3. Write 1 sentence explanation in Greek.\n"
+                                    "Format:\n"
+                                    "NAME: [Student Name]\n"
+                                    "SCORE: [Score]\n"
+                                    "FEEDBACK: [Feedback in Greek]"
                                 )
                                 
                                 contents_to_send = homework_images + [nb_img, prompt_eval]
@@ -503,41 +520,30 @@ else:
                                 
                                 matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
                                 score_val = 50
-                                feedback_val = "Χωρίς σχόλιο."
+                                feedback_val = "Χρειάζεται επανέλεγχο."
                                 
                                 if resp_text:
-                                    clean_resp = resp_text.replace("```json", "").replace("```", "").strip()
-                                    json_match = re.search(r'\{.*\}', clean_resp, re.DOTALL)
-                                    if json_match:
-                                        try:
-                                            res_data = json.loads(json_match.group(0))
-                                            raw_name = str(res_data.get("student_name", ""))
-                                            for s in class_students:
-                                                if s.lower() in raw_name.lower() or raw_name.lower() in s.lower():
-                                                    matched_student = s
-                                                    break
-                                            score_val = int(res_data.get("score", 50))
-                                            feedback_val = str(res_data.get("feedback", "Χωρίς σχόλιο."))
-                                        except:
-                                            pass
+                                    name_match = re.search(r'NAME:\s*(.+)', resp_text, re.IGNORECASE)
+                                    if name_match:
+                                        raw_name = name_match.group(1).strip()
+                                        for s in class_students:
+                                            if s.lower() in raw_name.lower() or raw_name.lower() in s.lower():
+                                                matched_student = s
+                                                break
                                     
-                                    # Fallback αναζήτησης αριθμού αν δεν γίνει parse το JSON
-                                    if score_val == 50 and resp_text:
-                                        nums = re.findall(r'\b(100|[1-9]?[0-9])\b', resp_text)
-                                        if nums:
-                                            for n in nums:
-                                                val = int(n)
-                                                if val <= 100:
-                                                    score_val = val
-                                                    break
-                                        feedback_val = resp_text[:200]
+                                    score_match = re.search(r'SCORE:\s*(100|50|0)', resp_text, re.IGNORECASE)
+                                    if score_match:
+                                        score_val = int(score_match.group(1))
+                                    
+                                    fb_match = re.search(r'FEEDBACK:\s*(.+)', resp_text, re.IGNORECASE | re.DOTALL)
+                                    if fb_match:
+                                        feedback_val = fb_match.group(1).strip()[:200]
 
-                                new_records.append({
-                                    "Section": selected_class,
-                                    "Student": matched_student,
-                                    "Date": today_str,
-                                    "Score": score_val,
-                                    "Feedback": feedback_val
+                                st.session_state["pending_evaluations"].append({
+                                    "img_path": nb_p,
+                                    "student": matched_student,
+                                    "score": score_val,
+                                    "feedback": feedback_val
                                 })
                             except Exception as inner_e:
                                 print(f"Skipping image due to error: {inner_e}")
@@ -546,20 +552,95 @@ else:
                         
                         status_text.empty()
                         progress_bar.empty()
-                        
-                        if new_records:
-                            df_new = pd.DataFrame(new_records)
-                            existing_df = st.session_state["grades_df"]
-                            if not existing_df.empty:
-                                existing_df = existing_df[~((existing_df["Section"] == selected_class) & (existing_df["Date"] == today_str))]
-                            
-                            st.session_state["grades_df"] = pd.concat([existing_df, df_new], ignore_index=True)
-                            save_grades_df(st.session_state["grades_df"])
-                            st.success(f"✅ {t['eval_success']}")
-                        else:
-                            st.error("⚠️ Αποτυχία βαθμολόγησης. Παρακαλώ δοκιμάστε ξανά.")
+                        st.success("✅ Η ανάλυση AI ολοκληρώθηκε! Επιθεωρήστε, διορθώστε ή εγκρίνετε μαζικά παρακάτω.")
                     except Exception as e:
                         st.error(f"⚠️ Processing error: {str(e)}")
+
+        # --- ΟΘΟΝΗ ΕΠΙΘΕΩΡΗΣΗΣ ΚΑΙ ΜΑΖΙΚΗΣ ΕΓΚΡΙΣΗΣ ---
+        if st.session_state["pending_evaluations"]:
+            st.markdown("### 📋 Επισκόπηση & Τελική Έγκριση Καθηγητή")
+            st.write("Μπορείτε είτε να ελέγξετε κάθε μαθητή ξεχωριστά είτε να πατήσετε **Μαζική Έγκριση** για άμεση καταχώρηση:")
+            
+            # Κουμπί Μαζικής Έγκρισης (Ideal για 25άρια τμήματα)
+            if st.button("🚀⚡ Μαζική Έγκριση & Αποθήκευση Όλων (Fast-Track)", type="primary"):
+                bulk_records = []
+                today_str = datetime.date.today().strftime("%Y-%m-%d")
+                for item in st.session_state["pending_evaluations"]:
+                    bulk_records.append({
+                        "Section": selected_class,
+                        "Student": item["student"],
+                        "Date": today_str,
+                        "Score": item["score"],
+                        "Feedback": item["feedback"]
+                    })
+                
+                df_new = pd.DataFrame(bulk_records)
+                existing_df = st.session_state["grades_df"]
+                if not existing_df.empty:
+                    existing_df = existing_df[~((existing_df["Section"] == selected_class) & (existing_df["Date"] == today_str))]
+                
+                st.session_state["grades_df"] = pd.concat([existing_df, df_new], ignore_index=True)
+                save_grades_df(st.session_state["grades_df"])
+                st.session_state["pending_evaluations"] = []
+                st.balloons()
+                st.success("🎉 Όλες οι βαθμολογίες εγκρίθηκαν και αποθηκεύτηκαν μαζικά στον Πίνακα Προόδου!")
+                time.sleep(1)
+                st.rerun()
+
+            st.markdown("---")
+            st.write("Ή αναλυτικός έλεγχος ανά μαθητή:")
+            
+            updated_results = []
+            class_students = st.session_state["students_db"].get(selected_class, [])
+            
+            for idx, item in enumerate(st.session_state["pending_evaluations"]):
+                st.markdown(f"#### 📄 Μαθητής #{idx+1}")
+                col1, col2 = st.columns([1, 2])
+                
+                with col1:
+                    try:
+                        st.image(item["img_path"], use_column_width=True, caption=f"Φωτογραφία #{idx+1}")
+                    except:
+                        st.write("Εικόνα τετραδίου")
+                        
+                with col2:
+                    student_idx = class_students.index(item["student"]) if item["student"] in class_students else 0
+                    sel_student = st.selectbox(f"Μαθητής #{idx+1}:", class_students, index=student_idx, key=f"sel_st_{idx}")
+                    
+                    sel_score = st.radio(
+                        f"Βαθμός #{idx+1}:", 
+                        [100, 50, 0], 
+                        index=[100, 50, 0].index(item["score"]) if item["score"] in [100, 50, 0] else 1, 
+                        horizontal=True,
+                        key=f"sel_sc_{idx}"
+                    )
+                    
+                    sel_fb = st.text_area(f"Σχόλιο #{idx+1}:", value=item["feedback"], height=70, key=f"sel_fb_{idx}")
+                    
+                    updated_results.append({
+                        "Section": selected_class,
+                        "Student": sel_student,
+                        "Date": datetime.date.today().strftime("%Y-%m-%d"),
+                        "Score": sel_score,
+                        "Feedback": sel_fb
+                    })
+                st.markdown("---")
+            
+            if st.button("💾 Οριστική Αποθήκευση Επιλεγμένων", type="primary"):
+                df_new = pd.DataFrame(updated_results)
+                existing_df = st.session_state["grades_df"]
+                today_str = datetime.date.today().strftime("%Y-%m-%d")
+                
+                if not existing_df.empty:
+                    existing_df = existing_df[~((existing_df["Section"] == selected_class) & (existing_df["Date"] == today_str))]
+                
+                st.session_state["grades_df"] = pd.concat([existing_df, df_new], ignore_index=True)
+                save_grades_df(st.session_state["grades_df"])
+                st.session_state["pending_evaluations"] = []
+                st.balloons()
+                st.success("🎉 Οι βαθμολογίες εγκρίθηκαν και αποθηκεύτηκαν επιτυχώς στον Πίνακα Προόδου!")
+                time.sleep(1)
+                st.rerun()
 
     elif mode == t["opt2"]:
         st.subheader(t["box2_title"])
@@ -578,12 +659,17 @@ else:
                 if not api_key_val:
                     st.error("⚠️ Please enter your Gemini API Key first above!")
                 else:
-                    spinner_placeholder = st.empty()
-                    spinner_placeholder.markdown(f"""
+                    # Μπάρα προόδου και για την ανάγνωση του καταλόγου
+                    cat_progress = st.progress(0)
+                    cat_status = st.empty()
+                    cat_status.markdown(f"""
                         <div class="custom-spinner-box">
-                            {t["catalog_spinner"]}
+                            ⏳ {t["catalog_spinner"]} (Εκτίμηση: ~15-20 δευτ.)
                         </div>
                     """, unsafe_allow_html=True)
+                    
+                    cat_progress.progress(30)
+                    time.sleep(0.5)
                     
                     try:
                         client = genai.Client(api_key=api_key_val)
@@ -595,11 +681,14 @@ else:
                             "List only the full names, one per line. Do not include numbers, codes, or extra text."
                         )
                         
+                        cat_progress.progress(70)
                         response_text = call_gemini_safe(client, 'gemini-3.8-flash', [img_to_send, prompt])
                         if not response_text:
                             response_text = call_gemini_safe(client, 'gemini-2.5-flash', [img_to_send, prompt])
                             
-                        spinner_placeholder.empty()
+                        cat_progress.progress(100)
+                        cat_status.empty()
+                        cat_progress.empty()
                         
                         if response_text:
                             lines = response_text.replace("```", "").split("\n")
@@ -626,8 +715,10 @@ else:
                         else:
                             st.error("⚠️ Error reading roster, please try again.")
                     except Exception as e:
-                        if 'spinner_placeholder' in locals():
-                            spinner_placeholder.empty()
+                        if 'cat_status' in locals():
+                            cat_status.empty()
+                        if 'cat_progress' in locals():
+                            cat_progress.empty()
                         st.error(f"⚠️ Processing error: {str(e)}")
 
     elif mode == t["opt3"]:
