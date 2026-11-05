@@ -93,7 +93,7 @@ def load_config():
                     return data
         except Exception:
             pass
-    return {"api_key": "", "audio_alert": True}
+    return {"api_key": "", "audio_target": True}
 
 def save_config(config_dict):
     try:
@@ -159,7 +159,6 @@ if "pending_evaluations" not in st.session_state:
     st.session_state["pending_evaluations"] = []
 
 def play_success_sound():
-    # Ενσωματωμένος ήχος καμπάνας/success chime μέσω Web Audio API (JavaScript)
     sound_html = """
         <script>
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -244,7 +243,12 @@ TRANSLATIONS = {
         "no_students_yet": "No students added yet.",
         "current_class_label": "Current Section:",
         "catalog_spinner": "⏳ AI is analyzing and organizing the class list...",
-        "workflow_info": "💡 <b>Hybrid Workflow:</b> AI compares homework + official solution vs student notebook. Review individually or use Fast-Track Bulk Approval!"
+        "workflow_info": "💡 <b>Hybrid Workflow:</b> AI compares homework + official solution vs student notebook. Review individually or use Fast-Track Bulk Approval!",
+        "hw_warn_box1": "⚠️ Note: Please upload the homework prompt first from the sidebar.",
+        "hw_err_eval": "⚠️ Please upload the homework prompt first in the sidebar!",
+        "no_notebooks_warn": "⚠️ No notebook photos found. Please upload notebook photos first.",
+        "eval_complete_msg": "🎉 AI analysis completed successfully! Review, correct, or approve in bulk below.",
+        "bulk_success_msg": "🎉 All grades approved and saved in bulk to the Progress Table!"
     },
     "Ελληνικά": {
         "title": "🎓 GradeMind AI",
@@ -293,7 +297,12 @@ TRANSLATIONS = {
         "no_students_yet": "Δεν έχουν προστεθεί μαθητές ακόμα.",
         "current_class_label": "Τρέχον Τμήμα:",
         "catalog_spinner": "⏳ Το AI αναλύει και οργανώνει τον κατάλογο της τάξης...",
-        "workflow_info": "💡 <b>Υβριδική Λειτουργία:</b> Το AI συγκρίνει Εκφώνηση + Σωστή Λύση με το τετράδιο του μαθητή, προτείνει βαθμό και σχόλια. Ελέγξτε ή εγκρίνετε μαζικά!"
+        "workflow_info": "💡 <b>Υβριδική Λειτουργία:</b> Το AI συγκρίνει Εκφώνηση + Σωστή Λύση με το τετράδιο του μαθητή, προτείνει βαθμό και σχόλια. Ελέγξτε ή εγκρίνετε μαζικά!",
+        "hw_warn_box1": "⚠️ Σημείωση: Ανεβάστε πρώτα την εκφώνηση της άσκησης από το πλαϊνό μενού (Sidebar).",
+        "hw_err_eval": "⚠️ Παρακαλώ ανεβάστε πρώτα την εκφώνηση της άσκησης στο πλαϊνό μενού!",
+        "no_notebooks_warn": "⚠️ Δεν βρέθηκαν φωτογραφίες τετραδίων. Ανεβάστε πρώτα φωτογραφίες τετραδίων.",
+        "eval_complete_msg": "🎉 Η ανάλυση AI ολοκληρώθηκε επιτυχώς! Επιθεωρήστε, διορθώστε ή εγκρίνετε μαζικά παρακάτω.",
+        "bulk_success_msg": "🎉 Όλες οι βαθμολογίες εγκρίθηκαν και αποθηκεύτηκαν μαζικά στον Πίνακα Προόδου!"
     }
 }
 
@@ -317,7 +326,6 @@ st.sidebar.markdown("---")
 st.sidebar.header(t["hw_section"])
 st.sidebar.write(t["hw_desc"])
 
-# Upload 1: Εκφώνηση με Progress Bar
 hw_files = st.sidebar.file_uploader(
     t["uploader_label_hw"],
     type=["png", "jpg", "jpeg"],
@@ -343,7 +351,6 @@ if hw_files:
                 f.write(compressed_bytes)
         status.update(label="✅ Η εκφώνηση αποθηκεύτηκε με επιτυχία!", state="complete", expanded=False)
 
-# Upload 2: Σωστή Λύση με Progress Bar
 sol_files = st.sidebar.file_uploader(
     t["uploader_label_sol"],
     type=["png", "jpg", "jpeg"],
@@ -489,7 +496,6 @@ with st.container():
     current_api_key = st.session_state["config"].get("api_key", "")
     api_key_input = st.text_input("API Key:", value=current_api_key, type="password", key="main_api_key_input", label_visibility="collapsed")
     
-    # Επιλογή ηχητικής ειδοποίησης
     audio_enabled_val = st.session_state["config"].get("audio_target", True)
     audio_toggle = st.checkbox(t["audio_toggle"], value=audio_enabled_val, key="audio_toggle_box")
     if audio_toggle != audio_enabled_val:
@@ -527,7 +533,7 @@ else:
     if mode == t["opt1"]:
         st.subheader(t["box1_title"])
         if not homework_images:
-            st.warning("⚠️ Σημείωση: Ανεβάστε πρώτα την εκφώνηση της άσκησης από το πλαϊνό μενού (Sidebar).")
+            st.warning(t["hw_warn_box1"])
         
         notebook_files = st.file_uploader(
             t["batch_upload"],
@@ -564,17 +570,16 @@ else:
         
         st.markdown("---")
         
-        # --- ΑΞΙΟΛΟΓΗΣΗ ΜΕ ΠΛΗΡΗ ΜΠΑΡΑ ΠΡΟΟΔΟΥ & ΗΧΗΤΙΚΟ ΣΗΜΑ ---
         if st.button(t["btn_evaluate"]):
             api_key_val = st.session_state["config"].get("api_key", "").strip()
             if not api_key_val:
                 st.error("⚠️ Please enter your Gemini API Key first above!")
             elif not homework_images:
-                st.error("⚠️ Παρακαλώ ανεβάστε πρώτα την εκφώνηση της άσκησης στο πλαϊνό μενού!")
+                st.error(t["hw_err_eval"])
             else:
                 nb_images_paths = [os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('student_page_')]
                 if not nb_images_paths:
-                    st.warning("⚠️ Δεν βρέθηκαν φωτογραφίες τετραδίων. Ανεβάστε πρώτα φωτογραφίες τετραδίων.")
+                    st.warning(t["no_notebooks_warn"])
                 else:
                     try:
                         client = genai.Client(api_key=api_key_val)
@@ -656,15 +661,13 @@ else:
                         progress_bar.empty()
                         status_box.empty()
                         
-                        # Αναπαραγωγή ήχου αν είναι ενεργοποιημένος
                         if st.session_state["config"].get("audio_target", True):
                             play_success_sound()
                         
-                        st.success("🎉 Η ανάλυση AI ολοκληρώθηκε επιτυχώς! Επιθεωρήστε, διορθώστε ή εγκρίνετε μαζικά παρακάτω.")
+                        st.success(t["eval_complete_msg"])
                     except Exception as e:
                         st.error(f"⚠️ Processing error: {str(e)}")
 
-        # --- ΟΘΟΝΗ ΕΠΙΘΕΩΡΗΣΗΣ ΚΑΙ ΜΑΖΙΚΗΣ ΕΓΚΡΙΣΗΣ ---
         if st.session_state["pending_evaluations"]:
             st.markdown("### 📋 Επισκόπηση & Τελική Έγκριση Καθηγητή")
             st.write("Μπορείτε είτε να ελέγξετε κάθε μαθητή ξεχωριστά είτε να πατήσετε **Μαζική Έγκριση** για άμεση καταχώρηση:")
@@ -692,7 +695,7 @@ else:
                     st.session_state["pending_evaluations"] = []
                     
                 st.balloons()
-                st.success("🎉 Όλες οι βαθμολογίες εγκρίθηκαν και αποθηκεύτηκαν μαζικά στον Πίνακα Προόδου!")
+                st.success(t["bulk_success_msg"])
                 time.sleep(1)
                 st.rerun()
 
