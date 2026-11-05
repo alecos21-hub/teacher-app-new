@@ -5,7 +5,6 @@ from PIL import Image
 import pandas as pd
 import datetime
 import os
-import shutil
 import json
 import re
 import time
@@ -152,9 +151,6 @@ if "initialized" not in st.session_state:
         progress_bar.empty()
         st.session_state["initialized"] = True
 
-if "app_lang" not in st.session_state:
-    st.session_state["app_lang"] = "English"
-
 if "pending_evaluations" not in st.session_state:
     st.session_state["pending_evaluations"] = []
 
@@ -176,9 +172,9 @@ def play_success_sound():
                     osc.stop(audioCtx.currentTime + time);
                 }, delay);
             }
-            playTone(523.25, 0.3, 0);   # C5
-            playTone(659.25, 0.3, 150); # E5
-            playTone(783.99, 0.5, 300); # G5
+            playTone(523.25, 0.3, 0);
+            playTone(659.25, 0.3, 150);
+            playTone(783.99, 0.5, 300);
         </script>
     """
     components.html(sound_html, height=0, width=0)
@@ -195,81 +191,20 @@ def call_gemini_safe(client, model_name, contents):
         print(f"Gemini API Error: {e}")
     return None
 
-TRANSLATIONS = {
-    "English": {
-        "title": "🎓 GradeMind AI",
-        "subtitle": "### *Smart Homework & Test Grader – Smart Teacher Assistant*",
-        "hw_section": "📖 Homework Prompt & Solution",
-        "hw_desc": "📸 Upload Homework Assignment & Official Solution:",
-        "hw_saved": "Homework page(s) saved & compressed!",
-        "sol_saved": "Solution page(s) saved & compressed!",
-        "class_mgmt": "⚙️ Class Management & Sections",
-        "select_class": "Select Class/Section:",
-        "add_new_class": "➕ Add New Section (e.g. B3):",
-        "btn_add_class": "Add Section",
-        "remove_class": "❌ Delete Section:",
-        "btn_remove_class": "Delete Section",
-        "students_in": "Students in Section",
-        "add_student": "Add new student:",
-        "btn_add": "➕ Add Student",
-        "remove_student": "Remove student:",
-        "btn_remove": "❌ Delete Student",
-        "api_prompt": "🔑 Google Gemini API Key",
-        "save_api": "💾 Save API Key",
-        "audio_toggle": "🔊 Enable Sound Notification on Completion",
-        "api_saved_success": "API Key saved successfully!",
-        "menu_title": "📌 Select Mode (Vertical Menu):",
-        "opt1": "📷 1. Assisted Grading",
-        "opt2": "📋 2. Import Roster",
-        "opt3": "📊 3. Progress Table & Reports",
-        "batch_upload": "📸 Take photo with camera or select notebook files (compressed automatically):",
-        "folder_found": "student notebook photos ready in folder.",
-        "clear_notebooks": "🗑️ Clear Notebooks Folder",
-        "btn_evaluate": "🔍 Generate Proposed Evaluations",
-        "eval_success": "Successfully evaluated and saved to Progress Table!",
-        "catalog_sec": "📷 Import Class Roster for Section",
-        "upload_catalog": "📸 Take roster photo with camera or upload file:",
-        "btn_read_names": "🤖 Read & Auto-Save Roster",
-        "stats_sec": "📊 Class Progress Matrix (Excel Style)",
-        "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.",
-        "alert_box": "⚙️ Manage sections and language from the sidebar, and enter your API Key below.",
-        "uploader_label_hw": "📸 Assignment Prompt Photo",
-        "uploader_label_sol": "💡 Official Answer/Solution Photo",
-        "box1_title": "🗂️ Box 1: AI-Assisted Homework Grading",
-        "box2_title": "🗂️ Box 2: Import Roster",
-        "box3_title": "🗂️ Box 3: Progress Table & Reports",
-        "roster_photo_caption": "Roster Photo",
-        "no_classes_warn": "⚠️ No sections available. Create a section from the sidebar to get started.",
-        "no_students_yet": "No students added yet.",
-        "current_class_label": "Current Section:",
-        "catalog_spinner": "⏳ AI is analyzing and organizing the class list...",
-        "workflow_info": "💡 <b>Hybrid Workflow:</b> AI compares homework + official solution vs student notebook. Review individually or use Fast-Track Bulk Approval!",
-        "hw_warn_box1": "⚠️ Note: Please upload the homework prompt first from the sidebar.",
-        "hw_err_eval": "⚠️ Please upload the homework prompt first in the sidebar!",
-        "no_notebooks_warn": "⚠️ No notebook photos found. Please upload notebook photos first.",
-        "eval_complete_msg": "🎉 AI analysis completed successfully! Review, correct, or approve in bulk below.",
-        "bulk_success_msg": "🎉 All grades approved and saved in bulk to the Progress Table!"
-    },
-    "Ελληνικά": {
-        "title": "🎓 GradeMind AI",
-        "subtitle": "### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*",
-        "hw_section": "📖 Εκφώνηση & Σωστή Λύση",
-        "hw_desc": "📸 Ανεβάστε την Εκφώνηση ΚΑΙ τη Σωστή Λύση:",
-        "hw_saved": "σελίδα/σελίδες Εκφώνησης αποθηκεύτηκαν!",
-        "sol_saved": "σελίδα/σελίδες Σωστής Λύσης αποθηκεύτηκαν!",
-        "class_mgmt": "⚙️ Διαχείριση Τάξης & Τμημάτων",
-        "select_class": "Επιλογή Τμήματος:",
-        "add_new_class": "➕ Δημιουργία Νέου Τμήματος (π.χ. Β3):",
-        "btn_add_class": "Προσθήκη Τμήματος",
-        "remove_class": "❌ Διαγραφή Τμήματος:",
-        "btn_remove_class": "Διαγραφή Τμήματος",
-        "students_in": "Μαθητές Τμήματος",
-        "add_student": "Προσθήκη νέου μαθητή:",
-        "btn_add": "➕ Προσθήκη Μαθητή",
-        "remove_student": "Αφαίρεση μαθητή:",
-        "btn_remove": "❌ Διαγραφή Μαθητή",
-        "api_prompt": "🔑 Google Gemini API Key",
-        "save_api": "💾 Αποθήκευση API Key",
-        "audio_toggle": "🔊 Ηχητική ειδοποίηση κατά την ολοκλήρωση",
-        "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
-        "menu
+# --- 3. SIDEBAR: ΕΚΦΩΝΗΣΗ, ΣΩΣΤΗ ΛΥΣΗ & ΤΜΗΜΑΤΑ ---
+st.markdown("🎓 GradeMind AI")
+st.markdown("### *Smart Homework & Test Grader – Ο Έξυπνος Ψηφιακός Βοηθός Δασκάλου*")
+
+st.sidebar.header("📖 Εκφώνηση & Σωστή Λύση")
+st.sidebar.write("📸 Ανεβάστε την Εκφώνηση ΚΑΙ τη Σωστή Λύση:")
+
+hw_files = st.sidebar.file_uploader(
+    "📸 Φωτογραφία Εκφώνησης (Homework)",
+    type=["png", "jpg", "jpeg"],
+    accept_multiple_files=True,
+    key="hw_high_res_uploader"
+)
+
+if hw_files:
+    with st.sidebar.status("🔄 Επεξεργασία & συμπίεση εκφώνησης...", expanded=True) as status:
+        old_
