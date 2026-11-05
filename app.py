@@ -176,9 +176,9 @@ def play_success_sound():
                     osc.stop(audioCtx.currentTime + time);
                 }, delay);
             }
-            playTone(523.25, 0.3, 0);   // C5
-            playTone(659.25, 0.3, 150); // E5
-            playTone(783.99, 0.5, 300); // G5
+            playTone(523.25, 0.3, 0);   # C5
+            playTone(659.25, 0.3, 150); # E5
+            playTone(783.99, 0.5, 300); # G5
         </script>
     """
     components.html(sound_html, height=0, width=0)
@@ -272,8 +272,4 @@ TRANSLATIONS = {
         "save_api": "💾 Αποθήκευση API Key",
         "audio_toggle": "🔊 Ηχητική ειδοποίηση κατά την ολοκλήρωση",
         "api_saved_success": "Το API Key αποθηκεύτηκε επιτυχώς!",
-        "menu_title": "📌 Επιλέξτε Λειτουργία (Κάθετο Μενού):",
-        "opt1": "📷 1. Υποβοηθούμενη Αξιολόγηση",
-        "opt2": "📋 2. Εισαγωγή Καταλόγου",
-        "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
-        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κά
+        "menu
