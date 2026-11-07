@@ -182,7 +182,7 @@ def play_success_sound():
     """
     components.html(sound_html, height=0, width=0)
 
-# ΑΣΦΑΛΗΣ ΣΥΝΑΡΤΗΣΗ ΜΕ AUTO-RETRY ΚΑΙ ΕΝΗΜΕΡΩΣΗ ΧΡΗΣΤΗ
+# ΑΣΦΑΛΗΣ ΣΥΝΑΡΤΗΣΗ ΜΕ AUTO-RETRY ΚΑΙ ΚΑΤΑΓΡΑΦΗ ΣΦΑΛΜΑΤΟΣ ΣΤΗΝ ΚΟΝΣΟΛΑ
 def call_gemini_safe(client, model_name, contents):
     max_retries = 3
     for attempt in range(max_retries):
@@ -195,7 +195,7 @@ def call_gemini_safe(client, model_name, contents):
                 return response.text
         except Exception as e:
             try:
-                print(f"Gemini API Error (προσπάθεια {attempt+1}/{max_retries})")
+                print(f"DEBUG - Gemini API Error (προσπάθεια {attempt+1}/{max_retries}): {str(e)}")
             except:
                 pass
             
@@ -203,7 +203,7 @@ def call_gemini_safe(client, model_name, contents):
                 st.toast(f"⚠️ Στιγμιαίο κόλλημα δικτύου. Γίνεται αυτόματη επανάληψη ({attempt+2}/3)...", icon="🔄")
                 time.sleep(2)
             else:
-                st.error("❌ Αποτυχία σύνδεσης με το Gemini API μετά από 3 προσπάθειες. Παρακαλώ δοκιμάστε ξανά.")
+                st.error("❌ Αποτυχία σύνδεσης με το Gemini API μετά από 3 προσπάθειες. Ελέγξτε την κονσόλα για λεπτομέρειες.")
     return None
 
 TRANSLATIONS = {
@@ -633,7 +633,7 @@ else:
                                 )
                                 
                                 contents_to_send = [prompt_eval] + homework_images + solution_images + [nb_img]
-                                resp_text = call_gemini_safe(client, 'gemini-2.5-flash', contents_to_send)
+                                resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
                                 
                                 matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
                                 score_val = 50
@@ -802,7 +802,7 @@ else:
                         )
                         
                         cat_progress.progress(70, text="🔄 Επεξεργασία ονομάτων...")
-                        response_text = call_gemini_safe(client, 'gemini-2.5-flash', [prompt, img_to_send])
+                        response_text = call_gemini_safe(client, 'gemini-3.8-flash', [prompt, img_to_send])
                             
                         cat_progress.progress(100, text="✅ Ολοκληρώθηκε!")
                         time.sleep(0.3)
