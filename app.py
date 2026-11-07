@@ -377,44 +377,4 @@ if sol_files:
 
         total_sol = len(sol_files)
         for idx, sol_f in enumerate(sol_files):
-            st.write(f"Συμπίεση λύσης {idx+1} από {total_sol}...")
-            compressed_bytes = compress_image(sol_f.getbuffer())
-            sol_path = os.path.join(UPLOAD_FOLDER, f"sol_page_{idx}.jpg")
-            with open(sol_path, "wb") as f:
-                f.write(compressed_bytes)
-        status.update(label="✅ Η σωστή λύση αποθηκεύτηκε με επιτυχία!", state="complete", expanded=False)
-
-homework_images = []
-hw_paths_in_folder = sorted([os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('hw_page_')])
-for p in hw_paths_in_folder:
-    try:
-        homework_images.append(Image.open(p))
-    except Exception:
-        pass
-
-solution_images = []
-sol_paths_in_folder = sorted([os.path.join(UPLOAD_FOLDER, f) for f in os.listdir(UPLOAD_FOLDER) if f.startswith('sol_page_')])
-for p in sol_paths_in_folder:
-    try:
-        solution_images.append(Image.open(p))
-    except Exception:
-        pass
-
-if homework_images or solution_images:
-    if homework_images:
-        st.sidebar.success(f"✅ {len(homework_images)} {t['hw_saved']}")
-    if solution_images:
-        st.sidebar.success(f"✅ {len(solution_images)} {t['sol_saved']}")
-        
-    if st.sidebar.button("🗑️ Εκκαθάριση Εκφώνησης & Λύσης", key="clear_hw_btn"):
-        with st.spinner("🗑️ Διαγραφή αρχείων..."):
-            for p in hw_paths_in_folder + sol_paths_in_folder:
-                try:
-                    os.remove(p)
-                except:
-                    pass
-        st.rerun()
-
-st.sidebar.markdown(f"""
-    <div class="sidebar-stop-box">
-        {t["sidebar
+            st.write(f"Συμπίεση λύσης {idx+
