@@ -621,15 +621,15 @@ else:
                                 nb_img = Image.open(nb_p)
                                 prompt_eval = (
                                     f"Official Roster: {class_students}\n"
-                                    "You are an expert teacher. Examine the provided Homework Prompt, Official Solution (if provided), and Student Notebook Page.\n"
-                                    "1. READ STUDENT NAME: Scan the top of the notebook page for the student's name and match it to the Official Roster.\n"
+                                    "You are an expert teacher grading student work. Examine the provided Homework Prompt, Official Solution (if provided), and Student Notebook Page.\n"
+                                    "1. READ STUDENT NAME: Scan the top of the notebook page for the student's name and match it strictly to the Official Roster.\n"
                                     "2. EVALUATE WORK: Compare student's steps and final answer against the prompt and solution.\n"
-                                    "3. SCORE: Assign a precise integer score from 0 to 100 representing the student's performance accurately (e.g., 95 for a minor omission, 100 for perfect, 50 for half-correct, etc.).\n"
-                                    f"4. FEEDBACK: Write 1 concise sentence explaining the score in the language: {app_lang}.\n"
-                                    "Format strictly as:\n"
+                                    "3. SCORE: Assign a score rounded to the nearest 10 (e.g., 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0).\n"
+                                    f"4. FEEDBACK: Write 1 clear, concise sentence explaining the evaluation in the language: {app_lang}.\n"
+                                    "You MUST provide valid values. Format strictly as:\n"
                                     "NAME: [Student Name]\n"
-                                    "SCORE: [Score]\n"
-                                    "FEEDBACK: [Feedback]"
+                                    "SCORE: [Score number only]\n"
+                                    "FEEDBACK: [Feedback text]"
                                 )
                                 
                                 contents_to_send = [prompt_eval] + homework_images + solution_images + [nb_img]
@@ -650,7 +650,10 @@ else:
                                     
                                     score_match = re.search(r'SCORE:\s*(\d+)', resp_text, re.IGNORECASE)
                                     if score_match:
-                                        score_val = int(score_match.group(1))
+                                        sc_extracted = int(score_match.group(1))
+                                        # Στρογγυλοποίηση στο πλησιέστερο 10
+                                        score_val = int(round(sc_extracted / 10.0) * 10)
+                                        score_val = max(0, min(100, score_val))
                                     
                                     fb_match = re.search(r'FEEDBACK:\s*(.+)', resp_text, re.IGNORECASE | re.DOTALL)
                                     if fb_match:
@@ -713,6 +716,7 @@ else:
                     col_img, col_form = st.columns([1, 2])
                     with col_img:
                         try:
+                            # Δυνατότητα προβολής εικόνας σε πλήρες μέγεθος (Zoom / Μεγεθυντικός Φακός)
                             st.image(eval_item["img_path"], caption=eval_item["student"], use_column_width=True)
                         except:
                             st.write("Image preview unavailable")
@@ -722,13 +726,13 @@ else:
                         
                         updated_student = st.selectbox(f"Μαθητής #{idx}", class_students_list, index=student_index, key=f"eval_stu_{idx}")
                         
-                        # Ελεύθερη αριθμητική εισαγωγή βαθμού (0-100) με προεπιλογή την πρόταση του AI
+                        # Βαθμολογία ανά 10 (step=10)
                         updated_score = st.number_input(
-                            f"Βαθμός #{idx} (0-100)", 
+                            f"Βαθμός #{idx} (ανά 10)", 
                             min_value=0, 
                             max_value=100, 
                             value=int(eval_item["score"]), 
-                            step=1, 
+                            step=10, 
                             key=f"eval_sco_{idx}"
                         )
                         
