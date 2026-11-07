@@ -182,16 +182,24 @@ def play_success_sound():
     """
     components.html(sound_html, height=0, width=0)
 
+# ΕΞΥΠΝΗ ΣΥΝΑΡΤΗΣΗ ΜΕ AUTO-RETRY ΚΑΙ ΕΝΗΜΕΡΩΣΗ ΧΡΗΣΤΗ
 def call_gemini_safe(client, model_name, contents):
-    try:
-        response = client.models.generate_content(
-            model=model_name,
-            contents=contents
-        )
-        if response and response.text:
-            return response.text
-    except Exception as e:
-        print(f"Gemini API Error: {e}")
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=contents
+            )
+            if response and response.text:
+                return response.text
+        except Exception as e:
+            print(f"Gemini API Error (προσπάθεια {attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                st.toast(f"⚠️ Στιγμιαίο κόλλημα δικτύου. Γίνεται αυτόματη επανάληψη ({attempt+2}/3)...", icon="🔄")
+                time.sleep(2)
+            else:
+                st.error(f"❌ Αποτυχία σύνδεσης με το Gemini API μετά από {max_retries} προσπάθειες. Λεπτομέρειες: {str(e)}")
     return None
 
 TRANSLATIONS = {
@@ -730,8 +738,6 @@ else:
                                 
                                 contents_to_send = homework_images + solution_images + [nb_img, prompt_eval]
                                 resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
-                                if not resp_text:
-                                    resp_text = call_gemini_safe(client, 'gemini-2.5-flash', contents_to_send)
                                 
                                 matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
                                 score_val = 50
@@ -901,8 +907,6 @@ else:
                         
                         cat_progress.progress(70, text="🔄 Επεξεργασία ονομάτων...")
                         response_text = call_gemini_safe(client, 'gemini-3.8-flash', [img_to_send, prompt])
-                        if not response_text:
-                            response_text = call_gemini_safe(client, 'gemini-2.5-flash', [img_to_send, prompt])
                             
                         cat_progress.progress(100, text="✅ Ολοκληρώθηκε!")
                         time.sleep(0.3)
@@ -943,18 +947,3 @@ else:
     elif mode == t["opt3"]:
         st.subheader(t["box3_title"])
         st.write(f"📊 {t['stats_sec']} - {selected_class}")
-        
-        grades_data = st.session_state["grades_df"]
-        section_grades = grades_data[grades_data["Section"] == selected_class] if not grades_data.empty and "Section" in grades_data.columns else pd.DataFrame()
-        
-        if st.session_state["students_db"][selected_class]:
-            students_list = st.session_state["students_db"][selected_class]
-            df_progress = pd.DataFrame({"Student": students_list})
-            
-            if not section_grades.empty:
-                latest_grades = section_grades.drop_duplicates(subset=["Student"], keep="last")
-                df_progress = pd.merge(df_progress, latest_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
-            
-            st.dataframe(df_progress, use_container_width=True)
-        else:
-            st.info(t["no_students_yet"])
