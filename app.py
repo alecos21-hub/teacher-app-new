@@ -182,7 +182,7 @@ def play_success_sound():
     """
     components.html(sound_html, height=0, width=0)
 
-# ΑΣΦΑΛΗΣ ΣΥΝΑΡΤΗΣΗ ΜΕ AUTO-RETRY ΚΑΙ UTF-8 ΑΣΦΑΛΕΙΑ
+# ΑΣΦΑΛΗΣ ΣΥΝΑΡΤΗΣΗ ΜΕ AUTO-RETRY ΚΑΙ ΕΝΗΜΕΡΩΣΗ ΧΡΗΣΤΗ
 def call_gemini_safe(client, model_name, contents):
     max_retries = 3
     for attempt in range(max_retries):
@@ -203,7 +203,7 @@ def call_gemini_safe(client, model_name, contents):
                 st.toast(f"⚠️ Στιγμιαίο κόλλημα δικτύου. Γίνεται αυτόματη επανάληψη ({attempt+2}/3)...", icon="🔄")
                 time.sleep(2)
             else:
-                st.error("❌ Αποτυχία σύνδεσης με το Gemini API μετά από 3 προσπάθειες. Δοκιμάστε ξανά.")
+                st.error("❌ Αποτυχία σύνδεσης με το Gemini API μετά από 3 προσπάθειες. Παρακαλώ δοκιμάστε ξανά.")
     return None
 
 TRANSLATIONS = {
@@ -632,8 +632,8 @@ else:
                                     "FEEDBACK: [Feedback]"
                                 )
                                 
-                                contents_to_send = homework_images + solution_images + [nb_img, prompt_eval]
-                                resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
+                                contents_to_send = [prompt_eval] + homework_images + solution_images + [nb_img]
+                                resp_text = call_gemini_safe(client, 'gemini-2.5-flash', contents_to_send)
                                 
                                 matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
                                 score_val = 50
@@ -802,7 +802,7 @@ else:
                         )
                         
                         cat_progress.progress(70, text="🔄 Επεξεργασία ονομάτων...")
-                        response_text = call_gemini_safe(client, 'gemini-3.8-flash', [img_to_send, prompt])
+                        response_text = call_gemini_safe(client, 'gemini-2.5-flash', [prompt, img_to_send])
                             
                         cat_progress.progress(100, text="✅ Ολοκληρώθηκε!")
                         time.sleep(0.3)
