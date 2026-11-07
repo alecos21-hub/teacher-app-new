@@ -624,8 +624,8 @@ else:
                                     "You are an expert teacher. Examine the provided Homework Prompt, Official Solution (if provided), and Student Notebook Page.\n"
                                     "1. READ STUDENT NAME: Scan the top of the notebook page for the student's name and match it to the Official Roster.\n"
                                     "2. EVALUATE WORK: Compare student's steps and final answer against the prompt and solution.\n"
-                                    "3. SCORE: Assign 100 (Fully correct), 50 (Partial/minor error), or 0 (Incorrect/missing).\n"
-                                    f"4. FEEDBACK: Write 1 concise sentence explaining the score in the following language: {app_lang}.\n"
+                                    "3. SCORE: Assign a precise integer score from 0 to 100 representing the student's performance accurately (e.g., 95 for a minor omission, 100 for perfect, 50 for half-correct, etc.).\n"
+                                    f"4. FEEDBACK: Write 1 concise sentence explaining the score in the language: {app_lang}.\n"
                                     "Format strictly as:\n"
                                     "NAME: [Student Name]\n"
                                     "SCORE: [Score]\n"
@@ -633,7 +633,7 @@ else:
                                 )
                                 
                                 contents_to_send = [prompt_eval] + homework_images + solution_images + [nb_img]
-                                resp_text = call_gemini_safe(client, 'gemini-3.8-flash', contents_to_send)
+                                resp_text = call_gemini_safe(client, 'gemini-2.5-flash', contents_to_send)
                                 
                                 matched_student = class_students[i % len(class_students)] if class_students else f"Student_{i+1}"
                                 score_val = 50
@@ -648,7 +648,7 @@ else:
                                                 matched_student = s
                                                 break
                                     
-                                    score_match = re.search(r'SCORE:\s*(100|50|0)', resp_text, re.IGNORECASE)
+                                    score_match = re.search(r'SCORE:\s*(\d+)', resp_text, re.IGNORECASE)
                                     if score_match:
                                         score_val = int(score_match.group(1))
                                     
@@ -697,164 +697,128 @@ else:
                     df_new = pd.DataFrame(bulk_records)
                     existing_df = st.session_state["grades_df"]
                     if not existing_df.empty:
-                        existing_df = existing_df[~((existing_df["Section"] == selected_class) & (existing_df["Date"] == today_str))]
+                        existing_df = pd.concat([existing_df, df_new], ignore_index=True)
+                    else:
+                        existing_df = df_new
                     
-                    st.session_state["grades_df"] = pd.concat([existing_df, df_new], ignore_index=True)
-                    save_grades_df(st.session_state["grades_df"])
-                    st.session_state["pending_evaluations"] = []
-                    
-                st.balloons()
+                    st.session_state["grades_df"] = existing_df
+                    save_grades_df(existing_df)
                 st.success(t["bulk_success_msg"])
+                st.session_state["pending_evaluations"] = []
                 time.sleep(1)
                 st.rerun()
 
-            st.markdown("---")
-            st.write("Ή αναλυτικός έλεγχος ανά μαθητή:")
-            
-            updated_results = []
-            class_students = st.session_state["students_db"].get(selected_class, [])
-            
-            for idx, item in enumerate(st.session_state["pending_evaluations"]):
-                st.markdown(f"#### 📄 Μαθητής #{idx+1}")
-                col1, col2 = st.columns([1, 2])
-                
-                with col1:
-                    try:
-                        st.image(item["img_path"], use_column_width=True, caption=f"Φωτογραφία #{idx+1}")
-                        with st.expander(f"🔍 Μεγέθυνση Φωτογραφίας #{idx+1}"):
-                            st.image(item["img_path"], use_column_width=True)
-                    except:
-                        st.write("Εικόνα τετραδίου")
+            for idx, eval_item in enumerate(st.session_state["pending_evaluations"]):
+                with st.expander(f"📄 {eval_item['student']} – Βαθμός: {eval_item['score']} / 100"):
+                    col_img, col_form = st.columns([1, 2])
+                    with col_img:
+                        try:
+                            st.image(eval_item["img_path"], caption=eval_item["student"], use_column_width=True)
+                        except:
+                            st.write("Image preview unavailable")
+                    with col_form:
+                        class_students_list = st.session_state["students_db"].get(selected_class, [])
+                        student_index = class_students_list.index(eval_item["student"]) if eval_item["student"] in class_students_list else 0
                         
-                with col2:
-                    student_idx = class_students.index(item["student"]) if item["student"] in class_students else 0
-                    sel_student = st.selectbox(f"Μαθητής #{idx+1}:", class_students, index=student_idx, key=f"sel_st_{idx}")
-                    
-                    sel_score = st.radio(
-                        f"Βαθμός #{idx+1}:", 
-                        [100, 50, 0], 
-                        index=[100, 50, 0].index(item["score"]) if item["score"] in [100, 50, 0] else 1, 
-                        horizontal=True,
-                        key=f"sel_sc_{idx}"
-                    )
-                    
-                    sel_fb = st.text_area(f"Σχόλιο #{idx+1}:", value=item["feedback"], height=70, key=f"sel_fb_{idx}")
-                    
-                    updated_results.append({
-                        "Section": selected_class,
-                        "Student": sel_student,
-                        "Date": datetime.date.today().strftime("%Y-%m-%d"),
-                        "Score": sel_score,
-                        "Feedback": sel_fb
-                    })
-                st.markdown("---")
-            
-            if st.button("💾 Οριστική Αποθήκευση Επιλεγμένων", type="primary"):
-                with st.spinner("💾 Αποθήκευση αλλαγών..."):
-                    df_new = pd.DataFrame(updated_results)
-                    existing_df = st.session_state["grades_df"]
-                    today_str = datetime.date.today().strftime("%Y-%m-%d")
-                    
-                    if not existing_df.empty:
-                        existing_df = existing_df[~((existing_df["Section"] == selected_class) & (existing_df["Date"] == today_str))]
-                    
-                    st.session_state["grades_df"] = pd.concat([existing_df, df_new], ignore_index=True)
-                    save_grades_df(st.session_state["grades_df"])
-                    st.session_state["pending_evaluations"] = []
-                    
-                st.balloons()
-                st.success("🎉 Οι βαθμολογίες εγκρίθηκαν και αποθηκεύτηκαν επιτυχώς στον Πίνακα Προόδου!")
-                time.sleep(1)
-                st.rerun()
+                        updated_student = st.selectbox(f"Μαθητής #{idx}", class_students_list, index=student_index, key=f"eval_stu_{idx}")
+                        
+                        # Ελεύθερη αριθμητική εισαγωγή βαθμού (0-100) με προεπιλογή την πρόταση του AI
+                        updated_score = st.number_input(
+                            f"Βαθμός #{idx} (0-100)", 
+                            min_value=0, 
+                            max_value=100, 
+                            value=int(eval_item["score"]), 
+                            step=1, 
+                            key=f"eval_sco_{idx}"
+                        )
+                        
+                        updated_fb = st.text_input(f"Σχόλιο #{idx}", value=eval_item["feedback"], key=f"eval_fb_{idx}")
+                        
+                        st.session_state["pending_evaluations"][idx]["student"] = updated_student
+                        st.session_state["pending_evaluations"][idx]["score"] = updated_score
+                        st.session_state["pending_evaluations"][idx]["feedback"] = updated_fb
+                        
+                        if st.button(f"💾 Αποθήκευση μεμονωμένου μαθητή #{idx}", key=f"save_single_{idx}"):
+                            single_record = pd.DataFrame([{
+                                "Section": selected_class,
+                                "Student": updated_student,
+                                "Date": datetime.date.today().strftime("%Y-%m-%d"),
+                                "Score": updated_score,
+                                "Feedback": updated_fb
+                            }])
+                            existing_df = st.session_state["grades_df"]
+                            if not existing_df.empty:
+                                existing_df = pd.concat([existing_df, single_record], ignore_index=True)
+                            else:
+                                existing_df = single_record
+                            
+                            st.session_state["grades_df"] = existing_df
+                            save_grades_df(existing_df)
+                            st.success(f"Αποθηκεύτηκε η αξιολόγηση για τον/την {updated_student}!")
+                            time.sleep(0.5)
+                            st.rerun()
 
     elif mode == t["opt2"]:
         st.subheader(t["box2_title"])
-        st.write(f"**{t['current_class_label']} {selected_class}**")
+        st.write(t["upload_catalog"])
         
-        catalog_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="catalog_uploader")
-        if catalog_file:
-            catalog_path = os.path.join(UPLOAD_FOLDER, "catalog_temp.jpg")
-            with open(catalog_path, "wb") as f:
-                f.write(compress_image(catalog_file.getbuffer()))
+        roster_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="roster_uploader_main", label_visibility="collapsed")
+        if roster_file:
+            roster_bytes = roster_file.getbuffer()
+            compressed_roster = compress_image(roster_bytes)
+            roster_path = os.path.join(UPLOAD_FOLDER, "roster_temp.jpg")
+            with open(roster_path, "wb") as f:
+                f.write(compressed_roster)
             
-            st.image(catalog_path, caption=t["roster_photo_caption"], width=300)
+            st.image(roster_path, caption=t["roster_photo_caption"], width=400)
             
             if st.button(t["btn_read_names"]):
                 api_key_val = st.session_state["config"].get("api_key", "").strip()
                 if not api_key_val:
                     st.error("⚠️ Please enter your Gemini API Key first above!")
                 else:
-                    cat_progress = st.progress(0, text="🔄 Ανάγνωση καταλόγου μαθητών...")
-                    cat_status = st.empty()
-                    cat_status.markdown(f"⏳ {t['catalog_spinner']}")
-                    
-                    cat_progress.progress(35, text="🔄 Αποστολή εικόνας στο AI...")
-                    time.sleep(0.5)
-                    
-                    try:
-                        client = genai.Client(api_key=api_key_val)
-                        img_to_send = Image.open(catalog_path)
-                        
-                        prompt = (
-                            "Read all student names from this school roster image. "
-                            "If last name and first name are in separate columns, combine them. "
-                            "List only the full names, one per line. Do not include numbers, codes, or extra text."
-                        )
-                        
-                        cat_progress.progress(70, text="🔄 Επεξεργασία ονομάτων...")
-                        response_text = call_gemini_safe(client, 'gemini-3.8-flash', [prompt, img_to_send])
+                    with st.spinner(t["catalog_spinner"]):
+                        try:
+                            client = genai.Client(api_key=api_key_val)
+                            roster_img = Image.open(roster_path)
+                            prompt_roster = (
+                                "Extract all student names from this class roster image.\n"
+                                "Return ONLY a JSON list of strings containing the student names in Greek or English as they appear.\n"
+                                "Example: [\"Αλέξανδρος Παπαδόπουλος\", \"Μαρία Ιωάννου\"]"
+                            )
+                            resp_text = call_gemini_safe(client, 'gemini-2.5-flash', [prompt_roster, roster_img])
                             
-                        cat_progress.progress(100, text="✅ Ολοκληρώθηκε!")
-                        time.sleep(0.3)
-                        cat_status.empty()
-                        cat_progress.empty()
-                        
-                        if response_text:
-                            lines = response_text.replace("```", "").split("\n")
-                            parsed_names = []
-                            for line in lines:
-                                clean_line = line.strip()
-                                clean_line = re.sub(r'^[\d\-\.\)]+\s*', '', clean_line).strip()
-                                if len(clean_line) > 2:
-                                    parsed_names.append(clean_line)
+                            extracted_names = []
+                            if resp_text:
+                                json_match = re.search(r'\[.*\]', resp_text, re.DOTALL)
+                                if json_match:
+                                    extracted_names = json.loads(json_match.group(0))
                             
-                            if parsed_names:
-                                added_count = 0
-                                for name in parsed_names:
-                                    if name not in st.session_state["students_db"][selected_class]:
-                                        st.session_state["students_db"][selected_class].append(name)
-                                        added_count += 1
-                                
+                            if extracted_names:
+                                st.session_state["students_db"][selected_class] = extracted_names
                                 save_students(st.session_state["students_db"])
-                                st.success(f"✅ Successfully read! Added {added_count} new students to section {selected_class}.")
+                                st.success(f"🎉 Επιτυχής εισαγωγή {len(extracted_names)} μαθητών στο τμήμα {selected_class}!")
                                 time.sleep(1)
                                 st.rerun()
                             else:
-                                st.error("⚠️ No clear names found. Please try taking a closer or clearer picture.")
-                        else:
-                            st.error("⚠️ Error reading roster, please try again.")
-                    except Exception as e:
-                        if 'cat_status' in locals():
-                            cat_status.empty()
-                        if 'cat_progress' in locals():
-                            cat_progress.empty()
-                        st.error("⚠️ Σφάλμα επεξεργασίας καταλόγου.")
+                                st.warning("⚠️ Δεν εντοπίστηκαν ονόματα αυτόματα. Δοκιμάστε να προσθέσετε τους μαθητές χειροκίνητα από το πλαϊνό μενού.")
+                        except Exception as e:
+                            st.error("⚠️ Σφάλμα κατά την ανάγνωση του καταλόγου.")
 
     elif mode == t["opt3"]:
         st.subheader(t["box3_title"])
-        st.write(f"📊 {t['stats_sec']} - {selected_class}")
+        df_grades = st.session_state["grades_df"]
         
-        grades_data = st.session_state["grades_df"]
-        section_grades = grades_data[grades_data["Section"] == selected_class] if not grades_data.empty and "Section" in grades_data.columns else pd.DataFrame()
-        
-        if st.session_state["students_db"][selected_class]:
-            students_list = st.session_state["students_db"][selected_class]
-            df_progress = pd.DataFrame({"Student": students_list})
-            
-            if not section_grades.empty:
-                latest_grades = section_grades.drop_duplicates(subset=["Student"], keep="last")
-                df_progress = pd.merge(df_progress, latest_grades[["Student", "Date", "Score", "Feedback"]], on="Student", how="left")
-            
-            st.dataframe(df_progress, use_container_width=True)
+        if df_grades.empty:
+            st.info("📊 Δεν υπάρχουν καταχωρημένες βαθμολογίες ακόμα.")
         else:
-            st.info(t["no_students_yet"])
+            st.dataframe(df_grades, use_container_width=True)
+            
+            csv_data = df_grades.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Λήψη Αποτελεσμάτων σε αρχείο CSV (Excel)",
+                data=csv_data,
+                file_name=f"GradeMind_Report_{selected_class}_{datetime.date.today()}.csv",
+                mime="text/csv",
+                type="primary"
+            )
