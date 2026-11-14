@@ -773,10 +773,10 @@ else:
             
             st.image(roster_path, caption=t["roster_photo_caption"], width=400)
             
-            if st.button(t["btn_read_names"]):
+            if st.button(t["btn_read_names"], type="primary"):
                 api_key_val = st.session_state["config"].get("api_key", "").strip()
                 if not api_key_val:
-                    st.error("⚠️ Please enter your Gemini API Key first above!")
+                    st.error("⚠️ Παρακαλώ εισάγετε πρώτα το Gemini API Key σας στην αρχική σελίδα!")
                 else:
                     with st.spinner(t["catalog_spinner"]):
                         try:
@@ -811,7 +811,7 @@ else:
                                 st.warning("⚠️ Δεν εντοπίστηκαν ονόματα αυτόματα. Απάντηση AI:")
                                 st.code(resp_text)
                         except Exception as e:
-                            st.error(f"⚠️ Αναλυτικό σφάλμα: {type(e).__name__} - {str(e)}")
+                            st.error(f"⚠️ Σφάλμα κατά την ανάγνωση: {type(e).__name__} - {str(e)}")
 
     elif mode == t["opt3"]:
         st.subheader(t["box3_title"])
