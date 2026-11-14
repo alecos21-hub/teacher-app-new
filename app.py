@@ -651,7 +651,6 @@ else:
                                     score_match = re.search(r'SCORE:\s*(\d+)', resp_text, re.IGNORECASE)
                                     if score_match:
                                         sc_extracted = int(score_match.group(1))
-                                        # Στρογγυλοποίηση στο πλησιέστερο 10
                                         score_val = int(round(sc_extracted / 10.0) * 10)
                                         score_val = max(0, min(100, score_val))
                                     
@@ -716,7 +715,6 @@ else:
                     col_img, col_form = st.columns([1, 2])
                     with col_img:
                         try:
-                            # Δυνατότητα προβολής εικόνας σε πλήρες μέγεθος (Zoom / Μεγεθυντικός Φακός)
                             st.image(eval_item["img_path"], caption=eval_item["student"], use_column_width=True)
                         except:
                             st.write("Image preview unavailable")
@@ -726,7 +724,6 @@ else:
                         
                         updated_student = st.selectbox(f"Μαθητής #{idx}", class_students_list, index=student_index, key=f"eval_stu_{idx}")
                         
-                        # Βαθμολογία ανά 10 (step=10)
                         updated_score = st.number_input(
                             f"Βαθμός #{idx} (ανά 10)", 
                             min_value=0, 
@@ -787,27 +784,34 @@ else:
                             roster_img = Image.open(roster_path)
                             prompt_roster = (
                                 "Extract all student names from this class roster image.\n"
-                                "Return ONLY a JSON list of strings containing the student names in Greek or English as they appear.\n"
+                                "Return ONLY a valid JSON array of strings containing the student names as they appear.\n"
+                                "Do not include markdown formatting or extra text.\n"
                                 "Example: [\"Αλέξανδρος Παπαδόπουλος\", \"Μαρία Ιωάννου\"]"
                             )
-                            resp_text = call_gemini_safe(client, 'gemini-2.5-flash', [prompt_roster, roster_img])
+                            response = client.models.generate_content(
+                                model="gemini-2.5-flash",
+                                contents=[prompt_roster, roster_img]
+                            )
+                            resp_text = response.text if response and response.text else ""
+                            
+                            clean_text = resp_text.replace("```json", "").replace("```", "").strip()
                             
                             extracted_names = []
-                            if resp_text:
-                                json_match = re.search(r'\[.*\]', resp_text, re.DOTALL)
-                                if json_match:
-                                    extracted_names = json.loads(json_match.group(0))
+                            json_match = re.search(r'\[.*\]', clean_text, re.DOTALL)
+                            if json_match:
+                                extracted_names = json.loads(json_match.group(0))
                             
-                            if extracted_names:
-                                st.session_state["students_db"][selected_class] = extracted_names
+                            if extracted_names and isinstance(extracted_names, list):
+                                st.session_state["students_db"][selected_class] = [str(n).strip() for n in extracted_names if str(n).strip()]
                                 save_students(st.session_state["students_db"])
                                 st.success(f"🎉 Επιτυχής εισαγωγή {len(extracted_names)} μαθητών στο τμήμα {selected_class}!")
                                 time.sleep(1)
                                 st.rerun()
                             else:
-                                st.warning("⚠️ Δεν εντοπίστηκαν ονόματα αυτόματα. Δοκιμάστε να προσθέσετε τους μαθητές χειροκίνητα από το πλαϊνό μενού.")
+                                st.warning("⚠️ Δεν εντοπίστηκαν ονόματα αυτόματα. Απάντηση AI:")
+                                st.code(resp_text)
                         except Exception as e:
-                            st.error("⚠️ Σφάλμα κατά την ανάγνωση του καταλόγου.")
+                            st.error(f"⚠️ Αναλυτικό σφάλμα: {type(e).__name__} - {str(e)}")
 
     elif mode == t["opt3"]:
         st.subheader(t["box3_title"])
@@ -818,11 +822,24 @@ else:
         else:
             st.dataframe(df_grades, use_container_width=True)
             
-            csv_data = df_grades.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Λήψη Αποτελεσμάτων σε αρχείο CSV (Excel)",
-                data=csv_data,
-                file_name=f"GradeMind_Report_{selected_class}_{datetime.date.today()}.csv",
-                mime="text/csv",
-                type="primary"
-            )
+            col_dl, col_del = st.columns(2)
+            with col_dl:
+                csv_data = df_grades.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Λήψη Αποτελεσμάτων σε αρχείο CSV (Excel)",
+                    data=csv_data,
+                    file_name=f"GradeMind_Report_{selected_class}_{datetime.date.today()}.csv",
+                    mime="text/csv",
+                    type="primary"
+                )
+            with col_del:
+                if st.button("🗑️ Εκκαθάριση Όσων Βαθμών / Reset Πίνακα", type="secondary"):
+                    st.session_state["grades_df"] = pd.DataFrame(columns=["Section", "Student", "Date", "Score", "Feedback"])
+                    if os.path.exists(GRADES_FILE):
+                        try:
+                            os.remove(GRADES_FILE)
+                        except:
+                            pass
+                    st.success("Ο πίνακας προόδου εκκαθαρίστηκε!")
+                    time.sleep(0.8)
+                    st.rerun()
