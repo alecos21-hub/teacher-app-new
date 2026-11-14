@@ -1,3 +1,14 @@
+import sys
+import subprocess
+
+# --- ΑΥΤΟΜΑΤΟΣ ΕΛΕΓΧΟΣ & ΕΓΚΑΤΑΣΤΑΣΗ ΒΙΒΛΙΟΘΗΚΩΝ ---
+required_packages = ["streamlit", "google-genai", "Pillow", "pandas"]
+for package in required_packages:
+    try:
+        __import__(package.replace("-", "_"))
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
 import streamlit as st
 import streamlit.components.v1 as components
 from google import genai
@@ -182,7 +193,6 @@ def play_success_sound():
     """
     components.html(sound_html, height=0, width=0)
 
-# ΑΣΦΑΛΗΣ ΣΥΝΑΡΤΗΣΗ ΜΕ AUTO-RETRY ΚΑΙ ΚΑΤΑΓΡΑΦΗ ΣΦΑΛΜΑΤΟΣ ΣΤΗΝ ΚΟΝΣΟΛΑ
 def call_gemini_safe(client, model_name, contents):
     max_retries = 3
     for attempt in range(max_retries):
@@ -194,16 +204,10 @@ def call_gemini_safe(client, model_name, contents):
             if response and response.text:
                 return response.text
         except Exception as e:
-            try:
-                print(f"DEBUG - Gemini API Error (προσπάθεια {attempt+1}/{max_retries}): {str(e)}")
-            except:
-                pass
-            
             if attempt < max_retries - 1:
-                st.toast(f"⚠️ Στιγμιαίο κόλλημα δικτύου. Γίνεται αυτόματη επανάληψη ({attempt+2}/3)...", icon="🔄")
                 time.sleep(2)
             else:
-                st.error("❌ Αποτυχία σύνδεσης με το Gemini API μετά από 3 προσπάθειες. Ελέγξτε την κονσόλα για λεπτομέρειες.")
+                st.error("❌ Αποτυχία σύνδεσης με το Gemini API.")
     return None
 
 TRANSLATIONS = {
@@ -233,13 +237,13 @@ TRANSLATIONS = {
         "opt1": "📷 1. Υποβοηθούμενη Αξιολόγηση",
         "opt2": "📋 2. Εισαγωγή Καταλόγου",
         "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
-        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων (συμπιέζονται αυτόματα):",
+        "batch_upload": "📸 Επιλέξτε φωτογραφίες τετραδίων (συμπιέζονται αυτόματα):",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "clear_notebooks": "🗑️ Εκκαθάριση Φακέλου Τετραδίων",
         "btn_evaluate": "🔍 Δημιουργία Προτεινόμενων Αξιολογήσεων",
         "eval_success": "Η αξιολόγηση ολοκληρώθηκε και αποθηκεύτηκε στον πίνακα προόδου!",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
-        "upload_catalog": "📸 Τραβήξτε φωτογραφία καταλόγου με κάμερα ή ανεβάστε αρχείο:",
+        "upload_catalog": "📸 Ανεβάστε φωτογραφία ή αρχείο καταλόγου μαθητών:",
         "btn_read_names": "🤖 Ανάγνωση & Αυτόματη Αποθήκευση Καταλόγου",
         "stats_sec": "📊 Συνολικός Πίνακας Προόδου Τμήματος (Excel Style)",
         "sidebar_stop_text": "🔴 ΣΗΜΑΝΤΙΚΟ:<br>Κάντε scroll προς τα κάτω 👇<br>για να επιλέξετε Τμήμα.",
@@ -287,13 +291,13 @@ TRANSLATIONS = {
         "opt1": "📷 1. Assisted Grading",
         "opt2": "📋 2. Import Roster",
         "opt3": "📊 3. Progress Table & Reports",
-        "batch_upload": "📸 Take photo with camera or select notebook files (compressed automatically):",
+        "batch_upload": "📸 Select notebook files (compressed automatically):",
         "folder_found": "student notebook photos ready in folder.",
         "clear_notebooks": "🗑️ Clear Notebooks Folder",
         "btn_evaluate": "🔍 Generate Proposed Evaluations",
         "eval_success": "Successfully evaluated and saved to Progress Table!",
         "catalog_sec": "📷 Import Class Roster for Section",
-        "upload_catalog": "📸 Take roster photo with camera or upload file:",
+        "upload_catalog": "📸 Upload roster photo or file:",
         "btn_read_names": "🤖 Read & Auto-Save Roster",
         "stats_sec": "📊 Class Progress Matrix (Excel Style)",
         "sidebar_stop_text": "🔴 IMPORTANT:<br>Scroll down 👇<br>to select Department.",
@@ -355,7 +359,6 @@ if hw_files:
 
         total_hw = len(hw_files)
         for idx, hw_f in enumerate(hw_files):
-            st.write(f"Συμπίεση αρχείου {idx+1} από {total_hw}...")
             compressed_bytes = compress_image(hw_f.getbuffer())
             hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{idx}.jpg")
             with open(hw_path, "wb") as f:
@@ -380,7 +383,6 @@ if sol_files:
 
         total_sol = len(sol_files)
         for idx, sol_f in enumerate(sol_files):
-            st.write(f"Συμπίεση λύσης {idx+1} από {total_sol}...")
             compressed_bytes = compress_image(sol_f.getbuffer())
             sol_path = os.path.join(UPLOAD_FOLDER, f"sol_page_{idx}.jpg")
             with open(sol_path, "wb") as f:
@@ -556,7 +558,6 @@ else:
         if notebook_files:
             with st.status("🔄 Συμπίεση & αποθήκευση φωτογραφιών τετραδίων...", expanded=True) as nb_status:
                 for idx, nb_file in enumerate(notebook_files):
-                    st.write(f"Επεξεργασία τετραδίου {idx+1} από {len(notebook_files)}...")
                     compressed_bytes = compress_image(nb_file.getbuffer())
                     unique_filename = f"student_page_{int(time.time())}_{idx}.jpg"
                     nb_path = os.path.join(UPLOAD_FOLDER, unique_filename)
@@ -598,10 +599,8 @@ else:
                         class_students = st.session_state["students_db"].get(selected_class, [])
                         
                         total_files = len(nb_images_paths)
-                        
                         progress_bar = st.progress(0, text="🔄 Προετοιμασία AI...")
                         status_box = st.empty()
-                        
                         start_time = time.time()
                         
                         for i, nb_p in enumerate(nb_images_paths):
@@ -609,24 +608,21 @@ else:
                             avg_time_per_item = elapsed / i if i > 0 else 3.5
                             remaining_items = total_files - i
                             est_sec = int(avg_time_per_item * remaining_items)
-                            
                             pct = int(((i) / total_files) * 100)
-                            progress_bar.progress(
-                                (i) / total_files, 
-                                text=f"🔄 Προόδος AI: {pct}% (Τετράδιο {i+1} από {total_files})"
-                            )
+                            
+                            progress_bar.progress((i) / total_files, text=f"🔄 Προόδος AI: {pct}% (Τετράδιο {i+1} από {total_files})")
                             status_box.markdown(f"⏱️ *Εκτιμώμενος υπολειπόμενος χρόνος: ~{est_sec} δευτερόλεπτα*")
                             
                             try:
                                 nb_img = Image.open(nb_p)
                                 prompt_eval = (
                                     f"Official Roster: {class_students}\n"
-                                    "You are an expert teacher grading student work. Examine the provided Homework Prompt, Official Solution (if provided), and Student Notebook Page.\n"
+                                    "You are an expert teacher grading student work. Examine the provided Homework Prompt, Official Solution, and Student Notebook Page.\n"
                                     "1. READ STUDENT NAME: Scan the top of the notebook page for the student's name and match it strictly to the Official Roster.\n"
                                     "2. EVALUATE WORK: Compare student's steps and final answer against the prompt and solution.\n"
                                     "3. SCORE: Assign a score rounded to the nearest 10 (e.g., 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0).\n"
-                                    f"4. FEEDBACK: Write 1 clear, concise sentence explaining the evaluation in the language: {app_lang}.\n"
-                                    "You MUST provide valid values. Format strictly as:\n"
+                                    f"4. FEEDBACK: Write 1 clear sentence explaining the evaluation in the language: {app_lang}.\n"
+                                    "Format strictly as:\n"
                                     "NAME: [Student Name]\n"
                                     "SCORE: [Score number only]\n"
                                     "FEEDBACK: [Feedback text]"
@@ -664,7 +660,7 @@ else:
                                     "score": score_val,
                                     "feedback": feedback_val
                                 })
-                            except Exception as inner_e:
+                            except Exception:
                                 pass
                         
                         progress_bar.progress(1.0, text="✅ Ολοκληρώθηκε!")
@@ -676,12 +672,12 @@ else:
                             play_success_sound()
                         
                         st.success(t["eval_complete_msg"])
-                    except Exception as e:
+                    except Exception:
                         st.error("⚠️ Σφάλμα επεξεργασίας.")
 
         if st.session_state["pending_evaluations"]:
             st.markdown("### 📋 Επισκόπηση & Τελική Έγκριση Καθηγητή")
-            st.write("Μπορείτε είτε να ελέγξετε κάθε μαθητή ξεχωριστά είτε να πατήσετε **Μαζική Έγκριση** για άμεση καταχώρηση:")
+            st.write("Μπορείτε είτε να ελέγξετε κάθε μαθητή ξεχωριστά είτε να πατήσετε **Μαζική Έγκριση**:")
             
             if st.button("🚀⚡ Μαζική Έγκριση & Αποθήκευση Όλων (Fast-Track)", type="primary"):
                 with st.spinner("💾 Μαζική αποθήκευση βαθμολογιών στον Πίνακα Προόδου..."):
@@ -723,16 +719,7 @@ else:
                         student_index = class_students_list.index(eval_item["student"]) if eval_item["student"] in class_students_list else 0
                         
                         updated_student = st.selectbox(f"Μαθητής #{idx}", class_students_list, index=student_index, key=f"eval_stu_{idx}")
-                        
-                        updated_score = st.number_input(
-                            f"Βαθμός #{idx} (ανά 10)", 
-                            min_value=0, 
-                            max_value=100, 
-                            value=int(eval_item["score"]), 
-                            step=10, 
-                            key=f"eval_sco_{idx}"
-                        )
-                        
+                        updated_score = st.number_input(f"Βαθμός #{idx} (ανά 10)", min_value=0, max_value=100, value=int(eval_item["score"]), step=10, key=f"eval_sco_{idx}")
                         updated_fb = st.text_input(f"Σχόλιο #{idx}", value=eval_item["feedback"], key=f"eval_fb_{idx}")
                         
                         st.session_state["pending_evaluations"][idx]["student"] = updated_student
@@ -764,13 +751,15 @@ else:
         st.write(t["upload_catalog"])
         
         roster_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="roster_uploader_main", label_visibility="collapsed")
+        roster_path = os.path.join(UPLOAD_FOLDER, "roster_temp.jpg")
+        
         if roster_file:
             roster_bytes = roster_file.getbuffer()
             compressed_roster = compress_image(roster_bytes)
-            roster_path = os.path.join(UPLOAD_FOLDER, "roster_temp.jpg")
             with open(roster_path, "wb") as f:
                 f.write(compressed_roster)
-            
+        
+        if os.path.exists(roster_path):
             st.image(roster_path, caption=t["roster_photo_caption"], width=400)
             
             if st.button(t["btn_read_names"], type="primary"):
@@ -793,7 +782,6 @@ else:
                                 contents=[prompt_roster, roster_img]
                             )
                             resp_text = response.text if response and response.text else ""
-                            
                             clean_text = resp_text.replace("```json", "").replace("```", "").strip()
                             
                             extracted_names = []
