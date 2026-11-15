@@ -70,7 +70,7 @@ STUDENTS_FILE = "students_db.json"
 GRADES_FILE = "grades_db.csv"
 CONFIG_FILE = "config.json"
 
-# --- 2. ΣΥΜΠΙΕΣΗ ΕΙΚΟΝΩΝ ΜΕ ΟΠΤΙΚΗ ΕΝΗΜΕΡΩΣΗ ---
+# --- 2. ΣΥΜΠΙΕΣΗ ΕΙΚΟΝΩΝ ---
 def compress_image(image_bytes, max_size=(1200, 1200), quality=80):
     try:
         img = Image.open(io.BytesIO(image_bytes))
@@ -192,7 +192,7 @@ def call_gemini_safe(client, model_name, contents):
             )
             if response and response.text:
                 return response.text
-        except Exception as e:
+        except Exception:
             if attempt < max_retries - 1:
                 time.sleep(2)
     return None
@@ -224,11 +224,10 @@ TRANSLATIONS = {
         "opt1": "📷 1. Υποβοηθούμενη Αξιολόγηση",
         "opt2": "📋 2. Εισαγωγή Καταλόγου",
         "opt3": "📊 3. Πίνακας Προόδου & Αναφορές",
-        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων (συμπιέζονται αυτόματα):",
+        "batch_upload": "📸 Τραβήξτε φωτογραφία με την κάμερα ή επιλέξτε αρχεία τετραδίων:",
         "folder_found": "φωτογραφίες σελίδων μαθητών είναι έτοιμες στον φάκελο.",
         "clear_notebooks": "🗑️ Εκκαθάριση Φακέλου Τετραδίων",
         "btn_evaluate": "🔍 Δημιουργία Προτεινόμενων Αξιολογήσεων",
-        "eval_success": "Η αξιολόγηση ολοκληρώθηκε και αποθηκεύτηκε στον πίνακα προόδου!",
         "catalog_sec": "📷 Εισαγωγή Καταλόγου για το Τμήμα",
         "upload_catalog": "📸 Τραβήξτε φωτογραφία καταλόγου με κάμερα ή ανεβάστε αρχείο:",
         "btn_read_names": "🤖 Ανάγνωση & Αυτόματη Αποθήκευση Καταλόγου",
@@ -278,11 +277,10 @@ TRANSLATIONS = {
         "opt1": "📷 1. Assisted Grading",
         "opt2": "📋 2. Import Roster",
         "opt3": "📊 3. Progress Table & Reports",
-        "batch_upload": "📸 Take photo with camera or select notebook files (compressed automatically):",
+        "batch_upload": "📸 Take photo with camera or select notebook files:",
         "folder_found": "student notebook photos ready in folder.",
         "clear_notebooks": "🗑️ Clear Notebooks Folder",
         "btn_evaluate": "🔍 Generate Proposed Evaluations",
-        "eval_success": "Successfully evaluated and saved to Progress Table!",
         "catalog_sec": "📷 Import Class Roster for Section",
         "upload_catalog": "📸 Take roster photo with camera or upload file:",
         "btn_read_names": "🤖 Read & Auto-Save Roster",
@@ -308,7 +306,7 @@ TRANSLATIONS = {
     }
 }
 
-# --- 3. SIDEBAR: ΓΛΩΣΣΑ, ΕΚΦΩΝΗΣΗ, ΣΩΣΤΗ ΛΥΣΗ & ΤΜΗΜΑΤΑ ---
+# --- 3. SIDEBAR ---
 st.sidebar.header("🌐 App Language / Γλώσσα")
 lang_keys = list(TRANSLATIONS.keys())
 current_lang_index = lang_keys.index(st.session_state["app_lang"]) if st.session_state["app_lang"] in lang_keys else 0
@@ -344,7 +342,6 @@ if hw_files:
             except:
                 pass
 
-        total_hw = len(hw_files)
         for idx, hw_f in enumerate(hw_files):
             compressed_bytes = compress_image(hw_f.getbuffer())
             hw_path = os.path.join(UPLOAD_FOLDER, f"hw_page_{idx}.jpg")
@@ -368,7 +365,6 @@ if sol_files:
             except:
                 pass
 
-        total_sol = len(sol_files)
         for idx, sol_f in enumerate(sol_files):
             compressed_bytes = compress_image(sol_f.getbuffer())
             sol_path = os.path.join(UPLOAD_FOLDER, f"sol_page_{idx}.jpg")
@@ -484,7 +480,7 @@ else:
     else:
         st.sidebar.info(t["no_students_yet"])
 
-# --- 4. ΚΥΡΙΩΣ ΠΕΡΙΕΧΟΜΕΝΟ, API KEY & AUDIO TOGGLE ---
+# --- 4. ΚΥΡΙΩΣ ΠΕΡΙΕΧΟΜΕΝΟ ---
 st.markdown(f"""
     <div class="custom-alert-box">
         {t["alert_box"]}
@@ -735,56 +731,55 @@ else:
                 st.markdown("---")
 
     # ----------------------------------------------------
-    # ΕΠΙΛΟΓΗ 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
+    # ΕΠΙΛΟΓΗ 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ (ΑΜΕΣΗ ΦΟΡΤΩΣΗ ΑΠΟ ΜΝΗΜΗ)
     # ----------------------------------------------------
     elif mode == t["opt2"]:
         st.subheader(t["box2_title"])
         st.markdown(f"<div class='custom-info-card'><b>{t['current_class_label']}</b> {selected_class}</div>", unsafe_allow_html=True)
         st.write(t["upload_catalog"])
         
-        roster_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="roster_uploader_main")
-        roster_path = os.path.join(UPLOAD_FOLDER, f"roster_{selected_class}.jpg")
+        roster_file = st.file_uploader(t["upload_catalog"], type=["png", "jpg", "jpeg"], key="roster_uploader_direct")
         
         if roster_file is not None:
             try:
                 roster_bytes = roster_file.getbuffer()
-                compressed_roster = compress_image(roster_bytes)
-                with open(roster_path, "wb") as f:
-                    f.write(compressed_roster)
-            except Exception as e:
-                st.error(f"⚠️ Σφάλμα αποθήκευσης εικόνας: {e}")
-
-        if os.path.exists(roster_path):
-            st.image(roster_path, caption=t["roster_photo_caption"], width=400)
-            st.markdown("---")
-            
-            if st.button(t["btn_read_names"], type="primary", key="btn_read_roster_action"):
-                api_key_val = st.session_state["config"].get("api_key", "").strip()
-                if not api_key_val:
-                    st.error("⚠️ Παρακαλώ εισάγετε πρώτα το Gemini API Key σας στην πλαϊνή μπάρα!")
-                else:
-                    with st.spinner(t["catalog_spinner"]):
-                        try:
+                compressed_roster = compress_image(roster_bytes, max_size=(1024, 1024), quality=80)
+                
+                st.image(compressed_roster, caption=t["roster_photo_caption"], width=400)
+                st.markdown("---")
+                
+                if st.button(t["btn_read_names"], type="primary", key="btn_read_roster_direct"):
+                    api_key_val = st.session_state["config"].get("api_key", "").strip()
+                    if not api_key_val:
+                        st.error("⚠️ Παρακαλώ εισάγετε πρώτα το Gemini API Key σας στην πλαϊνή μπάρα!")
+                    else:
+                        with st.spinner(t["catalog_spinner"]):
                             client = genai.Client(api_key=api_key_val)
-                            roster_img = Image.open(roster_path)
+                            roster_img = Image.open(io.BytesIO(compressed_roster))
+                            
                             prompt_roster = (
                                 f"Extract all student names for class section {selected_class} from this roster image.\n"
                                 "Return ONLY a valid JSON array of strings containing the student names as they appear.\n"
                                 "Do not include markdown formatting or extra text.\n"
                                 "Example: [\"Αλέξανδρος Παπαδόπουλος\", \"Μαρία Ιωάννου\"]"
                             )
+                            
                             response = client.models.generate_content(
                                 model="gemini-2.5-flash",
                                 contents=[prompt_roster, roster_img]
                             )
+                            
                             resp_text = response.text if response and response.text else ""
                             clean_text = resp_text.replace("```json", "").replace("```", "").strip()
                             
                             extracted_names = []
                             json_match = re.search(r'\[.*\]', clean_text, re.DOTALL)
                             if json_match:
-                                extracted_names = json.loads(json_match.group(0))
-                            
+                                try:
+                                    extracted_names = json.loads(json_match.group(0))
+                                except:
+                                    pass
+                                    
                             if extracted_names and isinstance(extracted_names, list):
                                 st.session_state["students_db"][selected_class] = [str(n).strip() for n in extracted_names if str(n).strip()]
                                 save_students(st.session_state["students_db"])
@@ -794,10 +789,10 @@ else:
                             else:
                                 st.warning("⚠️ Δεν εντοπίστηκαν ονόματα αυτόματα. Απάντηση AI:")
                                 st.code(resp_text)
-                        except Exception as e:
-                            st.error(f"⚠️ Σφάλμα κατά την ανάγνωση: {type(e).__name__} - {str(e)}")
+            except Exception as e:
+                st.error(f"⚠️ Σφάλμα επεξεργασίας: {str(e)}")
         else:
-            st.info("💡 Παρακαλώ ανεβάστε μια φωτογραφία του καταλόγου μαθητών για να εμφανιστεί η επιλογή ανάγνωσης.")
+            st.info("💡 Παρακαλώ ανεβάστε μια φωτογραφία του καταλόγου μαθητών για να συνεχίσετε.")
             
         current_students = st.session_state["students_db"].get(selected_class, [])
         if current_students:
