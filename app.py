@@ -12,7 +12,7 @@ import io
 
 # --- 1. ΔΙΑΜΟΡΦΩΣΗ ΣΕΛΙΔΑΣ & CUSTOM CSS ---
 st.set_page_config(
-    page_title="GradeMind AI – Smart Homework & Test Grader",
+    page_title="GradeMind AI – Smart Homework & Test Grader", 
     page_icon="🎓",
     layout="wide"
 )
@@ -542,7 +542,7 @@ else:
     # ----------------------------------------------------
     # ΕΠΙΛΟΓΗ 1: ΥΠΟΒΟΗΘΟΥΜΕΝΗ ΑΞΙΟΛΟΓΗΣΗ
     # ----------------------------------------------------
-    if mode == t["opt1"]:
+    if "1." in mode:
         st.subheader(t["box1_title"])
         if not homework_images:
             st.warning(t["hw_warn_box1"])
@@ -706,4 +706,160 @@ else:
                     st.session_state["pending_evaluations"] = []
                 st.success(t["bulk_success_msg"])
                 time.sleep(1)
-                st.rerun
+                st.rerun()
+
+            st.markdown("---")
+            for idx, ev in enumerate(st.session_state["pending_evaluations"]):
+                cols = st.columns([1, 2])
+                with cols[0]:
+                    try:
+                        st.image(ev["img_path"], caption=f"Τετράδιο {idx+1}", width=250)
+                    except Exception:
+                        pass
+                with cols[1]:
+                    st.markdown(f"**Μαθητής / Student:** {ev['student']}")
+                    new_student_sel = st.selectbox("Διόρθωση μαθητή:", st.session_state["students_db"].get(selected_class, [ev['student']]), index=0, key=f"sel_st_{idx}")
+                    new_score = st.selectbox("Βαθμός:", [100, 50, 0], index=0 if ev['score'] == 100 else (1 if ev['score'] == 50 else 2), key=f"score_sel_{idx}")
+                    new_fb = st.text_area("Σχόλιο / Feedback:", value=ev['feedback'], key=f"fb_ta_{idx}")
+
+                    if st.button(f"💾 Έγκριση & Αποθήκευση #{idx+1}", key=f"save_single_{idx}"):
+                        today_str = datetime.date.today().strftime("%Y-%m-%d")
+                        new_row = pd.DataFrame([{
+                            "Section": selected_class,
+                            "Student": new_student_sel,
+                            "Date": today_str,
+                            "Score": new_score,
+                            "Feedback": new_fb
+                        }])
+                        existing_df = st.session_state["grades_df"]
+                        if not existing_df.empty:
+                            existing_df = pd.concat([existing_df, new_row], ignore_index=True)
+                        else:
+                            existing_df = new_row
+
+                        st.session_state["grades_df"] = existing_df
+                        save_grades_df(existing_df)
+                        st.success(f"Αποθηκεύτηκε ο βαθμός για τον/την {new_student_sel}!")
+                st.markdown("---")
+
+    # ----------------------------------------------------
+    # ΕΠΙΛΟΓΗ 2: ΕΙΣΑΓΩΓΗ ΚΑΤΑΛΟΓΟΥ
+    # ----------------------------------------------------
+    elif "2." in mode:
+        st.subheader(t["box2_title"])
+        st.markdown(f"<div class='custom-info-card'><b>{t['current_class_label']}</b> {selected_class}</div>", unsafe_allow_html=True)
+        st.write(t["upload_catalog"])
+
+        if "roster_img_bytes" not in st.session_state:
+            st.session_state["roster_img_bytes"] = None
+            st.session_state["roster_img_name"] = None
+
+        roster_file = st.file_uploader(
+            t["upload_catalog"],
+            type=["png", "jpg", "jpeg"],
+            key=f"roster_uploader_{selected_class}"
+        )
+
+        if roster_file is not None:
+            if st.session_state["roster_img_name"] != roster_file.name:
+                raw_bytes = roster_file.getvalue()
+                st.session_state["roster_img_bytes"] = compress_image(raw_bytes, max_size=(1024, 1024), quality=85)
+                st.session_state["roster_img_name"] = roster_file.name
+
+        if st.session_state["roster_img_bytes"] is not None:
+            st.image(st.session_state["roster_img_bytes"], caption=t["roster_photo_caption"], width=400)
+
+            col_btn1, col_btn2 = st.columns([3, 1])
+            with col_btn1:
+                read_clicked = st.button(t["btn_read_names"], type="primary", key="btn_read_roster_persistent", use_container_width=True)
+            with col_btn2:
+                if st.button("🗑️ Καθαρισμός", key="btn_clear_roster_img", use_container_width=True):
+                    st.session_state["roster_img_bytes"] = None
+                    st.session_state["roster_img_name"] = None
+                    st.rerun()
+
+            if read_clicked:
+                api_key_val = st.session_state["config"].get("api_key", "").strip()
+                if not api_key_val:
+                    st.error("⚠️ Παρακαλώ εισάγετε πρώτα το Gemini API Key σας και πατήστε Αποθήκευση!")
+                else:
+                    progress_bar = st.progress(0, text="🔄 Προετοιμασία εικόνας...")
+                    try:
+                        progress_bar.progress(30, text="🔄 Αποστολή στο Google Gemini AI...")
+                        client = genai.Client(api_key=api_key_val)
+                        roster_img = Image.open(io.BytesIO(st.session_state["roster_img_bytes"]))
+
+                        prompt_roster = (
+                            f"Extract all student names for class section {selected_class} from this roster image.\n"
+                            "Return ONLY a valid JSON array of strings containing the student names as they appear.\n"
+                            "Do not include markdown formatting, numbering, or extra text.\n"
+                            "Example: [\"Αλέξανδρος Παπαδόπουλος\", \"Μαρία Ιωάννου\"]"
+                        )
+
+                        progress_bar.progress(65, text="🔄 Το AI διαβάζει τα ονοματεπώνυμα...")
+                        resp_text = call_gemini_safe(client, 'gemini-2.5-flash', [prompt_roster, roster_img])
+
+                        progress_bar.progress(90, text="🔄 Αποθήκευση μαθητών στο τμήμα...")
+                        if resp_text:
+                            clean_text = resp_text.replace("```json", "").replace("```", "").strip()
+                            extracted_names = []
+                            json_match = re.search(r'\[.*\]', clean_text, re.DOTALL)
+                            if json_match:
+                                extracted_names = json.loads(json_match.group(0))
+
+                            progress_bar.progress(100, text="✅ Ολοκληρώθηκε!")
+                            time.sleep(0.3)
+                            progress_bar.empty()
+
+                            if extracted_names and isinstance(extracted_names, list):
+                                cleaned_list = [str(n).strip() for n in extracted_names if str(n).strip()]
+                                st.session_state["students_db"][selected_class] = cleaned_list
+                                save_students(st.session_state["students_db"])
+                                st.session_state["roster_img_bytes"] = None
+                                st.session_state["roster_img_name"] = None
+                                st.success(f"🎉 Επιτυχής εισαγωγή {len(cleaned_list)} μαθητών στο τμήμα {selected_class}!")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.warning("⚠️ Δεν εντοπίστηκαν ονόματα. Απάντηση AI:")
+                                st.code(resp_text)
+                        else:
+                            progress_bar.empty()
+                            st.error("❌ Δεν υπήρξε απάντηση από το Gemini API. Ελέγξτε το API Key ή τη σύνδεσή σας.")
+                    except Exception as e:
+                        progress_bar.empty()
+                        st.error(f"⚠️ Σφάλμα κατά την ανάγνωση: {type(e).__name__} - {str(e)}")
+        else:
+            st.info("💡 Παρακαλώ ανεβάστε μια φωτογραφία του καταλόγου μαθητών για να εμφανιστεί η προεπισκόπηση και το κουμπί ανάγνωσης.")
+
+        current_students = st.session_state["students_db"].get(selected_class, [])
+        if current_students:
+            st.markdown("---")
+            st.subheader(f"📋 Εγγεγραμμένοι Μαθητές Τμήματος {selected_class} ({len(current_students)})")
+            for idx, student in enumerate(current_students, 1):
+                st.write(f"{idx}. {student}")
+
+    # ----------------------------------------------------
+    # ΕΠΙΛΟΓΗ 3: ΠΙΝΑΚΑΣ ΠΡΟΟΔΟΥ & ΑΝΑΦΟΡΕΣ
+    # ----------------------------------------------------
+    elif "3." in mode:
+        st.subheader(t["stats_sec"])
+        st.markdown(f"<div class='custom-info-card'><b>{t['current_class_label']}</b> {selected_class}</div>", unsafe_allow_html=True)
+
+        df_grades = st.session_state["grades_df"]
+        if not df_grades.empty and "Section" in df_grades.columns:
+            class_df = df_grades[df_grades["Section"] == selected_class]
+            if not class_df.empty:
+                st.dataframe(class_df, use_container_width=True)
+
+                csv_data = class_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Εξαγωγή βαθμών τμήματος σε CSV",
+                    data=csv_data,
+                    file_name=f"grades_{selected_class}.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.info("Δεν υπάρχουν καταχωρημένοι βαθμοί για αυτό το τμήμα ακόμα.")
+        else:
+            st.info("Δεν υπάρχουν αποθηκευμένοι βαθμοί στο σύστημα.")
